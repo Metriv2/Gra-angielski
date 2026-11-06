@@ -2531,7 +2531,7 @@ function startSpeechCheck() {
   let finalHeard = "";
 
   if (!SpeechRec) {
-    if (box) box.innerHTML = "❌ Przeglądarka nie wspiera mikrofonu (otwórz główny link /exec w Chrome). Kliknij Zalicz (Tata).";
+    if (box) box.innerHTML = "❌ Przeglądarka nie wspiera mikrofonu. Kliknij Zalicz (Tata).";
     return fallbackMicTimer(box);
   }
 
@@ -2548,8 +2548,28 @@ function startSpeechCheck() {
         currentTranscript += e.results[i][0].transcript.toLowerCase();
       }
       finalHeard = currentTranscript.trim();
+      
+      // Zabezpieczenie przed szumem i pustymi znakami (ignoruje wszystko poniżej 2 liter, z wyjątkiem "a" i "i")
+      if (finalHeard.length < 2 && finalHeard !== "a" && finalHeard !== "i") return; 
+
       const target = q.en.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-      if (finalHeard.includes(target) || target.includes(finalHeard) || (target.length > 2 && finalHeard.slice(0, 3) === target.slice(0, 3))) {
+      let isCorrect = false;
+
+      // REGULARNE SPRAWDZANIE:
+      // 1. Zwykłe trafienie (np. usłyszał "apple" w "it is an apple")
+      if (finalHeard.includes(target)) {
+        isCorrect = true;
+      }
+      // 2. Tolerancja na błędy wymowy dzieci (np. "app" zaliczy "apple", ale nie "a")
+      else if (target.length > 2 && finalHeard.length >= 3 && finalHeard.startsWith(target.slice(0, 3))) {
+        isCorrect = true;
+      }
+      // 3. Zabezpieczenie dla bardzo krótkich słów (np. "IN", "ON")
+      else if (target.length <= 2 && finalHeard === target) {
+        isCorrect = true;
+      }
+      
+      if (isCorrect) {
         handled = true;
         try { rec.stop(); } catch(err){}
         approveMicAnswer(`Rozpoznano: "${finalHeard}"!`);
@@ -2575,7 +2595,7 @@ function startSpeechCheck() {
       handled = true; 
       if (box) {
         box.className = "p-4 rounded-2xl bg-rose-100 border-2 border-rose-400 font-bold text-sm text-rose-950 mb-4 flex flex-col items-center justify-center text-center";
-        box.innerHTML = `❌ Błąd mikrofonu: ${e.error}. Jeśli to 'not-allowed', odpal grę przez główny link na telefonie!`;
+        box.innerHTML = `❌ Błąd mikrofonu: ${e.error}. Spróbuj ponownie.`;
       }
       fallbackMicTimer(box); 
     };
@@ -2599,7 +2619,6 @@ function startSpeechCheck() {
     fallbackMicTimer(box);
   }
 }
-
 function fallbackMicTimer(box) {
   setTimeout(() => { if (!state.answeredCurrent && box) box.innerHTML = `🎙️ Nagranie gotowe! Kliknij 👍 Zalicz (Tata) lub powtórz!`; }, 2400);
 }

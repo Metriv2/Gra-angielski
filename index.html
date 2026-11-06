@@ -620,43 +620,18 @@ const STICKER_POOL = [
   { id: "st_vh10", cat: "vehicles", icon: "👑", name: "Korona Mistrza" }
 ];
 
-const AVATAR_ITEMS = [
-  // Startowe ubrania
-  { id: "hat_blue", slot: "hat", rarity: "common", name: "Niebieska Czapka", color: "#3b82f6", style: "cap" },
-  { id: "shirt_amber", slot: "shirt", rarity: "common", name: "Żółta Koszulka", color: "#f59e0b", badge: "" },
-  { id: "pants_slate", slot: "pants", rarity: "common", name: "Granatowe Spodnie", color: "#334155" },
-
-  // Zwykłe kolory (Common)
-  { id: "hat_red", slot: "hat", rarity: "common", name: "Czerwona Czapka", color: "#ef4444", style: "cap" },
-  { id: "hat_green", slot: "hat", rarity: "common", name: "Zielona Czapka", color: "#10b981", style: "cap" },
-  { id: "hat_purple", slot: "hat", rarity: "common", name: "Fioletowa Czapka", color: "#8b5cf6", style: "cap" },
-  { id: "shirt_red", slot: "shirt", rarity: "common", name: "Czerwona Koszulka", color: "#ef4444", badge: "" },
-  { id: "shirt_green", slot: "shirt", rarity: "common", name: "Zielona Koszulka", color: "#22c55e", badge: "" },
-  { id: "shirt_sky", slot: "shirt", rarity: "common", name: "Błękitna Koszulka", color: "#0ea5e9", badge: "" },
-  { id: "pants_green", slot: "pants", rarity: "common", name: "Zielone Spodnie", color: "#15803d" },
-  { id: "pants_red", slot: "pants", rarity: "common", name: "Czerwone Spodnie", color: "#b91c1c" },
-
-  // Rzadkie dodatki (Rare)
-  { id: "hat_fire", slot: "hat", rarity: "rare", name: "Hełm Strażacki 🚒", color: "#dc2626", style: "fire" },
-  { id: "hat_pirate", slot: "hat", rarity: "rare", name: "Kapelusz Pirata 🏴‍☠️", color: "#1e293b", style: "pirate" },
-  { id: "hat_wizard", slot: "hat", rarity: "rare", name: "Kapelusz Czarodzieja 🧙‍♂️", color: "#6d28d9", style: "wizard" },
-  { id: "glasses_cool", slot: "glasses", rarity: "rare", name: "Okulary Pilota 😎", style: "cool" },
-  { id: "shirt_dino", slot: "shirt", rarity: "rare", name: "Bluza z Dinozaurem 🦖", color: "#16a34a", badge: "🦖" },
-  { id: "shirt_rocket", slot: "shirt", rarity: "rare", name: "Bluza Kosmiczna 🚀", color: "#2563eb", badge: "🚀" },
-  { id: "shirt_ball", slot: "shirt", rarity: "rare", name: "Koszulka Piłkarska ⚽", color: "#eab308", badge: "⚽" },
-  { id: "pet_dog", slot: "pet", rarity: "rare", name: "Piesek Pomocnik 🐶", icon: "🐶" },
-
-  // Epickie Skarby (Epic)
-  { id: "hat_crown", slot: "hat", rarity: "epic", name: "Złota Korona Króla 👑", color: "#fbbf24", style: "crown" },
-  { id: "hat_astro", slot: "hat", rarity: "epic", name: "Hełm Kosmonauty 👨‍🚀", color: "#f8fafc", style: "astro" },
-  { id: "glasses_star", slot: "glasses", rarity: "epic", name: "Gwiezdne Okulary 🌟", style: "star" },
-  { id: "shirt_hero", slot: "shirt", rarity: "epic", name: "Zbroja Superbohatera ⚡", color: "#7c3aed", badge: "⚡" },
-  { id: "cape_hero", slot: "cape", rarity: "epic", name: "Peleryna Mistrza 🦸‍♂️", color: "#dc2626" },
-  { id: "pet_trex", slot: "pet", rarity: "epic", name: "Mały T-Rex 🦖", icon: "🦖" },
-  { id: "pet_dragon", slot: "pet", rarity: "epic", name: "Ognisty Smok 🐉", icon: "🐉" },
-  { id: "pet_robot", slot: "pet", rarity: "epic", name: "Super Robot 🤖", icon: "🤖" }
-];
-
+const AVATAR_ITEMS = {
+  head: [
+    { id: "red_cap", name: "🎒 Czerwona czapka", rarity: "common" },
+    { id: "space_helmet", name: "🚀 Hełm Astronauty", rarity: "epic" }
+  ],
+  torso: [
+    { id: "hero_shirt", name: "⭐ Koszulka Bohatera", rarity: "rare" }
+  ],
+  legs: [
+    { id: "jeans", name: "👖 Niebieskie Jeansy", rarity: "common" }
+  ]
+};
 /* ============================================================================
    BAZA WSZYSTKICH 7 LEKCJI (Z PEŁNYMI TRYBAMI I OPISAMI)
    ============================================================================ */
@@ -852,25 +827,18 @@ function createDefaultPlayerStats() {
     stars: 0,
     cups: 0,
     perfectRounds: 0,
-    micCount: 0,
     examsDone: 0,
     duelsWon: 0,
-    streakDays: 1,
-    lastPlayDate: "",
-    lessonCounts: {},
+    streakDays: 0,
+    lastStreakCheck: "",
+    micCount: 0,
     badges: [],
-    unlockedItems: ["hat_blue", "shirt_amber", "pants_slate"],
-    equipped: {
-      hat: "hat_blue",
-      glasses: null,
-      shirt: "shirt_amber",
-      pants: "pants_slate",
-      cape: null,
-      pet: null
-    }
+    // Domyślne nowości
+    avatar: { head: "red_cap", torso: "hero_shirt", legs: "jeans" },
+    unlockedItems: ["red_cap", "hero_shirt", "jeans", "space_helmet"],
+    lessonCounts: {}
   };
 }
-
 let state = {
   profile: null,
   turtleMode: false,
@@ -1313,31 +1281,59 @@ function startKidVoiceTour() {
   ]);
 }
 
-// Generator postaci chłopca SVG
-function renderBoyAvatarSvg(profKey, size = 90) {
-  const p = state.stats[profKey === "hubert" ? "hubert" : "igor"];
-  const eq = p.equipped || {};
-  const hat = AVATAR_ITEMS.find(i => i.id === eq.hat) || AVATAR_ITEMS[0];
-  const shirt = AVATAR_ITEMS.find(i => i.id === eq.shirt) || AVATAR_ITEMS[1];
-  const pants = AVATAR_ITEMS.find(i => i.id === eq.pants) || AVATAR_ITEMS[2];
-  const glasses = AVATAR_ITEMS.find(i => i.id === eq.glasses);
-  const cape = AVATAR_ITEMS.find(i => i.id === eq.cape);
-  const pet = AVATAR_ITEMS.find(i => i.id === eq.pet);
+// NOWY, WARSTWOWY GENERATOR PNG (NA GITHUBIE)
+function renderBoyAvatarSvg(playerKey, size = 80) {
+  const p = state.stats[playerKey];
+  if (!p) return "";
+  
+  // Bezpieczne ładowanie zapisanego wyglądu gracza
+  const avatar = p.avatar || { head: "", torso: "", legs: "" };
+  
+  // Marginesy i wysokości, aby postać nie była kwadratowa
+  const width = size;
+  const height = Math.round(size * 1.3); // Kreskówkowe proporcje 3:4
 
-  let hatSvg = `<path d="M28 32 Q50 14 72 32 Z" fill="${hat.color}"/><rect x="26" y="29" width="54" height="6" rx="3" fill="${hat.color}"/>`;
-  if (hat.style === "crown") hatSvg = `<polygon points="26,32 32,14 44,25 50,11 56,25 68,14 74,32" fill="#fbbf24" stroke="#d97706" stroke-width="2"/>`;
-  else if (hat.style === "wizard") hatSvg = `<polygon points="22,32 50,4 78,32" fill="#6d28d9"/><ellipse cx="50" cy="32" rx="30" ry="5" fill="#4c1d95"/>`;
-  else if (hat.style === "pirate") hatSvg = `<path d="M20 33 Q50 10 80 33 Z" fill="#1e293b"/><text x="50" y="29" font-size="12" text-anchor="middle" fill="#fff">☠️</text>`;
-  else if (hat.style === "fire") hatSvg = `<path d="M24 33 Q50 12 76 33 Z" fill="#dc2626"/><rect x="22" y="30" width="56" height="5" rx="2" fill="#b91c1c"/><circle cx="50" cy="23" r="4" fill="#fbbf24"/>`;
-  else if (hat.style === "astro") hatSvg = `<circle cx="50" cy="42" r="27" fill="rgba(224,242,254,0.45)" stroke="#94a3b8" stroke-width="4"/>`;
+  // Mapowanie ubrań na pliki w folderze grafiki/
+  let headImg = "";
+  if (avatar.head === "red_cap") headImg = "grafiki/red_cap.png";
+  if (avatar.head === "space_helmet") headImg = "grafiki/space_helmet.png";
 
-  const glassesSvg = glasses ? (glasses.style === "star" ? `<text x="50" y="46" font-size="18" text-anchor="middle">🤩</text>` : `<rect x="33" y="37" width="14" height="9" rx="2" fill="#0f172a"/><rect x="53" y="37" width="14" height="9" rx="2" fill="#0f172a"/><line x1="47" y1="41" x2="53" y2="41" stroke="#0f172a" stroke-width="2"/>`) : "";
-  const capeSvg = cape ? `<polygon points="30,58 14,108 86,108 70,58" fill="${cape.color}" opacity="0.9"/>` : "";
-  const petHtml = pet ? `<span class="text-3xl -ml-2 float-anim">${pet.icon}</span>` : "";
+  let torsoImg = "";
+  if (avatar.torso === "hero_shirt") torsoImg = "grafiki/hero_shirt.png";
 
-  return `<div class="inline-flex items-end justify-center"><svg width="${size}" height="${Math.round(size * 1.15)}" viewBox="0 0 100 120">${capeSvg}<rect x="36" y="86" width="12" height="24" rx="4" fill="${pants.color}"/><rect x="52" y="86" width="12" height="24" rx="4" fill="${pants.color}"/><rect x="33" y="106" width="15" height="7" rx="3" fill="#1e293b"/><rect x="52" y="106" width="15" height="7" rx="3" fill="#1e293b"/><rect x="23" y="58" width="11" height="24" rx="5" fill="${shirt.color}"/><rect x="66" y="58" width="11" height="24" rx="5" fill="${shirt.color}"/><circle cx="28" cy="84" r="5" fill="#fde68a"/><circle cx="72" cy="84" r="5" fill="#fde68a"/><rect x="32" y="56" width="36" height="33" rx="8" fill="${shirt.color}"/><text x="50" y="78" font-size="15" text-anchor="middle">${shirt.badge || ""}</text><circle cx="50" cy="42" r="18" fill="#fde68a" stroke="#f59e0b" stroke-width="1.5"/><circle cx="43" cy="41" r="2.4" fill="#1e293b"/><circle cx="57" cy="41" r="2.4" fill="#1e293b"/><path d="M43 49 Q50 55 57 49" stroke="#b45309" stroke-width="2.5" fill="none" stroke-linecap="round"/>${glassesSvg}${hatSvg}</svg>${petHtml}</div>`;
+  let legsImg = "";
+  if (avatar.legs === "jeans") legsImg = "grafiki/jeans.png";
+
+  return `
+    <div class="relative flex items-center justify-center mx-auto select-none pointer-events-none" style="width: ${width}px; height: ${height}px;">
+      <!-- Warstwa 1: Baza (Blond Chłopiec) -->
+      <img src="grafiki/boy_base.png" 
+           class="absolute inset-0 w-full h-full object-contain z-10" 
+           alt="Boy Base" />
+      
+      <!-- Warstwa 2: Dół (Niebieskie Jeansy) -->
+      ${legsImg ? `
+        <img src="${legsImg}" 
+             class="absolute inset-0 w-full h-full object-contain z-20" 
+             alt="Jeans" />
+      ` : ""}
+      
+      <!-- Warstwa 3: Góra (Koszulka Superbohatera) -->
+      ${torsoImg ? `
+        <img src="${torsoImg}" 
+             class="absolute inset-0 w-full h-full object-contain z-30" 
+             alt="Shirt" />
+      ` : ""}
+      
+      <!-- Warstwa 4: Głowa (Czapka z daszkiem / Hełm) -->
+      ${headImg ? `
+        <img src="${headImg}" 
+             class="absolute inset-0 w-full h-full object-contain z-40" 
+             alt="Headwear" />
+      ` : ""}
+    </div>
+  `;
 }
-
 // Kolejka nagród za osiągnięcia i skrzynie
 function processNextRewardInQueue() {
   const modal = document.getElementById("rewardPopupModal");

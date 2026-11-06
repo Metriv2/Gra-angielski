@@ -1115,14 +1115,24 @@ function loadCloudData() {
         state.questionsPerRound = parseInt(data.questionsPerRound) || 10;
       }
       updateHeaderUI();
-      if (state.profile) showLessonMenu();
+      
+      // POPRAWKA: Jeśli wszystko się załaduje, pokaż wreszcie ekran wyboru gracza!
+      if (state.profile) {
+        showLessonMenu();
+      } else {
+        showStartScreen();
+      }
     })
     .catch(err => {
       console.error("Błąd pobierania danych:", err);
-      if (state.profile) showLessonMenu();
+      // POPRAWKA: Nawet jeśli brakuje internetu lub link jest błędny, pokaż ekran awaryjnie!
+      if (state.profile) {
+        showLessonMenu();
+      } else {
+        showStartScreen();
+      }
     });
 }
-
 function saveCloudData() {
   const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
   const payload = {

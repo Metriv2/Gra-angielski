@@ -1088,64 +1088,98 @@ function checkAndUnlockAchievements(profKey) {
   }
 }
 
-// Nieblokujące ładowanie danych (natychmiast pokazuje ekran startowy!)
+// =========================================================================
+// NOWA KOMUNIKACJA Z CHMURĄ (Z GITHUBA DO GOOGLE APPS SCRIPT)
+// =========================================================================
+
+// TUTAJ WKLEJ SWÓJ LINK Z KROKU 1 (musi się kończyć na /exec)
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec";
+
 function loadCloudData() {
-  try {
-    const loc = localStorage.getItem("igor_hubert_v9");
-    if (loc) applyLoadedData(JSON.parse(loc));
-  } catch (e) {}
-
-  showStartScreen();
-
-  if (typeof google !== "undefined" && google.script && google.script.run) {
-    google.script.run
-      .withSuccessHandler(d => {
-        if (d && Object.keys(d).length > 0) {
-          applyLoadedData(d);
-          if (!state.profile) showStartScreen();
-          else updateHeaderUI();
-        }
-      })
-      .withFailureHandler(() => {})
-      .getAppData();
-  }
-}
-
-function applyLoadedData(data) {
-  if (!data) return;
-  if (data.stats) {
-    state.stats.igor = ensurePlayerStructure(data.stats.igor);
-    state.stats.hubert = ensurePlayerStructure(data.stats.hubert);
-    state.stats.stickers = Array.isArray(data.stats.stickers) ? data.stats.stickers : [];
-  }
-  if (data.questionsPerRound) state.questionsPerRound = Number(data.questionsPerRound) || 8;
-  if (data.customLessons && Array.isArray(data.customLessons)) {
-    const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
-    state.lessons = [
-      ...JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE)),
-      ...data.customLessons.filter(l => l && l.id && !baseIds.includes(l.id))
-    ];
-  }
-  updateHeaderUI();
+  fetch(GAS_API_URL)
+    .then(res => res.json())
+    .then(data => {
+      if (data.stats) {
+        const pStats = JSON.parse(data.stats);
+        state.stats.igor = { ...state.stats.igor, ...pStats.igor };
+        state.stats.hubert = { ...state.stats.hubert, ...pStats.hubert };
+        if (pStats.stickers) state.stats.stickers = pStats.stickers;
+      }
+      if (data.lessons) {
+        const custom = JSON.parse(data.lessons);
+        const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
+        state.lessons = state.lessons.filter(l => baseIds.includes(l.id));
+        state.lessons.push(...custom);
+      }
+      if (data.questionsPerRound) {
+        state.questionsPerRound = parseInt(data.questionsPerRound) || 10;
+      }
+      updateHeaderUI();
+      if (state.profile) showLessonMenu();
+    })
+    .catch(err => {
+      console.error("Błąd pobierania danych:", err);
+      if (state.profile) showLessonMenu();
+    });
 }
 
 function saveCloudData() {
   const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
   const payload = {
-    stats: state.stats,
-    questionsPerRound: state.questionsPerRound,
-    customLessons: state.lessons.filter(l => !baseIds.includes(l.id))
+    action: "save",
+    data: {
+      stats: state.stats,
+      lessons: state.lessons.filter(l => !baseIds.includes(l.id)),
+      questionsPerRound: state.questionsPerRound
+    }
   };
-  try {
-    localStorage.setItem("igor_hubert_v9", JSON.stringify(payload));
-  } catch (e) {}
-  if (typeof google !== "undefined" && google.script && google.script.run) {
-    google.script.run.saveAppData(payload);
-  }
-  updateHeaderUI();
+  
+  // Wysłanie zapisu w tle (text/plain omija blokady bezpieczeństwa przeglądarek)
+  fetch(GAS_API_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+  }).catch(err => console.error("Błąd zapisu:", err));
 }
 
-// Obsługa okna Instrukcji Tekstowej dla Rodzica
+function parentScanWorksheetAI(inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  const apiKey = document.getElementById("parentGeminiKey").value.trim();
+  const targetAge = document.getElementById("parentAiTargetAge").value;
+  if (!file) return;
+  if (!apiKey) { alert("Wpisz najpierw darmowy klucz Gemini API!"); return; }
+  showParentStatus("⏳ Sówka AI analizuje zdjęcie kartki... Poczekaj ok. 10-15 sekund...");
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result.split(",")[1];
+    
+    fetch(GAS_API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: "scanAI",
+        base64: base64,
+        mimeType: file.type,
+        targetAge: targetAge,
+        apiKey: apiKey
+      }),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "success") {
+        state.lessons.push(data.lesson);
+        saveCloudData();
+        showParentStatus(`✅ Sówka AI utworzyła lekcję: "${data.lesson.title}" (${data.lesson.items.length} słówek)!`);
+        openParentDashboard();
+      } else {
+        alert("Błąd AI: " + data.message);
+      }
+    })
+    .catch(err => alert("Błąd połączenia: " + err.message));
+  };
+  reader.readAsDataURL(file);
+}// Obsługa okna Instrukcji Tekstowej dla Rodzica
 function openGuideModal() {
   const m = document.getElementById("guideModal");
   if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }

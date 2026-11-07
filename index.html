@@ -2608,8 +2608,9 @@ function resetEverythingAll() {
   showStartScreen();
 }
 window.addEventListener("DOMContentLoaded", () => {
-  if ("speechSynthesis" in window) window.speechSynthesis.getVoices();
-  showStartScreen(); // Odpala grę od razu, zero czekania na bazę!
+  const loading = document.getElementById("loadingScreen");
+  if (loading) loading.style.display = "none";
+  showStartScreen();
 });
 </script>
 </body>

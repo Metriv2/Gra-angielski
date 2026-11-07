@@ -1433,22 +1433,33 @@ const AVATAR_ITEMS = {
 };
 
 function renderBoyAvatarSvg(playerKey, size = 80) {
+  const p = state.stats[playerKey];
+  if (!p) return "";
+  if (!p.avatar) p.avatar = { head: "red_cap", torso: "hero_shirt", legs: "jeans" };
+  const avatar = p.avatar;
   const width = size;
-  const height = Math.round(size * 1.3);
+  const height = size; // Teraz to idealny kwadrat 1:1
+
+  let headImg = avatar.head ? "grafiki/" + avatar.head + ".png" : "";
+  let torsoImg = avatar.torso ? "grafiki/" + avatar.torso + ".png" : "";
+  let legsImg = avatar.legs ? "grafiki/" + avatar.legs + ".png" : "";
 
   return `
-    <div class="relative flex flex-col items-center justify-center mx-auto select-none pointer-events-none" style="width: ${width}px; height: ${height}px;">
-      <img src="grafiki/boy_base.png" class="w-full h-full object-contain" alt="Awatar" onerror="this.outerHTML='<div class=\\'text-5xl\\'>👦</div>'" />
+    <div class="relative mx-auto select-none pointer-events-none" style="width: ${width}px; height: ${height}px;">
+      <!-- Warstwa 1: Baza chłopca (zawsze na samym dole) -->
+      <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" onerror="this.style.display='none';" />
+      
+      <!-- Warstwa 2: Spodnie (nałożone dokładnie w tym samym kadrze) -->
+      ${legsImg ? `<img src="${legsImg}" class="absolute inset-0 w-full h-full object-contain z-20" onerror="this.style.display='none';" />` : ""}
+      
+      <!-- Warstwa 3: Koszulka -->
+      ${torsoImg ? `<img src="${torsoImg}" class="absolute inset-0 w-full h-full object-contain z-30" onerror="this.style.display='none';" />` : ""}
+      
+      <!-- Warstwa 4: Czapka -->
+      ${headImg ? `<img src="${headImg}" class="absolute inset-0 w-full h-full object-contain z-40" onerror="this.style.display='none';" />` : ""}
     </div>
   `;
-}}function openAvatarModal() {
-  cancelAllSpeechAndTimers();
-  ["igor", "hubert"].forEach(prof => {
-    if (!state.stats[prof].unlockedItems) {
-      state.stats[prof].unlockedItems = ["red_cap", "hero_shirt", "jeans", "space_helmet"];
-      state.stats[prof].avatar = { head: "red_cap", torso: "hero_shirt", legs: "jeans" };
-    }
-  });
+}
 
   document.getElementById("avatarModalPlayerName").textContent = state.profile === "igor" ? "IGOR" : "HUBERT";
   document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 140);

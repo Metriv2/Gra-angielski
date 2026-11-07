@@ -1454,6 +1454,8 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   `;
 }
 
+function openAvatarModal() {
+  if (!state.profile || state.profile === "duel") return;
   document.getElementById("avatarModalPlayerName").textContent = state.profile === "igor" ? "IGOR" : "HUBERT";
   document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 140);
   renderAvatarItems();

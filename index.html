@@ -2607,10 +2607,9 @@ function resetEverythingAll() {
   closeParentDashboard();
   showStartScreen();
 }
-
 window.addEventListener("DOMContentLoaded", () => {
   if ("speechSynthesis" in window) window.speechSynthesis.getVoices();
-  loadCloudData();
+  showStartScreen(); // Odpala grę od razu, zero czekania na bazę!
 });
 </script>
 </body>

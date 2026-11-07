@@ -1446,21 +1446,29 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 
   return `
     <div class="relative flex flex-col items-center mx-auto select-none pointer-events-none" style="width: ${width}px; height: ${height}px;">
-      <!-- Warstwa 1: Baza chłopca -->
-      <img src="grafiki/boy_base.png" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-full object-contain z-10" />
-      
-      <!-- Warstwa 2: Spodnie (reguluj parametry w nawiasach []) -->
-      ${legsImg ? `<img src="${legsImg}" class="absolute bottom-[2%] left-1/2 -translate-x-1/2 w-[60%] object-contain z-20" />` : ""}
-      
-      <!-- Warstwa 3: Koszulka -->
-      ${torsoImg ? `<img src="${torsoImg}" class="absolute bottom-[32%] left-1/2 -translate-x-1/2 w-[60%] object-contain z-30" />` : ""}
-      
-      <!-- Warstwa 4: Czapka / Hełm -->
-      ${headImg ? `<img src="${headImg}" class="absolute top-[2%] left-1/2 -translate-x-1/2 w-[64%] object-contain z-40" />` : ""}
+      <!-- Baza chłopca -->
+      <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" />
+
+      <!-- Kontener NÓG (Spodnie / Buty) -->
+      ${legsImg ? `
+        <div class="absolute bottom-[2%] left-1/2 -translate-x-1/2 w-[55%] h-[40%] flex items-end justify-center z-20">
+          <img src="${legsImg}" class="max-w-full max-h-full object-contain" />
+        </div>` : ""}
+
+      <!-- Kontener TUŁOWIA (Koszulki / Bluzy) -->
+      ${torsoImg ? `
+        <div class="absolute top-[28%] left-1/2 -translate-x-1/2 w-[65%] h-[36%] flex items-center justify-center z-30">
+          <img src="${torsoImg}" class="max-w-full max-h-full object-contain" />
+        </div>` : ""}
+
+      <!-- Kontener GŁOWY (Czapki / Hełmy / Korony) -->
+      ${headImg ? `
+        <div class="absolute top-[2%] left-1/2 -translate-x-1/2 w-[70%] h-[38%] flex items-start justify-center z-40">
+          <img src="${headImg}" class="max-w-full max-h-full object-contain" />
+        </div>` : ""}
     </div>
   `;
-}
-function openAvatarModal() {
+}function openAvatarModal() {
   cancelAllSpeechAndTimers();
   ["igor", "hubert"].forEach(prof => {
     if (!state.stats[prof].unlockedItems) {

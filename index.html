@@ -1438,7 +1438,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   if (!p.avatar) p.avatar = { head: "red_cap", torso: "hero_shirt", legs: "jeans" };
   const avatar = p.avatar;
   const width = size;
-  const height = size; // Teraz to idealny kwadrat 1:1
+  const height = size;
 
   let headImg = avatar.head ? "grafiki/" + avatar.head + ".png" : "";
   let torsoImg = avatar.torso ? "grafiki/" + avatar.torso + ".png" : "";
@@ -1446,16 +1446,9 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 
   return `
     <div class="relative mx-auto select-none pointer-events-none" style="width: ${width}px; height: ${height}px;">
-      <!-- Warstwa 1: Baza chłopca (zawsze na samym dole) -->
       <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" onerror="this.style.display='none';" />
-      
-      <!-- Warstwa 2: Spodnie (nałożone dokładnie w tym samym kadrze) -->
       ${legsImg ? `<img src="${legsImg}" class="absolute inset-0 w-full h-full object-contain z-20" onerror="this.style.display='none';" />` : ""}
-      
-      <!-- Warstwa 3: Koszulka -->
       ${torsoImg ? `<img src="${torsoImg}" class="absolute inset-0 w-full h-full object-contain z-30" onerror="this.style.display='none';" />` : ""}
-      
-      <!-- Warstwa 4: Czapka -->
       ${headImg ? `<img src="${headImg}" class="absolute inset-0 w-full h-full object-contain z-40" onerror="this.style.display='none';" />` : ""}
     </div>
   `;

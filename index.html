@@ -800,6 +800,37 @@ const FULL_LESSONS_DATABASE = [
   }
 ];
 
+const PARENT_PIN = "0608";
+let audioCtx = null;
+
+function createDefaultPlayerStats() {
+  return {
+    stars: 0,
+    cups: 0,
+    perfectRounds: 0,
+    examsDone: 0,
+    duelsWon: 0,
+    streakDays: 0,
+    lastPlayDate: "",
+    micCount: 0,
+    badges: [],
+    avatar: { head: "red_cap", torso: "hero_shirt", legs: "jeans" },
+    unlockedItems: ["red_cap", "hero_shirt", "jeans", "space_helmet"],
+    lessonCounts: {},
+    equipped: {}
+  };
+}
+
+function openGuideModal() {
+  const m = document.getElementById("guideModal");
+  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
+}
+
+function closeGuideModal() {
+  const m = document.getElementById("guideModal");
+  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
+}
+
 let state = {
   profile: null,
   turtleMode: false,
@@ -830,8 +861,9 @@ let state = {
     stickers: []
   }
 };
+</script>
 <!-- ======================== KONIEC CZĘŚCI 2 z 5 ======================== -->
-
+  
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 5 ======================= -->
 <script>
 /* ============================================================================

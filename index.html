@@ -1433,42 +1433,15 @@ const AVATAR_ITEMS = {
 };
 
 function renderBoyAvatarSvg(playerKey, size = 80) {
-  const p = state.stats[playerKey];
-  if (!p) return "";
-  if (!p.avatar) p.avatar = { head: "red_cap", torso: "hero_shirt", legs: "jeans" };
-  const avatar = p.avatar;
   const width = size;
   const height = Math.round(size * 1.3);
 
-  let headImg = avatar.head ? "grafiki/" + avatar.head + ".png" : "";
-  let torsoImg = avatar.torso ? "grafiki/" + avatar.torso + ".png" : "";
-  let legsImg = avatar.legs ? "grafiki/" + avatar.legs + ".png" : "";
-
   return `
-    <div class="relative flex flex-col items-center mx-auto select-none pointer-events-none" style="width: ${width}px; height: ${height}px;">
-      <!-- Baza chłopca -->
-      <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" />
-
-      <!-- Kontener NÓG (Spodnie / Buty) -->
-      ${legsImg ? `
-        <div class="absolute bottom-[2%] left-1/2 -translate-x-1/2 w-[55%] h-[40%] flex items-end justify-center z-20">
-          <img src="${legsImg}" class="max-w-full max-h-full object-contain" />
-        </div>` : ""}
-
-      <!-- Kontener TUŁOWIA (Koszulki / Bluzy) -->
-      ${torsoImg ? `
-        <div class="absolute top-[28%] left-1/2 -translate-x-1/2 w-[65%] h-[36%] flex items-center justify-center z-30">
-          <img src="${torsoImg}" class="max-w-full max-h-full object-contain" />
-        </div>` : ""}
-
-      <!-- Kontener GŁOWY (Czapki / Hełmy / Korony) -->
-      ${headImg ? `
-        <div class="absolute top-[2%] left-1/2 -translate-x-1/2 w-[70%] h-[38%] flex items-start justify-center z-40">
-          <img src="${headImg}" class="max-w-full max-h-full object-contain" />
-        </div>` : ""}
+    <div class="relative flex flex-col items-center justify-center mx-auto select-none pointer-events-none" style="width: ${width}px; height: ${height}px;">
+      <img src="grafiki/boy_base.png" class="w-full h-full object-contain" alt="Awatar" onerror="this.outerHTML='<div class=\\'text-5xl\\'>👦</div>'" />
     </div>
   `;
-}function openAvatarModal() {
+}}function openAvatarModal() {
   cancelAllSpeechAndTimers();
   ["igor", "hubert"].forEach(prof => {
     if (!state.stats[prof].unlockedItems) {

@@ -1009,6 +1009,20 @@ let state = {
    CZĘŚĆ 3 z 5: STAN GRY, OSIĄGNIĘCIA, CHMURA, SÓWKA, SKRZYNIE I GARDEROBA 131 PNG
    ============================================================================ */
 
+// Domyślne proporcje i pozycje warstw ubrań względem bazy postaci (boy_base.png)
+const DEFAULT_LAYER_LAYOUT = {
+  head:  { width: 46, height: 30, top: 2,  left: 50 },
+  torso: { width: 54, height: 38, top: 31, left: 50 },
+  legs:  { width: 48, height: 36, top: 57, left: 50 }
+};
+
+function getLayerCalibration() {
+  if (!state.stats.layerLayout) {
+    state.stats.layerLayout = JSON.parse(JSON.stringify(DEFAULT_LAYER_LAYOUT));
+  }
+  return state.stats.layerLayout;
+}
+
 // Pomocnicza funkcja zwracająca przedmioty z danej skrzyni (bronze / silver / gold)
 function getAllClothingItems(tier) {
   const folder = PATHS[tier];
@@ -1046,24 +1060,41 @@ function getAll131OutfitsFlat() {
   ];
 }
 
-// Automatyczna konwersja ścieżki (obsługuje stare zapisy oraz awaryjną ścieżkę grafiki/srebrna/zlota/)
+// Automatyczna konwersja i ujednolicenie wielkości liter (np. Shirt_blue -> shirt_blue)
 function resolveOutfitPath(pathOrId) {
   if (!pathOrId) return "";
   const legacyMap = {
     red_cap: "grafiki/cap_red.png",
-    hero_shirt: "grafiki/Shirt_blue.png",
+    hero_shirt: "grafiki/shirt_blue.png",
     jeans: "grafiki/jeans_blue.png",
     space_helmet: "grafiki/zlota/helmet_astronaut.png"
   };
-  if (legacyMap[pathOrId]) return legacyMap[pathOrId];
-  if (pathOrId.includes("/")) return pathOrId;
-  return "grafiki/" + pathOrId.replace(/\.png$/i, "") + ".png";
+  let candidate = legacyMap[pathOrId] || pathOrId;
+  if (!candidate.includes("/")) {
+    candidate = "grafiki/" + candidate.replace(/\.png$/i, "") + ".png";
+  }
+  const all131 = getAll131OutfitsFlat();
+  const lowerCandidate = candidate.toLowerCase();
+  const matched = all131.find(it =>
+    it.src.toLowerCase() === lowerCandidate ||
+    it.fallbackSrc.toLowerCase() === lowerCandidate
+  );
+  return matched ? matched.src : candidate;
 }
 
+// Obsługa awaryjnych ścieżek na GitHubie (wielkość pierwszej litery pliku lub podfolder zlota)
 function getFallbackOutfitPath(src) {
   if (!src) return "";
   if (src.startsWith("grafiki/zlota/")) {
     return src.replace("grafiki/zlota/", "grafiki/srebrna/zlota/");
+  }
+  const parts = src.split("/");
+  const file = parts.pop();
+  if (file && file.length > 1) {
+    const toggled = file[0] === file[0].toUpperCase()
+      ? file[0].toLowerCase() + file.slice(1)
+      : file[0].toUpperCase() + file.slice(1);
+    return [...parts, toggled].join("/");
   }
   return src;
 }
@@ -1074,7 +1105,7 @@ function ensurePlayerStructure(p) {
 
   const rawUnlocked = Array.isArray(p.unlockedItems) && p.unlockedItems.length
     ? p.unlockedItems.map(resolveOutfitPath)
-    : def.unlockedItems;
+    : def.unlockedItems.map(resolveOutfitPath);
 
   const rawAvatar = p.avatar || def.avatar;
   const normalizedAvatar = {
@@ -1282,6 +1313,7 @@ function loadCloudData() {
         state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
         state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
         if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
+        if (parsed.stats.layerLayout) state.stats.layerLayout = parsed.stats.layerLayout;
       }
     }
   } catch (e) {}
@@ -1294,6 +1326,7 @@ function loadCloudData() {
         state.stats.igor = ensurePlayerStructure({ ...state.stats.igor, ...pStats.igor });
         state.stats.hubert = ensurePlayerStructure({ ...state.stats.hubert, ...pStats.hubert });
         if (pStats.stickers) state.stats.stickers = pStats.stickers;
+        if (pStats.layerLayout) state.stats.layerLayout = pStats.layerLayout;
       }
       if (data.lessons) {
         const custom = JSON.parse(data.lessons);
@@ -1521,7 +1554,6 @@ function rollRewardFromChest(profKey, chestType) {
   const lockedMemory = MEMORY_ANIMALS_POOL.filter(a => !p.memoryAnimals.includes(a.id));
   const lockedStickers = STICKER_POOL.filter(s => !state.stats.stickers.includes(s.id));
 
-  // Szansa na wylosowanie zwierzaka do Memory (15%) lub Naklejki (12%) obok ubrań
   const rollSpecial = Math.random() * 100;
   if (rollSpecial < 15 && lockedMemory.length > 0) {
     const wonAnimal = lockedMemory[Math.floor(Math.random() * lockedMemory.length)];
@@ -1536,7 +1568,6 @@ function rollRewardFromChest(profKey, chestType) {
     return { rewardCategory: "sticker", item: wonSt };
   }
 
-  // Wagi rzadkości ubrań w zależności od skrzyni (Brązowa / Srebrna / Złota)
   const weights = chestType === "gold"
     ? { bronze: 10, silver: 35, gold: 55 }
     : chestType === "silver"
@@ -1549,20 +1580,15 @@ function rollRewardFromChest(profKey, chestType) {
   const tierItems = getAllClothingItems(targetTier);
   const all131 = getAll131OutfitsFlat();
 
-  // Najpierw szukamy nieodblokowanych ubrań z wylosowanego poziomu skrzyni
   let pool = tierItems.filter(it => !p.unlockedItems.includes(it.src));
-  // Jeśli w tym poziomie ma już wszystko, szukamy nieodblokowanych z bezpośredniej skrzyni (chestType)
   if (!pool.length) pool = getAllClothingItems(chestType).filter(it => !p.unlockedItems.includes(it.src));
-  // Jeśli i tam ma wszystko, szukamy jakiegokolwiek nieodblokowanego ze wszystkich 131 przebrań
   if (!pool.length) pool = all131.filter(it => !p.unlockedItems.includes(it.src));
-  // Jeśli ma już wszystkie 131 ubrań, losujemy dowolne z danej skrzyni
   if (!pool.length) pool = getAllClothingItems(chestType);
 
   const wonOutfit = pool[Math.floor(Math.random() * pool.length)];
   if (!p.unlockedItems.includes(wonOutfit.src)) {
     p.unlockedItems.push(wonOutfit.src);
   }
-  // Automatycznie zakładamy nowo wylosowany element na postać, by dziecko od razu go zobaczyło
   p.avatar[wonOutfit.slot] = wonOutfit.src;
   saveCloudData();
   return { rewardCategory: "clothing", item: wonOutfit };
@@ -1658,15 +1684,19 @@ function unlockAllOutfitsForTesting() {
   if (typeof showParentStatus === "function") {
     showParentStatus(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań (Brązowa, Srebrna i Złota skrzynka) dla Igora i Huberta!`);
   }
-  alert(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań oraz zwierzaki Memory! Wejdź teraz w „👑 Awatar” na górnym pasku, aby przetestować każde ubranie na postaci.`);
+  alert(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań (131/131) oraz zwierzaki Memory! Wejdź teraz w „👑 Awatar” na górnym pasku, aby przetestować każde ubranie.`);
 }
 
 function lockAllOutfitsAfterTesting() {
   if (!confirm("Czy chcesz zablokować testowe ubrania i zostawić tylko zestaw startowy?")) return;
   const def = createDefaultPlayerStats();
   ["igor", "hubert"].forEach(pk => {
-    state.stats[pk].unlockedItems = [...def.unlockedItems];
-    state.stats[pk].avatar = { ...def.avatar };
+    state.stats[pk].unlockedItems = def.unlockedItems.map(resolveOutfitPath);
+    state.stats[pk].avatar = {
+      head: resolveOutfitPath(def.avatar.head),
+      torso: resolveOutfitPath(def.avatar.torso),
+      legs: resolveOutfitPath(def.avatar.legs)
+    };
   });
   saveCloudData();
   updateHeaderUI();
@@ -1750,8 +1780,24 @@ function closeBadgesModal() {
 }
 
 // ============================================================================
-// MODUŁ GARDEROBY 131 PNG ORAZ RENDEROWANIE POSTACI Z AUTOMATYCZNYM FALLBACKIEM
+// MODUŁ GARDEROBY 131 PNG ORAZ PROPORCJONALNE RENDEROWANIE WARSTW NA POSTACI
 // ============================================================================
+function getSlotInlineStyle(slot, src) {
+  const cal = getLayerCalibration()[slot] || DEFAULT_LAYER_LAYOUT[slot];
+  const low = (src || "").toLowerCase();
+  let w = cal.width, h = cal.height, t = cal.top, l = cal.left;
+
+  // Delikatna korekta dla hełmów/masek oraz krótkich spodenek (szortów)
+  if (slot === "head" && (low.includes("helmet_") || low.includes("mask_"))) {
+    w = Math.min(100, w + 6);
+    h = Math.min(100, h + 5);
+    t = Math.max(-10, t - 1);
+  } else if (slot === "legs" && (low.includes("short_") || low.includes("shorts_"))) {
+    h = Math.max(15, Math.round(h * 0.72));
+  }
+  return `top:${t}%; left:${l}%; width:${w}%; height:${h}%; transform:translateX(-50%);`;
+}
+
 function renderBoyAvatarSvg(playerKey, size = 80) {
   const p = ensurePlayerStructure(state.stats[playerKey]);
   state.stats[playerKey] = p;
@@ -1765,20 +1811,39 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   const torsoFb = getFallbackOutfitPath(torsoImg);
   const legsFb = getFallbackOutfitPath(legsImg);
 
+  const headStyle = getSlotInlineStyle("head", headImg);
+  const torsoStyle = getSlotInlineStyle("torso", torsoImg);
+  const legsStyle = getSlotInlineStyle("legs", legsImg);
+
   return `
-    <div class="relative mx-auto select-none pointer-events-none" style="width: ${size}px; height: ${size}px;">
+    <div class="relative mx-auto select-none pointer-events-none overflow-hidden" style="width: ${size}px; height: ${size}px;">
       <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" onerror="this.style.display='none';" />
-      ${legsImg ? `<img src="${legsImg}" class="absolute inset-0 w-full h-full object-contain z-20" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
-      ${torsoImg ? `<img src="${torsoImg}" class="absolute inset-0 w-full h-full object-contain z-30" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
-      ${headImg ? `<img src="${headImg}" class="absolute inset-0 w-full h-full object-contain z-40" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${headFb}'!=='${headImg}'){this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
+      ${legsImg ? `<img src="${legsImg}" style="${legsStyle}" class="absolute object-contain z-20" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
+      ${torsoImg ? `<img src="${torsoImg}" style="${torsoStyle}" class="absolute object-contain z-30" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
+      ${headImg ? `<img src="${headImg}" style="${headStyle}" class="absolute object-contain z-40" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
     </div>
   `;
+}
+
+function updateLayerCalValue(slot, prop, val) {
+  const cal = getLayerCalibration();
+  cal[slot][prop] = Number(val);
+  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 165);
+  updateHeaderUI();
+}
+
+function resetLayerCalDefault() {
+  state.stats.layerLayout = JSON.parse(JSON.stringify(DEFAULT_LAYER_LAYOUT));
+  saveCloudData();
+  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 165);
+  renderAvatarItems();
+  updateHeaderUI();
 }
 
 function openAvatarModal() {
   if (!state.profile || state.profile === "duel") return;
   document.getElementById("avatarModalPlayerName").textContent = state.profile === "igor" ? "IGOR" : "HUBERT";
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 155);
+  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 165);
   renderAvatarItems();
 
   const m = document.getElementById("avatarModal");
@@ -1804,17 +1869,45 @@ function renderAvatarItems() {
   if (!container) return;
 
   const all131 = getAll131OutfitsFlat();
+  const unlockedLower = p.unlockedItems.map(u => u.toLowerCase());
   const unlockedCountEl = document.getElementById("avatarUnlockedCount");
   if (unlockedCountEl) {
-    const count = all131.filter(it => p.unlockedItems.includes(it.src)).length;
+    const count = all131.filter(it => unlockedLower.includes(it.src.toLowerCase())).length;
     unlockedCountEl.textContent = count;
   }
 
-  // Wyświetlenie odblokowanych zwierzaków Memory pod podglądem awatara
+  const cal = getLayerCalibration();
   const memBox = document.getElementById("avatarMemoryAnimalsBox");
   if (memBox) {
     const myAnimals = MEMORY_ANIMALS_POOL.filter(a => (p.memoryAnimals || []).includes(a.id));
     memBox.innerHTML = `
+      <details class="text-left bg-white/90 rounded-2xl p-2.5 mb-2 border border-indigo-200 text-[11px]">
+        <summary class="font-extrabold text-indigo-900 cursor-pointer select-none">🔧 Dopasuj skalę i pozycję ubrań</summary>
+        <div class="space-y-2 mt-2 pt-2 border-t border-indigo-100">
+          <div>
+            <div class="font-bold text-slate-700">🧢 Czapka (Rozmiar / Góra-Dół)</div>
+            <div class="flex gap-1 items-center">
+              <input type="range" min="20" max="100" value="${cal.head.width}" oninput="updateLayerCalValue('head','width',this.value);updateLayerCalValue('head','height',Math.round(this.value*0.68))" class="w-1/2 accent-indigo-600" />
+              <input type="range" min="-15" max="40" value="${cal.head.top}" oninput="updateLayerCalValue('head','top',this.value)" class="w-1/2 accent-amber-500" />
+            </div>
+          </div>
+          <div>
+            <div class="font-bold text-slate-700">👕 Koszulka (Rozmiar / Góra-Dół)</div>
+            <div class="flex gap-1 items-center">
+              <input type="range" min="25" max="100" value="${cal.torso.width}" oninput="updateLayerCalValue('torso','width',this.value);updateLayerCalValue('torso','height',Math.round(this.value*0.72))" class="w-1/2 accent-indigo-600" />
+              <input type="range" min="5" max="65" value="${cal.torso.top}" oninput="updateLayerCalValue('torso','top',this.value)" class="w-1/2 accent-amber-500" />
+            </div>
+          </div>
+          <div>
+            <div class="font-bold text-slate-700">👖 Spodnie (Rozmiar / Góra-Dół)</div>
+            <div class="flex gap-1 items-center">
+              <input type="range" min="25" max="100" value="${cal.legs.width}" oninput="updateLayerCalValue('legs','width',this.value);updateLayerCalValue('legs','height',Math.round(this.value*0.75))" class="w-1/2 accent-indigo-600" />
+              <input type="range" min="25" max="85" value="${cal.legs.top}" oninput="updateLayerCalValue('legs','top',this.value)" class="w-1/2 accent-amber-500" />
+            </div>
+          </div>
+          <button onclick="resetLayerCalDefault()" class="w-full py-1 bg-slate-100 hover:bg-slate-200 rounded-lg font-bold text-[10px] text-slate-600">↺ Przywróć domyślne proporcje</button>
+        </div>
+      </details>
       <div class="text-[11px] font-extrabold text-indigo-900 mb-1">🐾 Zwierzaki Memory (${myAnimals.length}/${MEMORY_ANIMALS_POOL.length}):</div>
       <div class="flex flex-wrap justify-center gap-1 text-lg">${myAnimals.map(a => `<span title="${a.en} - ${a.pl}">${a.icon}</span>`).join("")}</div>
     `;
@@ -1854,17 +1947,19 @@ function renderAvatarItems() {
       <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
 
     catItems.forEach(item => {
-      const isUnlocked = p.unlockedItems.includes(item.src);
-      const isEquipped = p.avatar && p.avatar[cat.key] === item.src;
+      const isUnlocked = unlockedLower.includes(item.src.toLowerCase());
+      const currentEquipped = (p.avatar && p.avatar[cat.key]) ? p.avatar[cat.key].toLowerCase() : "";
+      const isEquipped = currentEquipped === item.src.toLowerCase();
       const tierBadgeColor = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-800" : "bg-amber-700 text-white";
+      const altCaseSrc = getFallbackOutfitPath(item.src);
 
       if (isUnlocked) {
         html += `
           <div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm">
             <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span>
-            <img src="${item.src}" class="w-14 h-14 object-contain mb-1 drop-shadow" alt="${item.name}" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${item.fallbackSrc}';}" />
+            <img src="${item.src}" class="w-14 h-14 object-contain mb-1 drop-shadow" alt="${item.name}" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${altCaseSrc}';}else if(this.src.indexOf('srebrna/zlota')===-1){this.src='${item.fallbackSrc}';}" />
             <div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>
-            ${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}
+            ${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : `<div class="text-[9px] mt-1 text-indigo-600 font-bold">Załóż</div>`}
           </div>
         `;
       } else {
@@ -1884,15 +1979,22 @@ function renderAvatarItems() {
 }
 
 function equipAvatarItem(category, itemSrc) {
+  if (!state.profile || state.profile === "duel") return;
   const p = ensurePlayerStructure(state.stats[state.profile]);
-  p.avatar[category] = p.avatar[category] === itemSrc ? "" : itemSrc;
+  const normalizedTarget = resolveOutfitPath(itemSrc);
+  const current = resolveOutfitPath(p.avatar[category]);
+
+  p.avatar[category] = (current.toLowerCase() === normalizedTarget.toLowerCase()) ? "" : normalizedTarget;
+  state.stats[state.profile] = p;
+
   playEffect("beep");
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 155);
+  saveCloudData();
+  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 165);
   renderAvatarItems();
+  updateHeaderUI();
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 3 z 5 ======================== -->
-
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 5 ======================= -->
 <script>
 /* ============================================================================

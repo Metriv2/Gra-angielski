@@ -356,7 +356,7 @@
       <div class="flex justify-between items-center pb-3 border-b border-indigo-100 mb-4">
         <div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-indigo-950 flex items-center gap-2">
-            <span>🛠️</span> Panel Rodzica (PIN: 0608)
+            <span>🛠️</span> Panel Rodzica
           </h2>
           <p class="text-xs md:text-sm text-slate-500">
             Dodawaj słówka, skanuj zdjęcia kartek przez AI, testuj skrzynie i wszystkie 131 przebrań oraz zarządzaj postępami
@@ -704,7 +704,7 @@ const OUTFITS_DB = {
       "cap_T-Rex.png", "cap_volleyball.png"
     ],
     torso: [
-      "shirt_basketball.png", "shirt_batman.png", "shirt_captain.png", "shirt_cat.png",
+      "shirt_basktetball.png", "shirt_batman.png", "shirt_captain.png", "shirt_cat.png",
       "shirt_handball.png", "Shirt_pigeon.png", "shirt_pikachu.png", "shirt_pobeball.png",
       "shirt_poop.png", "shirt_pterodactyl.png", "shirt_soccer.png", "shirt_superman.png",
       "Shirt_T-Rex.png", "shirt_volleyball.png"
@@ -1983,57 +1983,202 @@ function toggleAvatarViewMode(mode) {
   updateHeaderUI();
 }
 
+// ============================================================================
+// INTELIGENTNE DOPASOWANIE AWATARA (CLIP-PATH + SUWAKI KALIBRACJI NA ŻYWO)
+// ============================================================================
+
+const DEFAULT_AVATAR_CALIBRATION = {
+  cap:       { label: "🧢 Czapki zwykłe",       top: -2, width: 46, height: 30, scaleX: 1.12, scaleY: 1.08, clipTop: 13 },
+  helmet:    { label: "🪖 Hełmy i Maski (Złote)", top: -1, width: 48, height: 35, scaleX: 1.08, scaleY: 1.08, hideHead: true },
+  hotdogCap: { label: "🌭 Czapka Hot-Dog",      top: -1, width: 50, height: 35, scaleX: 1.08, scaleY: 1.08, clipTop: 15 },
+  shirt:     { label: "👕 Koszulki T-Shirt",    top: 29, width: 48, height: 35, scaleX: 1.00, scaleY: 1.00 },
+  armor:     { label: "🛡️ Kurtki i Zbroje",     top: 28, width: 54, height: 39, scaleX: 1.02, scaleY: 1.04, hideTorso: true },
+  jeans:     { label: "👖 Długie spodnie",      top: 52, width: 42, height: 38, scaleX: 0.72, scaleY: 1.06, clipLegs: 84 },
+  shorts:    { label: "🩳 Krótkie spodenki",    top: 53, width: 40, height: 25, scaleX: 0.78, scaleY: 0.96, clipLegs: 70 },
+  goldPants: { label: "🥾 Spodnie z butami",    top: 52, width: 48, height: 43, scaleX: 0.84, scaleY: 1.04, hideLegs: true }
+};
+
+window._calibOpen = false;
+window._calibActiveType = "jeans";
+
+function getAvatarCalibration() {
+  try {
+    const saved = localStorage.getItem("akademia_avatar_calib_v2");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const merged = {};
+      Object.keys(DEFAULT_AVATAR_CALIBRATION).forEach(k => {
+        merged[k] = { ...DEFAULT_AVATAR_CALIBRATION[k], ...(parsed[k] || {}) };
+      });
+      return merged;
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_AVATAR_CALIBRATION));
+}
+
+function saveAvatarCalibration(cal) {
+  try {
+    localStorage.setItem("akademia_avatar_calib_v2", JSON.stringify(cal));
+  } catch (e) {}
+}
+
+function classifyHeadItem(src) {
+  if (!src) return "none";
+  const fn = src.split("/").pop().toLowerCase();
+  if (fn.includes("hot-dog")) return "hotdogCap";
+  if (fn.startsWith("helmet_") || fn.startsWith("mask_")) return "helmet";
+  return "cap";
+}
+
+function classifyTorsoItem(src) {
+  if (!src) return "none";
+  const fn = src.split("/").pop().toLowerCase();
+  if (
+    fn.startsWith("armor_") ||
+    fn.startsWith("jacket_") ||
+    fn.startsWith("suit_") ||
+    fn === "shirt_commando.png" ||
+    fn === "shirt_soldier.png"
+  ) {
+    return "armor";
+  }
+  return "shirt";
+}
+
+function classifyLegsItem(src) {
+  if (!src) return "none";
+  const fn = src.split("/").pop().toLowerCase();
+  if (
+    fn.startsWith("short_") ||
+    fn.startsWith("shorts_") ||
+    fn === "pants_barcelona.png" ||
+    fn === "pants_poland.png"
+  ) {
+    return "shorts";
+  }
+  if (src.includes("/zlota/")) return "goldPants";
+  return "jeans";
+}
+
 function renderBoyAvatarSvg(playerKey, size = 80) {
   const p = ensurePlayerStructure(state.stats[playerKey]);
   state.stats[playerKey] = p;
-  const avatar = p.avatar;
+  const avatar = p.avatar || {};
+  const cal = getAvatarCalibration();
 
-  const headImg = resolveOutfitPath(avatar.head);
-  const torsoImg = resolveOutfitPath(avatar.torso);
-  const legsImg = resolveOutfitPath(avatar.legs);
+  const headImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.head) : avatar.head;
+  const torsoImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.torso || avatar.top) : (avatar.torso || avatar.top);
+  const legsImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.legs || avatar.bottom) : (avatar.legs || avatar.bottom);
 
-  const headFb = getFallbackOutfitPath(headImg);
-  const torsoFb = getFallbackOutfitPath(torsoImg);
-  const legsFb = getFallbackOutfitPath(legsImg);
+  const headFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(headImg) : headImg;
+  const torsoFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(torsoImg) : torsoImg;
+  const legsFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(legsImg) : legsImg;
 
-  // Jeśli włączony jest widok Kart Bohatera (i rozmiar podglądu jest duży)
-  if (state.stats.avatarViewMode === "cards" && size >= 90) {
-    const slotBox = (img, fb, label, icon) => `
-      <div class="flex flex-col items-center justify-center bg-white rounded-xl border-2 border-indigo-200 p-1.5 shadow-sm w-16 h-16">
-        ${img
-          ? `<img src="${img}" class="w-11 h-11 object-contain" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${fb}';}else{this.style.display='none';}" />`
-          : `<span class="text-xl opacity-30">${icon}</span>`
-        }
-        <span class="text-[8px] font-extrabold text-slate-500 uppercase">${label}</span>
-      </div>
-    `;
-    return `
-      <div class="flex items-center justify-center gap-2 select-none pointer-events-none py-1">
-        <img src="grafiki/boy_base.png" style="width:${Math.round(size * 0.68)}px;height:${size}px;" class="object-contain drop-shadow" onerror="this.style.display='none';" />
-        <div class="flex flex-col gap-1.5">
-          ${slotBox(headImg, headFb, "Głowa", "🧢")}
-          ${slotBox(torsoImg, torsoFb, "Tułów", "👕")}
-          ${slotBox(legsImg, legsFb, "Nogi", "👖")}
-        </div>
-      </div>
-    `;
+  const headType = classifyHeadItem(headImg);
+  const torsoType = classifyTorsoItem(torsoImg);
+  const legsType = classifyLegsItem(legsImg);
+
+  const hCfg = cal[headType] || cal.cap;
+  const tCfg = cal[torsoType] || cal.shirt;
+  const lCfg = cal[legsType] || cal.jeans;
+
+  // 1. Przycinanie GŁOWY bazowej postaci (znika pod pełnymi hełmami, przycina czubek włosów pod czapką)
+  let showBaseHead = !(headType !== "none" && hCfg.hideHead);
+  let headClip = "inset(0% 0% 66% 0%)";
+  if (headType === "cap") {
+    headClip = `inset(${hCfg.clipTop || 13}% 26% 66% 26%)`;
+  } else if (headType === "hotdogCap") {
+    headClip = `inset(${hCfg.clipTop || 15}% 33% 68% 33%)`;
   }
 
-  // Widok domyślny: 100% automatyczne przycinanie marginesów PNG i dopasowanie do anatomii boy_base.png
+  // 2. Przycinanie TUŁOWIA I RĄK bazowej postaci (znika pod kurtkami i zbrojami)
+  let showBaseTorso = !(torsoType !== "none" && tCfg.hideTorso);
+  let torsoClip = torsoType === "shirt" ? "inset(33% 18% 45% 18%)" : "inset(33% 0% 44% 0%)";
+
+  // 3. Przycinanie NÓG I STOPY bazowej postaci (pod dżinsami zostają same buty, pod złotymi spodniami znika całość)
+  let showBaseLegs = !(legsType !== "none" && lCfg.hideLegs);
+  let legsClip = "inset(56% 0% 0% 0%)";
+  if (legsType === "jeans") {
+    legsClip = `inset(${lCfg.clipLegs || 84}% 25% 0% 25%)`;
+  } else if (legsType === "shorts") {
+    legsClip = `inset(${lCfg.clipLegs || 70}% 22% 0% 22%)`;
+  }
+
   return `
     <div class="relative mx-auto select-none pointer-events-none overflow-hidden" style="width: ${size}px; height: ${size}px;">
-      <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" onerror="this.style.display='none';" />
-      ${legsImg ? `<img src="${legsImg}" style="opacity:0;" onload="autoFitAvatarLayer(this,'legs','${legsImg}')" class="absolute object-fill z-20 transition-opacity duration-150" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
-      ${torsoImg ? `<img src="${torsoImg}" style="opacity:0;" onload="autoFitAvatarLayer(this,'torso','${torsoImg}')" class="absolute object-fill z-30 transition-opacity duration-150" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
-      ${headImg ? `<img src="${headImg}" style="opacity:0;" onload="autoFitAvatarLayer(this,'head','${headImg}')" class="absolute object-fill z-40 transition-opacity duration-150" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
+      ${showBaseHead ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${headClip};" onerror="this.style.display='none';" />` : ""}
+      ${showBaseTorso ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${torsoClip};" onerror="this.style.display='none';" />` : ""}
+      ${showBaseLegs ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${legsClip};" onerror="this.style.display='none';" />` : ""}
+
+      ${legsImg ? `<img src="${legsImg}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
+      ${torsoImg ? `<img src="${torsoImg}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
+      ${headImg ? `<img src="${headImg}" class="absolute left-1/2 object-fill z-40" style="top: ${hCfg.top}%; width: ${hCfg.width}%; height: ${hCfg.height}%; transform: translateX(-50%) scale(${hCfg.scaleX}, ${hCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${headFb}'!=='${headImg}'){this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
     </div>
   `;
+}
+
+// Panel suwaków do precyzyjnego dopasowania w Garderobie
+function updateAvatarPreviewWithCalibrator() {
+  const box = document.getElementById("avatarPreviewBox");
+  if (!box || !state.profile) return;
+
+  const cal = getAvatarCalibration();
+  const activeKey = window._calibActiveType || "jeans";
+  const cfg = cal[activeKey];
+
+  box.innerHTML = `
+    <div class="flex flex-col items-center w-full">
+      ${renderBoyAvatarSvg(state.profile, 165)}
+      <button onclick="window._calibOpen=!window._calibOpen;updateAvatarPreviewWithCalibrator();" class="mt-2 px-3 py-1 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-[11px] border border-indigo-300">
+        🔧 ${window._calibOpen ? "Ukryj suwaki dopasowania" : "Dopasuj wymiary (Suwaki)"}
+      </button>
+      ${window._calibOpen ? `
+        <div class="w-full mt-2 p-2.5 bg-white rounded-2xl border-2 border-indigo-300 text-left text-[11px] space-y-1.5 shadow-sm">
+          <div class="font-extrabold text-indigo-950 mb-1">Wybierz typ ubrania do regulacji:</div>
+          <select onchange="window._calibActiveType=this.value;updateAvatarPreviewWithCalibrator();" class="w-full p-1 rounded-lg border border-slate-300 font-bold text-xs mb-1">
+            ${Object.keys(cal).map(k => `<option value="${k}" ${k === activeKey ? "selected" : ""}>${cal[k].label}</option>`).join("")}
+          </select>
+
+          <div>
+            <div class="flex justify-between font-bold"><span>⬆️⬇️ Pozycja Góra/Dół (top):</span><span>${cfg.top}%</span></div>
+            <input type="range" min="-15" max="75" step="1" value="${cfg.top}" oninput="changeCalibVal('${activeKey}','top',this.value)" class="w-full accent-indigo-600" />
+          </div>
+          <div>
+            <div class="flex justify-between font-bold"><span>↔️ Szerokość (scaleX):</span><span>${cfg.scaleX}</span></div>
+            <input type="range" min="0.45" max="1.60" step="0.02" value="${cfg.scaleX}" oninput="changeCalibVal('${activeKey}','scaleX',this.value)" class="w-full accent-indigo-600" />
+          </div>
+          <div>
+            <div class="flex justify-between font-bold"><span>↕️ Wysokość (scaleY):</span><span>${cfg.scaleY}</span></div>
+            <input type="range" min="0.50" max="1.60" step="0.02" value="${cfg.scaleY}" oninput="changeCalibVal('${activeKey}','scaleY',this.value)" class="w-full accent-indigo-600" />
+          </div>
+          <div class="pt-1 flex justify-between gap-1">
+            <button onclick="resetCalibDefaults()" class="px-2 py-1 bg-rose-100 text-rose-800 font-bold rounded-lg text-[10px]">Resetuj wymiary</button>
+            <span class="text-[10px] text-emerald-700 font-bold self-center">✓ Zapisuje się automatycznie</span>
+          </div>
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function changeCalibVal(typeKey, prop, val) {
+  const cal = getAvatarCalibration();
+  cal[typeKey][prop] = parseFloat(val);
+  saveAvatarCalibration(cal);
+  updateAvatarPreviewWithCalibrator();
+  updateHeaderUI();
+}
+
+function resetCalibDefaults() {
+  localStorage.removeItem("akademia_avatar_calib_v2");
+  updateAvatarPreviewWithCalibrator();
+  updateHeaderUI();
 }
 
 function openAvatarModal() {
   if (!state.profile || state.profile === "duel") return;
   document.getElementById("avatarModalPlayerName").textContent = state.profile === "igor" ? "IGOR" : "HUBERT";
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 175);
+  updateAvatarPreviewWithCalibrator();
   renderAvatarItems();
 
   const m = document.getElementById("avatarModal");
@@ -2160,12 +2305,13 @@ function equipAvatarItem(category, itemSrc) {
 
   playEffect("beep");
   saveCloudData();
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 175);
+  updateAvatarPreviewWithCalibrator();
   renderAvatarItems();
   updateHeaderUI();
 }
 </script>
-<!-- ======================== KONIEC CZĘŚCI 3 z 5 ======================== -->  
+<!-- ======================== KONIEC CZĘŚCI 3 z 5 ======================== -->
+  
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 5 ======================= -->
 <script>
 /* ============================================================================
@@ -3051,7 +3197,7 @@ function verifyParentPin() {
   } else {
     playEffect("wrong");
     const err = document.getElementById("pinErrorMsg");
-    if (err) err.textContent = "❌ Błędny PIN! Spróbuj ponownie (0608).";
+    if (err) err.textContent = "❌ Błędny PIN! Spróbuj ponownie.";
     inp.value = "";
   }
 }

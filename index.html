@@ -172,7 +172,7 @@
             <span>🎁</span> Klaser Naklejek (<span id="stickerModalTotal">0</span>/60)
           </h2>
           <p class="text-xs md:text-sm text-slate-500 font-medium">
-            Naklejki zdobywasz za ukończenie rundy (maks. 1 błąd) oraz w nagrodę za Osiągnięcia!
+            Naklejki zdobywasz za ukończenie rundy (maks. 1 błąd), w skrzyniach oraz w nagrodę za Osiągnięcia!
           </p>
         </div>
         <button onclick="closeStickersModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-600">✖</button>
@@ -220,17 +220,17 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 3: GARDEROBA AWATARA (POSTAĆ CHŁOPCA + UBRANIA ZE SKRZYŃ)
+       MODAL 3: GARDEROBA AWATARA (POSTAĆ CHŁOPCA + 131 UBRAŃ ZE SKRZYŃ)
        ======================================================================== -->
   <div id="avatarModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
-    <div class="bg-white rounded-3xl max-w-4xl w-full p-5 md:p-6 border-4 border-indigo-400 shadow-2xl text-center max-h-[92vh] flex flex-col">
+    <div class="bg-white rounded-3xl max-w-5xl w-full p-5 md:p-6 border-4 border-indigo-400 shadow-2xl text-center max-h-[92vh] flex flex-col">
       <div class="flex justify-between items-center pb-3 border-b border-indigo-100 mb-3">
         <div class="text-left">
           <h2 class="text-2xl md:text-3xl font-extrabold text-indigo-900 flex items-center gap-2">
             <span>👕</span> Garderoba Bohatera – <span id="avatarModalPlayerName" class="text-amber-600"></span>
           </h2>
           <p class="text-xs text-slate-500">
-            Ubieraj swoją postać w nowe kolory czapek, koszulek i spodni oraz rzadkie i epickie skarby ze skrzyń!
+            Ubieraj swoją postać w przebrania ze Skrzyni Brązowej 📦, Srebrnej 🥈 oraz Złotej 👑 (<span id="avatarUnlockedCount">0</span>/131 odkrytych)!
           </p>
         </div>
         <button onclick="closeAvatarModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-600">✖</button>
@@ -238,13 +238,14 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-y-auto flex-1 p-1">
         <div class="bg-gradient-to-b from-sky-100 via-indigo-50 to-amber-50 rounded-3xl border-3 border-indigo-200 p-4 flex flex-col items-center h-fit shadow-inner">
-          <div class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-white text-indigo-800 border border-indigo-200 mb-3">
+          <div class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-white text-indigo-800 border border-indigo-200 mb-2">
             Twój aktualny wygląd
           </div>
-          <div id="avatarPreviewBox" class="flex items-center justify-center"></div>
+          <div id="avatarPreviewBox" class="flex items-center justify-center my-1"></div>
+          <div id="avatarMemoryAnimalsBox" class="w-full mt-3 pt-2 border-t border-indigo-200 text-center"></div>
         </div>
 
-        <div id="avatarItemsContainer" class="md:col-span-2 space-y-3 text-left"></div>
+        <div id="avatarItemsContainer" class="md:col-span-2 space-y-3 text-left overflow-y-auto pr-1"></div>
       </div>
 
       <div class="mt-4 pt-2 border-t border-slate-100 flex justify-end">
@@ -292,16 +293,16 @@
         </div>
 
         <div class="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200">
-          <h3 class="font-extrabold text-emerald-950 text-base mb-1">🏅🎁 3. System Osiągnięć, Naklejek i Skrzyń z Ubraniami</h3>
+          <h3 class="font-extrabold text-emerald-950 text-base mb-1">🏅🎁 3. System Osiągnięć, Naklejek, Zwierząt Memory i 131 Ubrań w Skrzyniach</h3>
           <ul class="list-disc pl-5 space-y-1">
             <li><strong>Gwiazdki ⭐, Puchary 🏆 i Naklejki 🎁:</strong> Za każdą dobrą odpowiedź dziecko dostaje +1 Gwiazdkę, za ukończenie rundy +1 Puchar, a jeśli zrobiło maks. 1 błąd – losuje też nową Naklejkę!</li>
             <li><strong>Ponad 90 Osiągnięć:</strong> Odznaki przyznawane są za: Gwiazdki, Dni pod rząd (Streak), Wykładnicze powtórki (1x, 2x, 3x, 5x, 8x, 13x, 21x, 35x), Wyzwania specjalne oraz Arcymistrzów Kategorii.</li>
-            <li><strong>Nagroda za KAŻDE osiągnięcie:</strong> Dziecko natychmiast losuje <strong>Nową Naklejkę</strong> albo <strong>Skrzynię z ubraniami</strong>.</li>
-            <li><strong>🎲 Szanse w skrzyniach:</strong>
+            <li><strong>Nagroda za KAŻDE osiągnięcie:</strong> Dziecko natychmiast losuje <strong>Nową Naklejkę</strong> albo <strong>Skrzynię z ubraniami i zwierzakami Memory</strong>.</li>
+            <li><strong>🎲 Zawartość i szanse w skrzyniach (131 przebrań):</strong>
               <div class="mt-1 ml-2 text-xs">
-                📦 <strong>Brązowa:</strong> 75% Zwykłe • 20% Rzadkie • 5% Epickie<br>
-                🥈 <strong>Srebrna:</strong> 35% Zwykłe • 50% Rzadkie • 15% Epickie<br>
-                👑 <strong>Złota:</strong> 10% Zwykłe • 35% Rzadkie • 55% Epickie!
+                📦 <strong>Brązowa:</strong> 75% Brązowe (codzienne) • 20% Srebrne • 5% Złote + szansa na Naklejkę / Zwierzaka Memory<br>
+                🥈 <strong>Srebrna:</strong> 35% Brązowe • 50% Srebrne (tematyczne) • 15% Złote + szansa na Naklejkę / Zwierzaka Memory<br>
+                👑 <strong>Złota:</strong> 10% Brązowe • 35% Srebrne • 55% Złote (epickie stroje specjalne)!
               </div>
             </li>
           </ul>
@@ -348,7 +349,7 @@
   </div>
 
   <!-- ========================================================================
-       MODAL 7: PEŁNY PANEL RODZICA (5 SEKCJI ZARZĄDZANIA GRĄ + SKANER AI)
+       MODAL 7: PEŁNY PANEL RODZICA (5 SEKCJI ZARZĄDZANIA GRĄ + SKANER AI + TEST PRZEBRAŃ)
        ======================================================================== -->
   <div id="parentDashboardModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 md:p-4 overflow-y-auto">
     <div class="bg-white rounded-3xl max-w-4xl w-full p-5 md:p-6 border-4 border-indigo-500 shadow-2xl text-left my-6 max-h-[93vh] overflow-y-auto">
@@ -358,7 +359,7 @@
             <span>🛠️</span> Panel Rodzica (PIN: 0608)
           </h2>
           <p class="text-xs md:text-sm text-slate-500">
-            Dodawaj słówka, skanuj zdjęcia kartek przez AI, testuj skrzynie oraz zarządzaj postępami Igora i Huberta
+            Dodawaj słówka, skanuj zdjęcia kartek przez AI, testuj skrzynie i wszystkie 131 przebrań oraz zarządzaj postępami
           </p>
         </div>
         <button onclick="closeParentDashboard()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-700">✖</button>
@@ -477,10 +478,10 @@
         </div>
       </div>
 
-      <!-- SEKCJA 5: Ustawienia rundy, Tester Skrzyń i Osobne Przyciski Resetowania -->
+      <!-- SEKCJA 5: Ustawienia rundy, Tester Skrzyń, Odblokowanie 131 Przebrań i Resetowanie -->
       <div class="p-4 rounded-3xl bg-rose-50/90 border-2 border-rose-300 shadow-sm">
         <h3 class="font-extrabold text-rose-950 text-base md:text-lg mb-2 flex items-center gap-2">
-          <span>⚙️</span> 5. Ustawienia gry, Tester Nagród oraz Resetowanie po testach
+          <span>⚙️</span> 5. Ustawienia gry, Tester Przebrań / Skrzyń oraz Resetowanie po testach
         </h3>
 
         <div class="mb-3">
@@ -488,19 +489,46 @@
           <div id="roundLengthButtons" class="flex flex-wrap gap-2"></div>
         </div>
 
-        <div class="mb-3">
-          <div class="text-xs font-bold text-slate-700 mb-1.5">🎁 Testowe przyznawanie nagród i dni pod rząd (Streak):</div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <button onclick="parentGiveTestChest('igor','gold')" class="kid-card py-2 px-3 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold rounded-xl text-xs shadow-sm">
-              👑 Daj Złotą Skrzynię Igorowi
+        <!-- NOWOŚĆ: ODBLOKOWANIE WSZYSTKICH 131 PRZEBRAŃ DO PRZETESTOWANIA -->
+        <div class="mb-3 p-3 rounded-2xl bg-amber-100/90 border-2 border-amber-400">
+          <div class="text-xs font-extrabold text-amber-950 mb-1.5">👕 Tester Garderoby (Wszystkie 131 ubrań: Brązowa + Srebrna + Złota skrzynka):</div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="unlockAllOutfitsForTesting()" class="kid-card py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow">
+              🔓 Odblokuj WSZYSTKIE 131 przebrań (Igor i Hubert) do testów
             </button>
-            <button onclick="parentGiveTestChest('hubert','gold')" class="kid-card py-2 px-3 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold rounded-xl text-xs shadow-sm">
-              👑 Daj Złotą Skrzynię Hubertowi
-            </button>
-            <button onclick="parentAddStreakDay()" class="kid-card py-2 px-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs shadow-sm">
-              🔥 +1 Dzień ćwiczeń z rzędu (Obaj)
+            <button onclick="lockAllOutfitsAfterTesting()" class="kid-card py-2 px-4 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded-xl text-xs shadow">
+              🔒 Zablokuj z powrotem (zostaw startowe)
             </button>
           </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="text-xs font-bold text-slate-700 mb-1.5">🎁 Testowe przyznawanie Skrzyń (Brązowa / Srebrna / Złota) i Dni z rzędu:</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+            <button onclick="parentGiveTestChest('igor','bronze')" class="kid-card py-2 px-3 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl text-xs shadow-sm">
+              📦 Brązowa Skrzynia (Igor)
+            </button>
+            <button onclick="parentGiveTestChest('igor','silver')" class="kid-card py-2 px-3 bg-slate-500 hover:bg-slate-600 text-white font-bold rounded-xl text-xs shadow-sm">
+              🥈 Srebrna Skrzynia (Igor)
+            </button>
+            <button onclick="parentGiveTestChest('igor','gold')" class="kid-card py-2 px-3 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold rounded-xl text-xs shadow-sm">
+              👑 Złota Skrzynia (Igor)
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button onclick="parentGiveTestChest('hubert','bronze')" class="kid-card py-2 px-3 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl text-xs shadow-sm">
+              📦 Brązowa Skrzynia (Hubert)
+            </button>
+            <button onclick="parentGiveTestChest('hubert','silver')" class="kid-card py-2 px-3 bg-slate-500 hover:bg-slate-600 text-white font-bold rounded-xl text-xs shadow-sm">
+              🥈 Srebrna Skrzynia (Hubert)
+            </button>
+            <button onclick="parentGiveTestChest('hubert','gold')" class="kid-card py-2 px-3 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold rounded-xl text-xs shadow-sm">
+              👑 Złota Skrzynia (Hubert)
+            </button>
+          </div>
+          <button onclick="parentAddStreakDay()" class="kid-card w-full mt-2 py-2 px-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs shadow-sm">
+            🔥 +1 Dzień ćwiczeń z rzędu (Obaj bracia)
+          </button>
         </div>
 
         <div class="pt-3 border-t border-rose-200">
@@ -529,7 +557,7 @@
 <!-- ======================= POCZĄTEK CZĘŚCI 2 z 5 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 2 z 5: STAŁE, 60 NAKLEJEK ORAZ BAZA 7 LEKCJI
+   CZĘŚĆ 2 z 5: STAŁE, 60 NAKLEJEK, 131 UBRAŃ, ZWIERZĘTA MEMORY I BAZA 7 LEKCJI
    ============================================================================ */
 
 const STICKER_CATEGORIES = [
@@ -615,6 +643,107 @@ const STICKER_POOL = [
   { id: "st_vh9", cat: "vehicles", icon: "🤖", name: "Super Robot" },
   { id: "st_vh10", cat: "vehicles", icon: "👑", name: "Korona Mistrza" }
 ];
+
+/* ============================================================================
+   PULA ZWIERZĄT DO GRY MEMORY (DO ODBLOKOWANIA W SKRZYNIACH)
+   ============================================================================ */
+const MEMORY_ANIMALS_POOL = [
+  { id: "mem_dog", icon: "🐶", en: "Dog", pl: "Piesek" },
+  { id: "mem_cat", icon: "🐱", en: "Cat", pl: "Kotek" },
+  { id: "mem_rabbit", icon: "🐰", en: "Rabbit", pl: "Króliczek" },
+  { id: "mem_fox", icon: "🦊", en: "Fox", pl: "Lisek" },
+  { id: "mem_bear", icon: "🐻", en: "Bear", pl: "Niedźwiadek" },
+  { id: "mem_panda", icon: "🐼", en: "Panda", pl: "Panda" },
+  { id: "mem_koala", icon: "🐨", en: "Koala", pl: "Koala" },
+  { id: "mem_tiger", icon: "🐯", en: "Tiger", pl: "Tygrys" },
+  { id: "mem_lion", icon: "🦁", en: "Lion", pl: "Lew" },
+  { id: "mem_cow", icon: "🐮", en: "Cow", pl: "Krówka" },
+  { id: "mem_pig", icon: "🐷", en: "Pig", pl: "Świnka" },
+  { id: "mem_frog", icon: "🐸", en: "Frog", pl: "Żabka" },
+  { id: "mem_monkey", icon: "🐵", en: "Monkey", pl: "Małpka" },
+  { id: "mem_owl", icon: "🦉", en: "Owl", pl: "Sówka" },
+  { id: "mem_turtle", icon: "🐢", en: "Turtle", pl: "Żółwik" },
+  { id: "mem_octopus", icon: "🐙", en: "Octopus", pl: "Ośmiornica" }
+];
+
+/* ============================================================================
+   BAZA WSZYSTKICH 131 PRZEBRAŃ PODZIELONA NA 3 SKRZYNIE (BRĄZOWA, SREBRNA, ZŁOTA)
+   ============================================================================ */
+const PATHS = {
+  base: "grafiki/",
+  bronze: "grafiki/",
+  silver: "grafiki/srebrna/",
+  gold: "grafiki/zlota/"
+};
+
+const OUTFITS_DB = {
+  // SKRZYNKA BRĄZOWA - 30 elementów (folder: grafiki/)
+  bronze: {
+    head: [
+      "cap_black.png", "cap_blue.png", "cap_green.png", "cap_orange.png",
+      "cap_purple.png", "cap_red.png", "cap_white.png", "cap_yellow.png"
+    ],
+    torso: [
+      "Shirt_black.png", "Shirt_blue.png", "Shirt_green.png", "Shirt_pink.png",
+      "Shirt_red.png", "Shirt_white.png", "Shirt_yellow.png"
+    ],
+    legs: [
+      "jeans_black.png", "jeans_blue.png", "jeans_braun.png", "jeans_green.png",
+      "jeans_orange.png", "jeans_red.png", "jeans_seledin.png", "jeans_yellow.png",
+      "short_black.png", "short_blue.png", "short_green.png", "short_pink.png",
+      "short_red.png", "short_white.png", "short_yellow.png"
+    ]
+  },
+
+  // SKRZYNKA SREBRNA - 56 elementów (folder: grafiki/srebrna/)
+  silver: {
+    head: [
+      "cap_bastetball.png", "cap_batman.png", "cap_captain.png", "cap_cat.png",
+      "cap_handball.png", "cap_pigeon.png", "cap_pikachu.png", "cap_pokeball.png",
+      "cap_poop.png", "cap_pterodactyl.png", "cap_soccer.png", "cap_superman.png",
+      "cap_T-Rex.png", "cap_volleyball.png"
+    ],
+    torso: [
+      "shirt_basketball.png", "shirt_batman.png", "shirt_captain.png", "shirt_cat.png",
+      "shirt_handball.png", "Shirt_pigeon.png", "shirt_pikachu.png", "shirt_pobeball.png",
+      "shirt_poop.png", "shirt_pterodactyl.png", "shirt_soccer.png", "shirt_superman.png",
+      "Shirt_T-Rex.png", "shirt_volleyball.png"
+    ],
+    legs: [
+      "pants_basketball.png", "pants_batman.png", "pants_captain.png", "pants_cat.png",
+      "pants_handball.png", "pants_pigeon.png", "pants_pikachu.png", "pants_pokeball.png",
+      "pants_poop.png", "pants_pterodactyl.png", "pants_soccer.png", "pants_superman.png",
+      "pants_volleyball.png", "pants-T-Rex.png",
+      "shorts_basketball.png", "shorts_batman.png", "shorts_captain.png", "shorts_cat.png",
+      "shorts_handball.png", "shorts_pigeon.png", "shorts_pikachu.png", "shorts_pokeball.png",
+      "shorts_poop.png", "shorts_pterodactyl.png", "shorts_soccer.png", "shorts_superman.png",
+      "shorts_T-Rex.png", "shorts_volleyball.png"
+    ]
+  },
+
+  // SKRZYNKA ZŁOTA - 45 elementów / 15 zestawów (folder: grafiki/zlota/)
+  gold: {
+    head: [
+      "cap_barcelona.png", "cap_hot-dog.png", "cap_paramedic.png", "cap_poland.png",
+      "cap_police.png", "cap_soldier.png", "helmet_astronaut.png", "helmet_commando.png",
+      "helmet_cyberdragon.png", "helmet_diver.png", "helmet_electrician.png",
+      "helmet_firefighter.png", "helmet_knight.png", "mask_batman.png", "mask_skeleton.png"
+    ],
+    torso: [
+      "armor_batman.png", "armor_cyberdragon.png", "armor_knight.png", "jacket_diver.png",
+      "jacket_electician.png", "jacket_firefighter.png", "jacket_paramedic.png",
+      "shirt_barcelona.png", "shirt_commando.png", "shirt_poland.png", "shirt_police.png",
+      "shirt_soldier.png", "suit_astronaut.png", "suit_hot-dog.png", "suit_skeleton.png"
+    ],
+    legs: [
+      "pants_austronaut.png", "pants_barcelona.png", "pants_batman2.png",
+      "pants_commando.png", "pants_cyberdragon.png", "pants_diver.png",
+      "pants_electrician.png", "pants_firefighter.png", "pants_hot-dog.png",
+      "pants_knight.png", "pants_paramedic.png", "pants_poland.png",
+      "pants_police.png", "pants_skeleton.png", "pants_soldier.png"
+    ]
+  }
+};
 
 /* ============================================================================
    BAZA WSZYSTKICH 7 LEKCJI
@@ -814,8 +943,17 @@ function createDefaultPlayerStats() {
     lastPlayDate: "",
     micCount: 0,
     badges: [],
-    avatar: { head: "red_cap", torso: "hero_shirt", legs: "jeans" },
-    unlockedItems: ["red_cap", "hero_shirt", "jeans", "space_helmet"],
+    avatar: {
+      head: "grafiki/cap_red.png",
+      torso: "grafiki/Shirt_blue.png",
+      legs: "grafiki/jeans_blue.png"
+    },
+    unlockedItems: [
+      "grafiki/cap_red.png",
+      "grafiki/Shirt_blue.png",
+      "grafiki/jeans_blue.png"
+    ],
+    memoryAnimals: ["mem_dog", "mem_cat", "mem_rabbit", "mem_fox"],
     lessonCounts: {},
     equipped: {}
   };
@@ -853,6 +991,7 @@ let state = {
   duelReadyWaiting: false,
   selectedStickerCat: "all",
   selectedBadgeCat: "all",
+  selectedWardrobeTier: "all",
   rewardQueue: [],
   lessons: JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE)),
   stats: {
@@ -863,22 +1002,95 @@ let state = {
 };
 </script>
 <!-- ======================== KONIEC CZĘŚCI 2 z 5 ======================== -->
-  
+
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 5 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 5: STAN GRY, OSIĄGNIĘCIA, API CHMURY, SÓWKA I GARDEROBA PNG
+   CZĘŚĆ 3 z 5: STAN GRY, OSIĄGNIĘCIA, CHMURA, SÓWKA, SKRZYNIE I GARDEROBA 131 PNG
    ============================================================================ */
+
+// Pomocnicza funkcja zwracająca przedmioty z danej skrzyni (bronze / silver / gold)
+function getAllClothingItems(tier) {
+  const folder = PATHS[tier];
+  const data = OUTFITS_DB[tier];
+  if (!data) return [];
+  const rarityMap = { bronze: "common", silver: "rare", gold: "epic" };
+  const tierNameMap = { bronze: "📦 Brązowa", silver: "🥈 Srebrna", gold: "👑 Złota" };
+  const items = [];
+
+  ["head", "torso", "legs"].forEach(slot => {
+    (data[slot] || []).forEach(filename => {
+      const cleanName = filename.replace(/\.png$/i, "");
+      items.push({
+        id: `${folder}${filename}`,
+        src: `${folder}${filename}`,
+        fallbackSrc: tier === "gold" ? `grafiki/srebrna/zlota/${filename}` : `${folder}${filename}`,
+        tier: tier,
+        tierLabel: tierNameMap[tier],
+        rarity: rarityMap[tier],
+        slot: slot,
+        filename: filename,
+        name: cleanName
+      });
+    });
+  });
+  return items;
+}
+
+// Pełna płaska lista wszystkich 131 ubrań ze wszystkich 3 skrzyń
+function getAll131OutfitsFlat() {
+  return [
+    ...getAllClothingItems("bronze"),
+    ...getAllClothingItems("silver"),
+    ...getAllClothingItems("gold")
+  ];
+}
+
+// Automatyczna konwersja ścieżki (obsługuje stare zapisy oraz awaryjną ścieżkę grafiki/srebrna/zlota/)
+function resolveOutfitPath(pathOrId) {
+  if (!pathOrId) return "";
+  const legacyMap = {
+    red_cap: "grafiki/cap_red.png",
+    hero_shirt: "grafiki/Shirt_blue.png",
+    jeans: "grafiki/jeans_blue.png",
+    space_helmet: "grafiki/zlota/helmet_astronaut.png"
+  };
+  if (legacyMap[pathOrId]) return legacyMap[pathOrId];
+  if (pathOrId.includes("/")) return pathOrId;
+  return "grafiki/" + pathOrId.replace(/\.png$/i, "") + ".png";
+}
+
+function getFallbackOutfitPath(src) {
+  if (!src) return "";
+  if (src.startsWith("grafiki/zlota/")) {
+    return src.replace("grafiki/zlota/", "grafiki/srebrna/zlota/");
+  }
+  return src;
+}
 
 function ensurePlayerStructure(p) {
   const def = createDefaultPlayerStats();
   if (!p) return def;
+
+  const rawUnlocked = Array.isArray(p.unlockedItems) && p.unlockedItems.length
+    ? p.unlockedItems.map(resolveOutfitPath)
+    : def.unlockedItems;
+
+  const rawAvatar = p.avatar || def.avatar;
+  const normalizedAvatar = {
+    head: resolveOutfitPath(rawAvatar.head !== undefined ? rawAvatar.head : def.avatar.head),
+    torso: resolveOutfitPath(rawAvatar.torso !== undefined ? rawAvatar.torso : (rawAvatar.top || def.avatar.torso)),
+    legs: resolveOutfitPath(rawAvatar.legs !== undefined ? rawAvatar.legs : (rawAvatar.bottom || def.avatar.legs))
+  };
+
   return {
     ...def,
     ...p,
     lessonCounts: p.lessonCounts || {},
     badges: Array.isArray(p.badges) ? p.badges : [],
-    unlockedItems: Array.isArray(p.unlockedItems) && p.unlockedItems.length ? p.unlockedItems : def.unlockedItems,
+    unlockedItems: Array.from(new Set(rawUnlocked)),
+    memoryAnimals: Array.isArray(p.memoryAnimals) && p.memoryAnimals.length ? p.memoryAnimals : def.memoryAnimals,
+    avatar: normalizedAvatar,
     equipped: { ...def.equipped, ...(p.equipped || {}) }
   };
 }
@@ -1057,18 +1269,30 @@ function checkAndUnlockAchievements(profKey) {
 }
 
 // =========================================================================
-// KOMUNIKACJA Z CHMURĄ (GOOGLE APPS SCRIPT)
+// KOMUNIKACJA Z CHMURĄ (GOOGLE APPS SCRIPT) + ZAPIS LOKALNY
 // =========================================================================
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec";
 
 function loadCloudData() {
+  try {
+    const localSaved = localStorage.getItem("akademia_save_v9");
+    if (localSaved) {
+      const parsed = JSON.parse(localSaved);
+      if (parsed.stats) {
+        state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
+        state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
+        if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
+      }
+    }
+  } catch (e) {}
+
   fetch(GAS_API_URL)
     .then(res => res.json())
     .then(data => {
       if (data.stats) {
         const pStats = JSON.parse(data.stats);
-        state.stats.igor = { ...state.stats.igor, ...pStats.igor };
-        state.stats.hubert = { ...state.stats.hubert, ...pStats.hubert };
+        state.stats.igor = ensurePlayerStructure({ ...state.stats.igor, ...pStats.igor });
+        state.stats.hubert = ensurePlayerStructure({ ...state.stats.hubert, ...pStats.hubert });
         if (pStats.stickers) state.stats.stickers = pStats.stickers;
       }
       if (data.lessons) {
@@ -1078,7 +1302,7 @@ function loadCloudData() {
         state.lessons.push(...custom);
       }
       if (data.questionsPerRound) {
-        state.questionsPerRound = parseInt(data.questionsPerRound) || 10;
+        state.questionsPerRound = parseInt(data.questionsPerRound) || 8;
       }
       updateHeaderUI();
       if (state.profile) showLessonMenu(); else showStartScreen();
@@ -1090,6 +1314,13 @@ function loadCloudData() {
 }
 
 function saveCloudData() {
+  try {
+    localStorage.setItem("akademia_save_v9", JSON.stringify({
+      stats: state.stats,
+      questionsPerRound: state.questionsPerRound
+    }));
+  } catch (e) {}
+
   const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
   const payload = {
     action: "save",
@@ -1100,9 +1331,9 @@ function saveCloudData() {
     }
   };
   fetch(GAS_API_URL, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify(payload),
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
   }).catch(err => console.error("Błąd zapisu:", err));
 }
 
@@ -1113,14 +1344,14 @@ function parentScanWorksheetAI(inputEl) {
   if (!file) return;
   if (!apiKey) { alert("Wpisz najpierw darmowy klucz Gemini API!"); return; }
   showParentStatus("⏳ Sówka AI analizuje zdjęcie kartki... Poczekaj ok. 10-15 sekund...");
-  
+
   const reader = new FileReader();
   reader.onload = function(e) {
     const base64 = e.target.result.split(",")[1];
     fetch(GAS_API_URL, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ action: "scanAI", base64: base64, mimeType: file.type, targetAge: targetAge, apiKey: apiKey }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      headers: { "Content-Type": "text/plain;charset=utf-8" }
     })
     .then(res => res.json())
     .then(data => {
@@ -1240,19 +1471,21 @@ function startKidVoiceTour() {
     { lang: "pl", text: `Cześć ${kidName}! Pokażę Ci co gdzie jest! Na środku ekranu masz kolorowe kafelki z lekcjami. Kliknij lekcję, aby zbierać gwiazdki!`, onStart: () => hl("lessonsGridBox", true), onEnd: () => hl("lessonsGridBox", false) },
     { lang: "pl", text: "Tutaj na górze świeci przycisk Odznaki! Za gwiazdki, powtarzanie lekcji i codzienne ćwiczenia zdobywasz medale, a za każdy medal od razu losujesz Skrzynię albo Naklejkę!", onStart: () => hl("navBadgesBtn", true), onEnd: () => hl("navBadgesBtn", false) },
     { lang: "pl", text: "Obok świeci różowy przycisk Naklejki! Tam zobaczysz swój klaser z kosmosem, zwierzętami, owocami i autami!", onStart: () => hl("navStickersBtn", true), onEnd: () => hl("navStickersBtn", false) },
-    { lang: "pl", text: "Tutaj jest przycisk Awatar! W nim przebierasz swoją postać w czapki, koszulki, korony i zwierzaki ze skrzyń!", onStart: () => hl("navAvatarBtn", true), onEnd: () => hl("navAvatarBtn", false) },
+    { lang: "pl", text: "Tutaj jest przycisk Awatar! W nim przebierasz swoją postać w czapki, koszulki, zbroje i stroje ze skrzyń!", onStart: () => hl("navAvatarBtn", true), onEnd: () => hl("navAvatarBtn", false) },
     { lang: "pl", text: "Gdy klikniesz zielonego Żółwika, lektor będzie mówił bardzo powoli!", onStart: () => hl("btnTurtle", true), onEnd: () => hl("btnTurtle", false) },
     { lang: "pl", text: "A ten duży przycisk to Wielki Sprawdzian, w którym zawsze wygrywasz Skrzynię! Powodzenia!", onStart: () => hl("btnExamMain", true), onEnd: () => hl("btnExamMain", false) }
   ]);
 }
 
-// Nagrody i skrzynie PNG
+// =========================================================================
+// NAGRODY ZA OSIĄGNIĘCIA I LOSOWANIE ZE SKRZYŃ (131 UBRAŃ + MEMORY + NAKLEJKI)
+// =========================================================================
 function processNextRewardInQueue() {
   const modal = document.getElementById("rewardPopupModal");
   if (!modal || !modal.classList.contains("hidden") || !state.rewardQueue.length) return;
   const { profKey, achievement } = state.rewardQueue.shift();
   const lockedStickers = STICKER_POOL.filter(s => !state.stats.stickers.includes(s.id));
-  const giveSticker = lockedStickers.length > 0 && Math.random() < 0.42;
+  const giveSticker = lockedStickers.length > 0 && Math.random() < 0.35;
 
   playEffect("fanfare");
   modal.classList.remove("hidden");
@@ -1276,39 +1509,70 @@ function processNextRewardInQueue() {
     speakSequence([{ lang: "pl", text: `Brawo! Zdobywasz osiągnięcie: ${achievement.name} oraz nową naklejkę: ${wonSt.name}!` }]);
   } else {
     const r = Math.random() * 100;
-    const chestType = r < 65 ? "bronze" : r < 90 ? "silver" : "gold";
+    const chestType = r < 55 ? "bronze" : r < 85 ? "silver" : "gold";
     renderChestOpeningInsidePopup(profKey, chestType, `🏅 Nagroda za: ${achievement.name}`);
   }
 }
 
-function rollAvatarItemFromChest(profKey, chestType) {
-  const weights = chestType === "gold" ? { common: 10, rare: 35, epic: 55 } : chestType === "silver" ? { common: 35, rare: 50, epic: 15 } : { common: 75, rare: 20, epic: 5 };
-  const r = Math.random() * 100;
-  const targetRarity = r < weights.epic ? "epic" : r < (weights.epic + weights.rare) ? "rare" : "common";
-  const p = state.stats[profKey];
-  
-  // Płaska baza ubrań PNG
-  const flatItems = [
-    { id: "red_cap", name: "🎒 Czerwona czapka", rarity: "common" },
-    { id: "space_helmet", name: "🚀 Hełm Astronauty", rarity: "epic" },
-    { id: "hero_shirt", name: "⭐ Koszulka Bohatera", rarity: "rare" },
-    { id: "jeans", name: "👖 Niebieskie Jeansy", rarity: "common" }
-  ];
+function rollRewardFromChest(profKey, chestType) {
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  state.stats[profKey] = p;
 
-  let pool = flatItems.filter(it => it.rarity === targetRarity && !p.unlockedItems.includes(it.id));
-  if (!pool.length) pool = flatItems.filter(it => !p.unlockedItems.includes(it.id));
-  if (!pool.length) pool = flatItems.filter(it => it.rarity === targetRarity);
-  const won = pool[Math.floor(Math.random() * pool.length)];
-  if (!p.unlockedItems.includes(won.id)) p.unlockedItems.push(won.id);
+  const lockedMemory = MEMORY_ANIMALS_POOL.filter(a => !p.memoryAnimals.includes(a.id));
+  const lockedStickers = STICKER_POOL.filter(s => !state.stats.stickers.includes(s.id));
+
+  // Szansa na wylosowanie zwierzaka do Memory (15%) lub Naklejki (12%) obok ubrań
+  const rollSpecial = Math.random() * 100;
+  if (rollSpecial < 15 && lockedMemory.length > 0) {
+    const wonAnimal = lockedMemory[Math.floor(Math.random() * lockedMemory.length)];
+    p.memoryAnimals.push(wonAnimal.id);
+    saveCloudData();
+    return { rewardCategory: "memory_animal", item: wonAnimal };
+  }
+  if (rollSpecial >= 15 && rollSpecial < 27 && lockedStickers.length > 0) {
+    const wonSt = lockedStickers[Math.floor(Math.random() * lockedStickers.length)];
+    state.stats.stickers.push(wonSt.id);
+    saveCloudData();
+    return { rewardCategory: "sticker", item: wonSt };
+  }
+
+  // Wagi rzadkości ubrań w zależności od skrzyni (Brązowa / Srebrna / Złota)
+  const weights = chestType === "gold"
+    ? { bronze: 10, silver: 35, gold: 55 }
+    : chestType === "silver"
+    ? { bronze: 30, silver: 55, gold: 15 }
+    : { bronze: 75, silver: 20, gold: 5 };
+
+  const r = Math.random() * 100;
+  const targetTier = r < weights.gold ? "gold" : r < (weights.gold + weights.silver) ? "silver" : "bronze";
+
+  const tierItems = getAllClothingItems(targetTier);
+  const all131 = getAll131OutfitsFlat();
+
+  // Najpierw szukamy nieodblokowanych ubrań z wylosowanego poziomu skrzyni
+  let pool = tierItems.filter(it => !p.unlockedItems.includes(it.src));
+  // Jeśli w tym poziomie ma już wszystko, szukamy nieodblokowanych z bezpośredniej skrzyni (chestType)
+  if (!pool.length) pool = getAllClothingItems(chestType).filter(it => !p.unlockedItems.includes(it.src));
+  // Jeśli i tam ma wszystko, szukamy jakiegokolwiek nieodblokowanego ze wszystkich 131 przebrań
+  if (!pool.length) pool = all131.filter(it => !p.unlockedItems.includes(it.src));
+  // Jeśli ma już wszystkie 131 ubrań, losujemy dowolne z danej skrzyni
+  if (!pool.length) pool = getAllClothingItems(chestType);
+
+  const wonOutfit = pool[Math.floor(Math.random() * pool.length)];
+  if (!p.unlockedItems.includes(wonOutfit.src)) {
+    p.unlockedItems.push(wonOutfit.src);
+  }
+  // Automatycznie zakładamy nowo wylosowany element na postać, by dziecko od razu go zobaczyło
+  p.avatar[wonOutfit.slot] = wonOutfit.src;
   saveCloudData();
-  return won;
+  return { rewardCategory: "clothing", item: wonOutfit };
 }
 
 function renderChestOpeningInsidePopup(profKey, chestType, headerLabel) {
   const meta = {
-    bronze: { icon: "📦", name: "Brązowa Skrzynia", c: "border-amber-600 bg-amber-50", d: "75% Zwykłe • 20% Rzadkie • 5% Epickie!" },
-    silver: { icon: "🥈", name: "Srebrna Skrzynia", c: "border-slate-400 bg-slate-50", d: "35% Zwykłe • 50% Rzadkie • 15% Epickie!" },
-    gold: { icon: "👑", name: "Złota Skrzynia!", c: "border-yellow-400 bg-yellow-50", d: "10% Zwykłe • 35% Rzadkie • 55% Epickie Skarby!" }
+    bronze: { icon: "📦", name: "Brązowa Skrzynia", c: "border-amber-600 bg-amber-50", d: "30 ubrań codziennych + szansa na Srebrne, Złote, Naklejki i Memory!" },
+    silver: { icon: "🥈", name: "Srebrna Skrzynia", c: "border-slate-400 bg-slate-50", d: "56 przebrań tematycznych + szansa na Złote stroje, Naklejki i Memory!" },
+    gold: { icon: "👑", name: "Złota Skrzynia!", c: "border-yellow-400 bg-yellow-50", d: "45 epickich strojów specjalnych + Naklejki i Zwierzaki Memory!" }
   }[chestType];
   const modal = document.getElementById("rewardPopupModal");
   modal.classList.remove("hidden");
@@ -1327,15 +1591,45 @@ function renderChestOpeningInsidePopup(profKey, chestType, headerLabel) {
 
 function openRolledChestNow(profKey, chestType) {
   playEffect("fanfare");
-  const won = rollAvatarItemFromChest(profKey, chestType);
-  const badge = won.rarity === "epic" ? "👑 EPICKI SKARB!" : won.rarity === "rare" ? "💎 RZADKI DODATEK!" : "👕 NOWY KOLOR UBRANIA";
+  const result = rollRewardFromChest(profKey, chestType);
+
+  if (result.rewardCategory === "memory_animal") {
+    const an = result.item;
+    document.getElementById("rewardPopupContent").innerHTML = `
+      <div class="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 inline-block mb-2">🐾 NOWY ZWIERZAK DO MEMORY!</div>
+      <h3 class="text-xl font-extrabold text-slate-900 mb-1">${an.en} – ${an.pl}</h3>
+      <div class="text-7xl my-3 float-anim">${an.icon}</div>
+      <p class="text-xs text-slate-500 mb-3">Odblokowano nową parę zwierzaków w pamięci!</p>
+      <button onclick="closeRewardPopup()" class="w-full py-3 rounded-2xl bg-emerald-500 text-white font-bold text-lg shadow">Super!</button>
+    `;
+    speakSequence([{ lang: "pl", text: `W skrzyni był nowy zwierzak do gry Memory: ${an.pl}!` }]);
+    return;
+  }
+
+  if (result.rewardCategory === "sticker") {
+    const st = result.item;
+    document.getElementById("rewardPopupContent").innerHTML = `
+      <div class="text-xs font-extrabold px-3 py-1 rounded-full bg-pink-100 text-pink-900 inline-block mb-2">🎁 NOWA NAKLEJKA ZE SKRZYNI!</div>
+      <h3 class="text-xl font-extrabold text-slate-900 mb-1">${st.name}</h3>
+      <div class="text-7xl my-3 float-anim">${st.icon}</div>
+      <button onclick="closeRewardPopup()" class="w-full py-3 rounded-2xl bg-pink-500 text-white font-bold text-lg shadow">Super!</button>
+    `;
+    speakSequence([{ lang: "pl", text: `W skrzyni była nowa naklejka: ${st.name}!` }]);
+    return;
+  }
+
+  const won = result.item;
+  const badge = won.tier === "gold" ? "👑 ZŁOTA SKRZYNIA – EPICKI STRÓJ!" : won.tier === "silver" ? "🥈 SREBRNA SKRZYNIA – RZADKI STRÓJ!" : "📦 BRĄZOWA SKRZYNIA – UBRANIE";
   document.getElementById("rewardPopupContent").innerHTML = `
     <div class="text-xs font-extrabold px-3 py-1 rounded-full bg-indigo-100 text-indigo-900 inline-block mb-2">${badge}</div>
-    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Wylosowano: ${won.name}!</h3>
-    <div class="my-2 p-3 rounded-3xl bg-sky-50 border border-sky-200 flex justify-center">${renderBoyAvatarSvg(profKey, 105)}</div>
+    <h3 class="text-lg font-extrabold text-slate-900 mb-1">Wylosowano: ${won.name}</h3>
+    <div class="my-2 p-3 rounded-3xl bg-sky-50 border border-sky-200 flex flex-col items-center justify-center">
+      ${renderBoyAvatarSvg(profKey, 120)}
+      <span class="text-[11px] font-bold text-slate-500 mt-1">Założono na postać!</span>
+    </div>
     <button onclick="closeRewardPopup()" class="w-full py-3 mt-2 rounded-2xl bg-emerald-500 text-white font-bold text-lg shadow">Super!</button>
   `;
-  speakSequence([{ lang: "pl", text: `W skrzyni było: ${won.name}!` }]);
+  speakSequence([{ lang: "pl", text: "Super! Masz nowe przebranie dla swojego bohatera!" }]);
 }
 
 function closeRewardPopup() {
@@ -1346,7 +1640,44 @@ function closeRewardPopup() {
   if (state.rewardQueue.length > 0) setTimeout(processNextRewardInQueue, 300);
 }
 
-// Modale kolekcji: Naklejki, Odznaki
+// =========================================================================
+// PANEL RODZICA: ODBLOKOWANIE WSZYSTKICH 131 PRZEBRAŃ DO TESTÓW
+// =========================================================================
+function unlockAllOutfitsForTesting() {
+  const allPaths = getAll131OutfitsFlat().map(it => it.src);
+  const allMemIds = MEMORY_ANIMALS_POOL.map(a => a.id);
+
+  ["igor", "hubert"].forEach(pk => {
+    state.stats[pk] = ensurePlayerStructure(state.stats[pk]);
+    state.stats[pk].unlockedItems = [...allPaths];
+    state.stats[pk].memoryAnimals = [...allMemIds];
+  });
+
+  saveCloudData();
+  updateHeaderUI();
+  if (typeof showParentStatus === "function") {
+    showParentStatus(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań (Brązowa, Srebrna i Złota skrzynka) dla Igora i Huberta!`);
+  }
+  alert(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań oraz zwierzaki Memory! Wejdź teraz w „👑 Awatar” na górnym pasku, aby przetestować każde ubranie na postaci.`);
+}
+
+function lockAllOutfitsAfterTesting() {
+  if (!confirm("Czy chcesz zablokować testowe ubrania i zostawić tylko zestaw startowy?")) return;
+  const def = createDefaultPlayerStats();
+  ["igor", "hubert"].forEach(pk => {
+    state.stats[pk].unlockedItems = [...def.unlockedItems];
+    state.stats[pk].avatar = { ...def.avatar };
+  });
+  saveCloudData();
+  updateHeaderUI();
+  if (typeof showParentStatus === "function") {
+    showParentStatus("🔒 Przywrócono startowy stan garderoby.");
+  }
+}
+
+// =========================================================================
+// MODALE KOLEKCJI: NAKLEJKI I ODZNAKI
+// =========================================================================
 function openStickersModal(cat = null) {
   if (cat) state.selectedStickerCat = cat;
   const modal = document.getElementById("stickersModal");
@@ -1369,6 +1700,7 @@ function openStickersModal(cat = null) {
     `;
   }).join("");
 }
+
 function closeStickersModal() {
   const m = document.getElementById("stickersModal");
   m.classList.add("hidden"); m.classList.remove("flex");
@@ -1411,45 +1743,34 @@ function openBadgesModal(cat = null) {
   const modal = document.getElementById("badgesModal");
   modal.classList.remove("hidden"); modal.classList.add("flex");
 }
+
 function closeBadgesModal() {
   const m = document.getElementById("badgesModal");
   m.classList.add("hidden"); m.classList.remove("flex");
 }
 
 // ============================================================================
-// MODUŁ GARDEROBY PNG ORAZ RENDEROWANIE POSTACI
+// MODUŁ GARDEROBY 131 PNG ORAZ RENDEROWANIE POSTACI Z AUTOMATYCZNYM FALLBACKIEM
 // ============================================================================
-const AVATAR_ITEMS = {
-  head: [
-    { id: "red_cap", name: "🎒 Czerwona czapka", rarity: "common" },
-    { id: "space_helmet", name: "🚀 Hełm Astronauty", rarity: "epic" }
-  ],
-  torso: [
-    { id: "hero_shirt", name: "⭐ Koszulka Bohatera", rarity: "rare" }
-  ],
-  legs: [
-    { id: "jeans", name: "👖 Niebieskie Jeansy", rarity: "common" }
-  ]
-};
-
 function renderBoyAvatarSvg(playerKey, size = 80) {
-  const p = state.stats[playerKey];
-  if (!p) return "";
-  if (!p.avatar) p.avatar = { head: "red_cap", torso: "hero_shirt", legs: "jeans" };
+  const p = ensurePlayerStructure(state.stats[playerKey]);
+  state.stats[playerKey] = p;
   const avatar = p.avatar;
-  const width = size;
-  const height = size;
 
-  let headImg = avatar.head ? "grafiki/" + avatar.head + ".png" : "";
-  let torsoImg = avatar.torso ? "grafiki/" + avatar.torso + ".png" : "";
-  let legsImg = avatar.legs ? "grafiki/" + avatar.legs + ".png" : "";
+  const headImg = resolveOutfitPath(avatar.head);
+  const torsoImg = resolveOutfitPath(avatar.torso);
+  const legsImg = resolveOutfitPath(avatar.legs);
+
+  const headFb = getFallbackOutfitPath(headImg);
+  const torsoFb = getFallbackOutfitPath(torsoImg);
+  const legsFb = getFallbackOutfitPath(legsImg);
 
   return `
-    <div class="relative mx-auto select-none pointer-events-none" style="width: ${width}px; height: ${height}px;">
+    <div class="relative mx-auto select-none pointer-events-none" style="width: ${size}px; height: ${size}px;">
       <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" onerror="this.style.display='none';" />
-      ${legsImg ? `<img src="${legsImg}" class="absolute inset-0 w-full h-full object-contain z-20" onerror="this.style.display='none';" />` : ""}
-      ${torsoImg ? `<img src="${torsoImg}" class="absolute inset-0 w-full h-full object-contain z-30" onerror="this.style.display='none';" />` : ""}
-      ${headImg ? `<img src="${headImg}" class="absolute inset-0 w-full h-full object-contain z-40" onerror="this.style.display='none';" />` : ""}
+      ${legsImg ? `<img src="${legsImg}" class="absolute inset-0 w-full h-full object-contain z-20" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
+      ${torsoImg ? `<img src="${torsoImg}" class="absolute inset-0 w-full h-full object-contain z-30" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
+      ${headImg ? `<img src="${headImg}" class="absolute inset-0 w-full h-full object-contain z-40" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${headFb}'!=='${headImg}'){this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
     </div>
   `;
 }
@@ -1457,9 +1778,9 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 function openAvatarModal() {
   if (!state.profile || state.profile === "duel") return;
   document.getElementById("avatarModalPlayerName").textContent = state.profile === "igor" ? "IGOR" : "HUBERT";
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 140);
+  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 155);
   renderAvatarItems();
-  
+
   const m = document.getElementById("avatarModal");
   if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
 }
@@ -1471,59 +1792,102 @@ function closeAvatarModal() {
   if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
 }
 
+function setWardrobeTierFilter(tier) {
+  state.selectedWardrobeTier = tier;
+  renderAvatarItems();
+}
+
 function renderAvatarItems() {
-  const p = state.stats[state.profile];
+  const p = ensurePlayerStructure(state.stats[state.profile]);
+  state.stats[state.profile] = p;
   const container = document.getElementById("avatarItemsContainer");
   if (!container) return;
 
-  let html = "";
-  const categories = [
-    { key: "head", title: "🧢 Nakrycia głowy" },
-    { key: "torso", title: "👕 Koszulki i Bluzki" },
-    { key: "legs", title: "👖 Spodnie i Buty" }
+  const all131 = getAll131OutfitsFlat();
+  const unlockedCountEl = document.getElementById("avatarUnlockedCount");
+  if (unlockedCountEl) {
+    const count = all131.filter(it => p.unlockedItems.includes(it.src)).length;
+    unlockedCountEl.textContent = count;
+  }
+
+  // Wyświetlenie odblokowanych zwierzaków Memory pod podglądem awatara
+  const memBox = document.getElementById("avatarMemoryAnimalsBox");
+  if (memBox) {
+    const myAnimals = MEMORY_ANIMALS_POOL.filter(a => (p.memoryAnimals || []).includes(a.id));
+    memBox.innerHTML = `
+      <div class="text-[11px] font-extrabold text-indigo-900 mb-1">🐾 Zwierzaki Memory (${myAnimals.length}/${MEMORY_ANIMALS_POOL.length}):</div>
+      <div class="flex flex-wrap justify-center gap-1 text-lg">${myAnimals.map(a => `<span title="${a.en} - ${a.pl}">${a.icon}</span>`).join("")}</div>
+    `;
+  }
+
+  const tierTabs = [
+    { id: "all", label: "Wszystkie (131)" },
+    { id: "bronze", label: "📦 Brązowa (30)" },
+    { id: "silver", label: "🥈 Srebrna (56)" },
+    { id: "gold", label: "👑 Złota (45)" }
   ];
 
+  let html = `
+    <div class="flex flex-wrap gap-1.5 mb-3 pb-2 border-b border-indigo-100">
+      ${tierTabs.map(t => `
+        <button onclick="setWardrobeTierFilter('${t.id}')" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedWardrobeTier === t.id ? 'bg-indigo-600 text-white border-indigo-800' : 'bg-white text-slate-700 border-slate-200'}">
+          ${t.label}
+        </button>
+      `).join("")}
+    </div>
+  `;
+
+  const categories = [
+    { key: "head", title: "🧢 Nakrycia głowy i Hełmy" },
+    { key: "torso", title: "👕 Koszulki, Kurtki i Zbroje" },
+    { key: "legs", title: "👖 Spodnie i Szorty" }
+  ];
+
+  const filteredOutfits = state.selectedWardrobeTier === "all"
+    ? all131
+    : all131.filter(it => it.tier === state.selectedWardrobeTier);
+
   categories.forEach(cat => {
+    const catItems = filteredOutfits.filter(it => it.slot === cat.key);
     html += `<div class="mb-4">
-      <h3 class="text-sm font-extrabold text-slate-700 mb-2 border-b pb-1">${cat.title}</h3>
-      <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">`;
-    
-    if (AVATAR_ITEMS[cat.key]) {
-        AVATAR_ITEMS[cat.key].forEach(item => {
-          const isUnlocked = p.unlockedItems && p.unlockedItems.includes(item.id);
-          const isEquipped = p.avatar && p.avatar[cat.key] === item.id;
-          let imgPath = "grafiki/" + item.id + ".png";
-          
-          if (isUnlocked) {
-            html += `
-              <div onclick="equipAvatarItem('${cat.key}', '${item.id}')" class="cursor-pointer rounded-2xl border-4 ${isEquipped ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'} p-2 flex flex-col items-center justify-between text-center shadow-sm">
-                <img src="${imgPath}" class="w-12 h-12 object-contain mb-1 drop-shadow-md" alt="${item.name}" onerror="this.style.display='none'" />
-                <div class="text-[10px] font-bold text-slate-700 leading-tight mt-1">${item.name}</div>
-                ${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full uppercase">Założone</div>` : ``}
-              </div>
-            `;
-          } else {
-            html += `
-              <div class="rounded-2xl border-4 border-slate-200 bg-slate-100 p-2 flex flex-col items-center justify-between text-center opacity-60 grayscale">
-                <div class="text-2xl mb-1 mt-1">🔒</div>
-                <div class="text-[10px] font-bold text-slate-500 leading-tight mt-1">${item.name}</div>
-                <div class="text-[9px] mt-1 bg-slate-300 text-slate-600 px-2 py-0.5 rounded-full uppercase">Zablokowane</div>
-              </div>
-            `;
-          }
-        });
-    }
+      <h3 class="text-sm font-extrabold text-slate-700 mb-2 border-b pb-1">${cat.title} (${catItems.length})</h3>
+      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
+
+    catItems.forEach(item => {
+      const isUnlocked = p.unlockedItems.includes(item.src);
+      const isEquipped = p.avatar && p.avatar[cat.key] === item.src;
+      const tierBadgeColor = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-800" : "bg-amber-700 text-white";
+
+      if (isUnlocked) {
+        html += `
+          <div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm">
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span>
+            <img src="${item.src}" class="w-14 h-14 object-contain mb-1 drop-shadow" alt="${item.name}" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${item.fallbackSrc}';}" />
+            <div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>
+            ${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="rounded-2xl border-2 border-slate-200 bg-slate-100 p-2 flex flex-col items-center justify-between text-center opacity-55">
+            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span>
+            <div class="text-2xl my-2">🔒</div>
+            <div class="text-[10px] font-bold text-slate-500 leading-tight break-all">${item.name}</div>
+          </div>
+        `;
+      }
+    });
     html += `</div></div>`;
   });
+
   container.innerHTML = html;
 }
 
-function equipAvatarItem(category, itemId) {
-  const p = state.stats[state.profile];
-  if (!p.avatar) p.avatar = { head: "", torso: "", legs: "" };
-  p.avatar[category] = p.avatar[category] === itemId ? "" : itemId;
+function equipAvatarItem(category, itemSrc) {
+  const p = ensurePlayerStructure(state.stats[state.profile]);
+  p.avatar[category] = p.avatar[category] === itemSrc ? "" : itemSrc;
   playEffect("beep");
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 140);
+  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 155);
   renderAvatarItems();
 }
 </script>
@@ -1532,7 +1896,7 @@ function equipAvatarItem(category, itemId) {
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 5 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 4 z 5: EKRAN STARTOWY, MENU LEKCJI, SPRAWDZIAN I POJEDYNEK
+   CZĘŚĆ 4 z 5: EKRAN STARTOWY, MENU LEKCJI, SPRAWDZIAN I POJEDYNEK BRACI
    ============================================================================ */
 
 function updateHeaderUI() {
@@ -1566,7 +1930,7 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-5xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 9.0
+        🌟 Akademia Angielskiego • Wersja 9.0 (131 Przebrań PNG)
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
@@ -2370,7 +2734,9 @@ function renderEndRoundScreen() {
   `;
 }
 
-// Panel Rodzica i PIN
+// ============================================================================
+// PANEL RODZICA I ZABEZPIECZENIE PIN (0608)
+// ============================================================================
 function initPinKeyboard() {
   const grid = document.getElementById("pinKeyboardGrid");
   if (!grid) return;
@@ -2452,7 +2818,6 @@ function parentAddSingleWord() {
   const pl = document.getElementById("parentWordPl").value.trim();
   const phonetic = document.getElementById("parentWordPhonetic").value.trim();
   const icon = document.getElementById("parentWordIcon").value.trim() || "⭐";
-  const age = document.getElementById("parentWordAge").value.split(",").map(Number);
   const lesson = state.lessons.find(l => l.id === lid);
 
   if (!lesson || !en || !pl) {
@@ -2460,7 +2825,7 @@ function parentAddSingleWord() {
     return;
   }
 
-  lesson.items.push({ en, pl, phonetic, icon, age });
+  lesson.items.push({ en, pl, phonetic, icon, age: [4,6] });
   if (document.getElementById("parentAutoExpandWord").checked) {
     lesson.items.push({ en: `Big ${en.toLowerCase()}`, pl: `Duże: ${pl}`, phonetic: `big ${phonetic || en}`, icon: "✨" + icon, age: [4,6] });
   }
@@ -2496,17 +2861,6 @@ function parentCreateNewLesson() {
     return;
   }
 
-  if (document.getElementById("newLessonAutoBonus").checked) {
-    [
-      { en: "Red car", pl: "Czerwone auto", icon: "🚗" },
-      { en: "Big ball", pl: "Duża piłka", icon: "⚽" },
-      { en: "Happy dog", pl: "Wesoły piesek", icon: "🐶" },
-      { en: "Blue star", pl: "Niebieska gwiazdka", icon: "🌟" }
-    ].forEach(b => {
-      if (!items.some(i => i.en.toLowerCase() === b.en.toLowerCase())) items.push({ ...b, age: [4,6] });
-    });
-  }
-
   const newId = "custom_" + Date.now();
   state.lessons.push({
     id: newId,
@@ -2526,52 +2880,14 @@ function parentCreateNewLesson() {
   openParentDashboard();
 }
 
-function parentImportJsonLesson() {
-  try {
-    const txt = document.getElementById("parentJsonInput").value.trim();
-    if (!txt) return;
-    const parsed = JSON.parse(txt);
-    if (!parsed.title || !parsed.items) throw new Error("Brak pola title lub items");
-    if (!parsed.id) parsed.id = "json_" + Date.now();
-    if (!parsed.color) parsed.color = "from-teal-500 to-emerald-600";
-    if (!parsed.borderColor) parsed.borderColor = "border-teal-400";
-    if (!parsed.icon) parsed.icon = "📥";
-    if (!parsed.subtitle) parsed.subtitle = "Lekcja z pliku JSON";
-
-    state.lessons.push(parsed);
-    saveCloudData();
-    document.getElementById("parentJsonInput").value = "";
-    showParentStatus(`✅ Wgrano lekcję JSON: "${parsed.title}"!`);
-    openParentDashboard();
-  } catch (e) {
-    alert("Błąd składni JSON!");
-  }
-}
-
-function parentExportBackup() {
-  const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
-  const payload = {
-    stats: state.stats,
-    questionsPerRound: state.questionsPerRound,
-    customLessons: state.lessons.filter(l => !baseIds.includes(l.id))
-  };
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-  const dlAnchorElem = document.createElement('a');
-  dlAnchorElem.setAttribute("href", dataStr);
-  dlAnchorElem.setAttribute("download", "akademia_angielskiego_backup.json");
-  dlAnchorElem.click();
-}
-
 function parentGiveTestChest(profKey, type) {
   closeParentDashboard();
-  renderChestOpeningInsidePopup(profKey, type, "🎁 Testowa Skrzynia od Taty");
+  renderChestOpeningInsidePopup(profKey, type, `🎁 Testowa Skrzynia (${type.toUpperCase()}) od Taty`);
 }
 
 function parentAddStreakDay() {
   state.stats.igor.streakDays = (state.stats.igor.streakDays || 1) + 1;
   state.stats.hubert.streakDays = (state.stats.hubert.streakDays || 1) + 1;
-  checkAndUnlockAchievements("igor");
-  checkAndUnlockAchievements("hubert");
   saveCloudData();
   showParentStatus(`🔥 Dodano dzień streak! Obaj mają po: ${state.stats.igor.streakDays} dni.`);
 }
@@ -2602,10 +2918,11 @@ function resetEverythingAll() {
   closeParentDashboard();
   showStartScreen();
 }
+
 window.addEventListener("DOMContentLoaded", () => {
   const loading = document.getElementById("loadingScreen");
   if (loading) loading.style.display = "none";
-  showStartScreen();
+  loadCloudData();
 });
 </script>
 </body>

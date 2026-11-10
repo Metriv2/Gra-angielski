@@ -1006,21 +1006,218 @@ let state = {
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 5 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 5: STAN GRY, OSIĄGNIĘCIA, CHMURA, SÓWKA, SKRZYNIE I GARDEROBA 131 PNG
+   CZĘŚĆ 3 z 5: STAN GRY, OSIĄGNIĘCIA, CHMURA, SÓWKA, SKRZYNIE I AUTO-GARDEROBA
    ============================================================================ */
 
-// Domyślne proporcje i pozycje warstw ubrań dopasowane do sylwetki boy_base.png
-const DEFAULT_LAYER_LAYOUT = {
-  head:  { width: 26, height: 18, top: 6,  left: 50 },
-  torso: { width: 32, height: 26, top: 34, left: 50 },
-  legs:  { width: 28, height: 28, top: 58, left: 50 }
-};
+// Pamięć podręczna dla automatycznie przyciętych grafik (bez pustych marginesów PNG)
+const _trimmedImageCache = {};
+let _boyAnatomyMetrics = null;
+let _boyAnatomyLoading = false;
 
-function getLayerCalibration() {
-  if (!state.stats.layerLayout) {
-    state.stats.layerLayout = JSON.parse(JSON.stringify(DEFAULT_LAYER_LAYOUT));
+// Automatyczne skanowanie sylwetki boy_base.png w celu wykrycia głowy, ramion, pasa i nóg
+function analyzeBoyBaseAnatomy(callback) {
+  if (_boyAnatomyMetrics) {
+    if (callback) callback(_boyAnatomyMetrics);
+    return;
   }
-  return state.stats.layerLayout;
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = function () {
+    try {
+      const cw = 200, ch = 200;
+      const canvas = document.createElement("canvas");
+      canvas.width = cw;
+      canvas.height = ch;
+      const ctx = canvas.getContext("2d");
+
+      // Rysujemy boy_base.png tak jak object-contain w kwadracie
+      const scale = Math.min(cw / img.width, ch / img.height);
+      const dw = img.width * scale, dh = img.height * scale;
+      const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
+      ctx.drawImage(img, dx, dy, dw, dh);
+
+      const data = ctx.getImageData(0, 0, cw, ch).data;
+      let minY = ch, maxY = 0, minX = cw, maxX = 0;
+
+      for (let y = 0; y < ch; y++) {
+        for (let x = 0; x < cw; x++) {
+          const alpha = data[(y * cw + x) * 4 + 3];
+          if (alpha > 25) {
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+          }
+        }
+      }
+
+      const bodyH = Math.max(40, maxY - minY);
+      const measureBand = (yStartRatio, yEndRatio) => {
+        const y0 = Math.floor(minY + bodyH * yStartRatio);
+        const y1 = Math.floor(minY + bodyH * yEndRatio);
+        let bMinX = cw, bMaxX = 0;
+        for (let y = y0; y <= y1; y++) {
+          for (let x = 0; x < cw; x++) {
+            if (data[(y * cw + x) * 4 + 3] > 25) {
+              if (x < bMinX) bMinX = x;
+              if (x > bMaxX) bMaxX = x;
+            }
+          }
+        }
+        if (bMaxX <= bMinX) return { widthPct: 30, centerPct: 50 };
+        return {
+          widthPct: ((bMaxX - bMinX) / cw) * 100,
+          centerPct: (((bMinX + bMaxX) / 2) / cw) * 100
+        };
+      };
+
+      const headBand = measureBand(0.03, 0.24);
+      const torsoBand = measureBand(0.33, 0.56);
+      const legsBand = measureBand(0.60, 0.88);
+
+      _boyAnatomyMetrics = {
+        topPct: (minY / ch) * 100,
+        bottomPct: (maxY / ch) * 100,
+        heightPct: (bodyH / ch) * 100,
+        centerPct: headBand.centerPct || 50,
+        headWidthPct: headBand.widthPct,
+        torsoWidthPct: torsoBand.widthPct,
+        legsWidthPct: legsBand.widthPct
+      };
+    } catch (e) {
+      _boyAnatomyMetrics = {
+        topPct: 8, bottomPct: 92, heightPct: 84, centerPct: 50,
+        headWidthPct: 26, torsoWidthPct: 34, legsWidthPct: 26
+      };
+    }
+    if (callback) callback(_boyAnatomyMetrics);
+  };
+  img.onerror = function () {
+    _boyAnatomyMetrics = {
+      topPct: 8, bottomPct: 92, heightPct: 84, centerPct: 50,
+      headWidthPct: 26, torsoWidthPct: 34, legsWidthPct: 26
+    };
+    if (callback) callback(_boyAnatomyMetrics);
+  };
+  img.src = "grafiki/boy_base.png";
+}
+
+// Automatyczne przycinanie pustych przezroczystych brzegów każdego ubrania PNG
+function getAutoTrimmedOutfit(src, callback) {
+  if (_trimmedImageCache[src]) {
+    callback(_trimmedImageCache[src]);
+    return;
+  }
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = function () {
+    try {
+      const w = img.width, h = img.height;
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, w, h).data;
+
+      let minX = w, minY = h, maxX = 0, maxY = 0;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (data[(y * w + x) * 4 + 3] > 20) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      if (maxX > minX && maxY > minY) {
+        const cropW = maxX - minX + 1;
+        const cropH = maxY - minY + 1;
+        const outCanvas = document.createElement("canvas");
+        outCanvas.width = cropW;
+        outCanvas.height = cropH;
+        outCanvas.getContext("2d").drawImage(img, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+
+        const result = {
+          dataUrl: outCanvas.toDataURL("image/png"),
+          aspect: cropW / cropH
+        };
+        _trimmedImageCache[src] = result;
+        callback(result);
+        return;
+      }
+    } catch (e) {}
+    const fallback = { dataUrl: src, aspect: 1 };
+    _trimmedImageCache[src] = fallback;
+    callback(fallback);
+  };
+  img.onerror = function () {
+    const fbSrc = getFallbackOutfitPath(src);
+    if (fbSrc !== src && !_trimmedImageCache[fbSrc]) {
+      getAutoTrimmedOutfit(fbSrc, callback);
+    } else {
+      callback({ dataUrl: src, aspect: 1 });
+    }
+  };
+  img.src = src;
+}
+
+// Funkcja wywoływana automatycznie po załadowaniu warstwy ubrania - dopasowuje ją do anatomii postaci
+function autoFitAvatarLayer(imgEl, slot, rawSrc) {
+  if (!imgEl || imgEl.dataset.autofitted === "1") return;
+  imgEl.dataset.autofitted = "1";
+
+  analyzeBoyBaseAnatomy(metrics => {
+    getAutoTrimmedOutfit(rawSrc, trimmed => {
+      if (trimmed && trimmed.dataUrl) {
+        imgEl.src = trimmed.dataUrl;
+      }
+      const low = (rawSrc || "").toLowerCase();
+      const aspect = (trimmed && trimmed.aspect) ? trimmed.aspect : 1;
+      const topY = metrics.topPct;
+      const bodyH = metrics.heightPct;
+      const centerX = metrics.centerPct;
+
+      let wPct = 30, hPct = 25, topPct = 10;
+
+      if (slot === "head") {
+        const isFullHead = low.includes("helmet_") || low.includes("mask_");
+        if (isFullHead) {
+          wPct = Math.max(22, metrics.headWidthPct * 1.18);
+          hPct = wPct / aspect;
+          const maxH = bodyH * 0.34;
+          if (hPct > maxH) { hPct = maxH; wPct = hPct * aspect; }
+          topPct = topY - bodyH * 0.02;
+        } else {
+          // Czapka z daszkiem (cap_)
+          wPct = Math.max(20, metrics.headWidthPct * 1.06);
+          hPct = wPct / aspect;
+          const maxH = bodyH * 0.22;
+          if (hPct > maxH) { hPct = maxH; wPct = hPct * aspect; }
+          topPct = topY - hPct * 0.22;
+        }
+      } else if (slot === "torso") {
+        const isSuit = low.includes("suit_") || low.includes("armor_");
+        wPct = Math.max(24, metrics.torsoWidthPct * (isSuit ? 1.08 : 1.02));
+        hPct = bodyH * (isSuit ? 0.38 : 0.33);
+        topPct = topY + bodyH * 0.29;
+      } else if (slot === "legs") {
+        const isShorts = low.includes("short_") || low.includes("shorts_");
+        wPct = Math.max(20, metrics.legsWidthPct * 1.08);
+        hPct = bodyH * (isShorts ? 0.20 : 0.33);
+        topPct = topY + bodyH * 0.57;
+      }
+
+      imgEl.style.left = `${centerX}%`;
+      imgEl.style.top = `${topPct}%`;
+      imgEl.style.width = `${wPct}%`;
+      imgEl.style.height = `${hPct}%`;
+      imgEl.style.transform = "translateX(-50%)";
+      imgEl.style.opacity = "1";
+    });
+  });
 }
 
 // Pomocnicza funkcja zwracająca przedmioty z danej skrzyni (bronze / silver / gold)
@@ -1060,7 +1257,7 @@ function getAll131OutfitsFlat() {
   ];
 }
 
-// Automatyczna konwersja i ujednolicenie wielkości liter pod GitHub Pages (Linux case-sensitive)
+// Automatyczna konwersja i ujednolicenie wielkości liter pod GitHub Pages
 function resolveOutfitPath(pathOrId) {
   if (!pathOrId) return "";
   const legacyMap = {
@@ -1082,7 +1279,6 @@ function resolveOutfitPath(pathOrId) {
   return matched ? matched.src : candidate;
 }
 
-// Obsługa awaryjnych ścieżek na GitHubie (zmiana wielkości pierwszej litery pliku lub podfolder zlota)
 function getFallbackOutfitPath(src) {
   if (!src) return "";
   if (src.startsWith("grafiki/zlota/")) {
@@ -1300,6 +1496,7 @@ function checkAndUnlockAchievements(profKey) {
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec";
 
 function loadCloudData() {
+  analyzeBoyBaseAnatomy();
   try {
     const localSaved = localStorage.getItem("akademia_save_v9");
     if (localSaved) {
@@ -1308,7 +1505,7 @@ function loadCloudData() {
         state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
         state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
         if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
-        if (parsed.stats.layerLayout) state.stats.layerLayout = parsed.stats.layerLayout;
+        if (parsed.stats.avatarViewMode) state.stats.avatarViewMode = parsed.stats.avatarViewMode;
       }
     }
   } catch (e) {}
@@ -1321,7 +1518,6 @@ function loadCloudData() {
         state.stats.igor = ensurePlayerStructure({ ...state.stats.igor, ...pStats.igor });
         state.stats.hubert = ensurePlayerStructure({ ...state.stats.hubert, ...pStats.hubert });
         if (pStats.stickers) state.stats.stickers = pStats.stickers;
-        if (pStats.layerLayout) state.stats.layerLayout = pStats.layerLayout;
       }
       if (data.lessons) {
         const custom = JSON.parse(data.lessons);
@@ -1679,7 +1875,7 @@ function unlockAllOutfitsForTesting() {
   if (typeof showParentStatus === "function") {
     showParentStatus(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań (Brązowa, Srebrna i Złota skrzynka) dla Igora i Huberta!`);
   }
-  alert(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań (131/131) oraz zwierzaki Memory! Wejdź teraz w „👑 Awatar” na górnym pasku, aby przetestować każde ubranie.`);
+  alert(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań (131/131) oraz zwierzaki Memory!`);
 }
 
 function lockAllOutfitsAfterTesting() {
@@ -1775,21 +1971,16 @@ function closeBadgesModal() {
 }
 
 // ============================================================================
-// MODUŁ GARDEROBY 131 PNG ORAZ PROPORCJONALNE RENDEROWANIE WARSTW NA POSTACI
+// AUTOMATYCZNE RENDEROWANIE POSTACI (CANVAS AUTO-TRIM + TRYB KART BOHATERA)
 // ============================================================================
-function getSlotInlineStyle(slot, src) {
-  const cal = getLayerCalibration()[slot] || DEFAULT_LAYER_LAYOUT[slot];
-  const low = (src || "").toLowerCase();
-  let w = cal.width, h = cal.height, t = cal.top, l = cal.left;
-
-  if (slot === "head" && (low.includes("helmet_") || low.includes("mask_"))) {
-    w = Math.min(100, w + 5);
-    h = Math.min(100, h + 5);
-    t = Math.max(-10, t - 1);
-  } else if (slot === "legs" && (low.includes("short_") || low.includes("shorts_"))) {
-    h = Math.max(12, Math.round(h * 0.72));
+function toggleAvatarViewMode(mode) {
+  state.stats.avatarViewMode = mode;
+  saveCloudData();
+  if (state.profile && state.profile !== "duel") {
+    document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 175);
+    renderAvatarItems();
   }
-  return `top:${t}%; left:${l}%; width:${w}%; height:${h}%; transform:translateX(-50%);`;
+  updateHeaderUI();
 }
 
 function renderBoyAvatarSvg(playerKey, size = 80) {
@@ -1805,39 +1996,44 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   const torsoFb = getFallbackOutfitPath(torsoImg);
   const legsFb = getFallbackOutfitPath(legsImg);
 
-  const headStyle = getSlotInlineStyle("head", headImg);
-  const torsoStyle = getSlotInlineStyle("torso", torsoImg);
-  const legsStyle = getSlotInlineStyle("legs", legsImg);
+  // Jeśli włączony jest widok Kart Bohatera (i rozmiar podglądu jest duży)
+  if (state.stats.avatarViewMode === "cards" && size >= 90) {
+    const slotBox = (img, fb, label, icon) => `
+      <div class="flex flex-col items-center justify-center bg-white rounded-xl border-2 border-indigo-200 p-1.5 shadow-sm w-16 h-16">
+        ${img
+          ? `<img src="${img}" class="w-11 h-11 object-contain" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${fb}';}else{this.style.display='none';}" />`
+          : `<span class="text-xl opacity-30">${icon}</span>`
+        }
+        <span class="text-[8px] font-extrabold text-slate-500 uppercase">${label}</span>
+      </div>
+    `;
+    return `
+      <div class="flex items-center justify-center gap-2 select-none pointer-events-none py-1">
+        <img src="grafiki/boy_base.png" style="width:${Math.round(size * 0.68)}px;height:${size}px;" class="object-contain drop-shadow" onerror="this.style.display='none';" />
+        <div class="flex flex-col gap-1.5">
+          ${slotBox(headImg, headFb, "Głowa", "🧢")}
+          ${slotBox(torsoImg, torsoFb, "Tułów", "👕")}
+          ${slotBox(legsImg, legsFb, "Nogi", "👖")}
+        </div>
+      </div>
+    `;
+  }
 
+  // Widok domyślny: 100% automatyczne przycinanie marginesów PNG i dopasowanie do anatomii boy_base.png
   return `
     <div class="relative mx-auto select-none pointer-events-none overflow-hidden" style="width: ${size}px; height: ${size}px;">
       <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" onerror="this.style.display='none';" />
-      ${legsImg ? `<img src="${legsImg}" style="${legsStyle}" class="absolute object-contain z-20" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
-      ${torsoImg ? `<img src="${torsoImg}" style="${torsoStyle}" class="absolute object-contain z-30" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
-      ${headImg ? `<img src="${headImg}" style="${headStyle}" class="absolute object-contain z-40" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
+      ${legsImg ? `<img src="${legsImg}" style="opacity:0;" onload="autoFitAvatarLayer(this,'legs','${legsImg}')" class="absolute object-fill z-20 transition-opacity duration-150" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
+      ${torsoImg ? `<img src="${torsoImg}" style="opacity:0;" onload="autoFitAvatarLayer(this,'torso','${torsoImg}')" class="absolute object-fill z-30 transition-opacity duration-150" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
+      ${headImg ? `<img src="${headImg}" style="opacity:0;" onload="autoFitAvatarLayer(this,'head','${headImg}')" class="absolute object-fill z-40 transition-opacity duration-150" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
     </div>
   `;
-}
-
-function updateLayerCalValue(slot, prop, val) {
-  const cal = getLayerCalibration();
-  cal[slot][prop] = Number(val);
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 165);
-  updateHeaderUI();
-}
-
-function resetLayerCalDefault() {
-  state.stats.layerLayout = JSON.parse(JSON.stringify(DEFAULT_LAYER_LAYOUT));
-  saveCloudData();
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 165);
-  renderAvatarItems();
-  updateHeaderUI();
 }
 
 function openAvatarModal() {
   if (!state.profile || state.profile === "duel") return;
   document.getElementById("avatarModalPlayerName").textContent = state.profile === "igor" ? "IGOR" : "HUBERT";
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 165);
+  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 175);
   renderAvatarItems();
 
   const m = document.getElementById("avatarModal");
@@ -1870,40 +2066,18 @@ function renderAvatarItems() {
     unlockedCountEl.textContent = count;
   }
 
-  const cal = getLayerCalibration();
+  const vMode = state.stats.avatarViewMode || "auto";
   const memBox = document.getElementById("avatarMemoryAnimalsBox");
   if (memBox) {
     const myAnimals = MEMORY_ANIMALS_POOL.filter(a => (p.memoryAnimals || []).includes(a.id));
     memBox.innerHTML = `
-      <div class="mb-2 px-2 py-1 rounded-xl bg-emerald-100 border border-emerald-400 text-emerald-900 font-extrabold text-[10px]">
-        ✅ Garderoba v9.1 Aktywna (Kliknij ubranie, aby założyć/zdjąć)
-      </div>
-      <div class="text-left bg-white/95 rounded-2xl p-2.5 mb-2 border border-indigo-200 text-[11px] shadow-sm">
-        <div class="font-extrabold text-indigo-900 mb-1.5">🔧 Dopasuj skalę (lewy) i wysokość (prawy suwak):</div>
-        <div class="space-y-1.5">
-          <div>
-            <div class="font-bold text-slate-700 text-[10px]">🧢 Czapka / Hełm</div>
-            <div class="flex gap-1 items-center">
-              <input type="range" min="14" max="80" value="${cal.head.width}" oninput="updateLayerCalValue('head','width',this.value);updateLayerCalValue('head','height',Math.round(this.value*0.7))" class="w-1/2 accent-indigo-600" />
-              <input type="range" min="-10" max="35" value="${cal.head.top}" oninput="updateLayerCalValue('head','top',this.value)" class="w-1/2 accent-amber-500" />
-            </div>
-          </div>
-          <div>
-            <div class="font-bold text-slate-700 text-[10px]">👕 Koszulka / Zbroja</div>
-            <div class="flex gap-1 items-center">
-              <input type="range" min="18" max="85" value="${cal.torso.width}" oninput="updateLayerCalValue('torso','width',this.value);updateLayerCalValue('torso','height',Math.round(this.value*0.8))" class="w-1/2 accent-indigo-600" />
-              <input type="range" min="15" max="60" value="${cal.torso.top}" oninput="updateLayerCalValue('torso','top',this.value)" class="w-1/2 accent-amber-500" />
-            </div>
-          </div>
-          <div>
-            <div class="font-bold text-slate-700 text-[10px]">👖 Spodnie / Szorty</div>
-            <div class="flex gap-1 items-center">
-              <input type="range" min="18" max="85" value="${cal.legs.width}" oninput="updateLayerCalValue('legs','width',this.value);updateLayerCalValue('legs','height',Math.round(this.value*0.95))" class="w-1/2 accent-indigo-600" />
-              <input type="range" min="35" max="85" value="${cal.legs.top}" oninput="updateLayerCalValue('legs','top',this.value)" class="w-1/2 accent-amber-500" />
-            </div>
-          </div>
-          <button onclick="resetLayerCalDefault()" class="w-full py-1 mt-1 bg-slate-100 hover:bg-slate-200 rounded-lg font-bold text-[10px] text-slate-700">↺ Resetuj suwaki</button>
-        </div>
+      <div class="flex gap-1.5 justify-center mb-3">
+        <button onclick="toggleAvatarViewMode('auto')" class="px-2.5 py-1.5 rounded-xl font-extrabold text-[11px] border-2 ${vMode === 'auto' ? 'bg-indigo-600 text-white border-indigo-800' : 'bg-white text-slate-700 border-slate-200'}">
+          🤖 Na postaci (Auto)
+        </button>
+        <button onclick="toggleAvatarViewMode('cards')" class="px-2.5 py-1.5 rounded-xl font-extrabold text-[11px] border-2 ${vMode === 'cards' ? 'bg-indigo-600 text-white border-indigo-800' : 'bg-white text-slate-700 border-slate-200'}">
+          🃏 Obok postaci (Sloty)
+        </button>
       </div>
       <div class="text-[11px] font-extrabold text-indigo-900 mb-1">🐾 Zwierzaki Memory (${myAnimals.length}/${MEMORY_ANIMALS_POOL.length}):</div>
       <div class="flex flex-wrap justify-center gap-1 text-lg">${myAnimals.map(a => `<span title="${a.en} - ${a.pl}">${a.icon}</span>`).join("")}</div>
@@ -1986,13 +2160,12 @@ function equipAvatarItem(category, itemSrc) {
 
   playEffect("beep");
   saveCloudData();
-  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 165);
+  document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 175);
   renderAvatarItems();
   updateHeaderUI();
 }
 </script>
-<!-- ======================== KONIEC CZĘŚCI 3 z 5 ======================== -->
-  
+<!-- ======================== KONIEC CZĘŚCI 3 z 5 ======================== -->  
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 5 ======================= -->
 <script>
 /* ============================================================================

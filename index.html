@@ -1988,14 +1988,14 @@ function toggleAvatarViewMode(mode) {
 // ============================================================================
 
 const DEFAULT_AVATAR_CALIBRATION = {
-  cap:       { label: "🧢 Czapki zwykłe",       top: -2, width: 46, height: 30, scaleX: 1.12, scaleY: 1.08, clipTop: 13 },
-  helmet:    { label: "🪖 Hełmy i Maski (Złote)", top: -1, width: 48, height: 35, scaleX: 1.08, scaleY: 1.08, hideHead: true },
-  hotdogCap: { label: "🌭 Czapka Hot-Dog",      top: -1, width: 50, height: 35, scaleX: 1.08, scaleY: 1.08, clipTop: 15 },
-  shirt:     { label: "👕 Koszulki T-Shirt",    top: 29, width: 48, height: 35, scaleX: 1.00, scaleY: 1.00 },
-  armor:     { label: "🛡️ Kurtki i Zbroje",     top: 28, width: 54, height: 39, scaleX: 1.02, scaleY: 1.04, hideTorso: true },
-  jeans:     { label: "👖 Długie spodnie",      top: 52, width: 42, height: 38, scaleX: 0.72, scaleY: 1.06, clipLegs: 84 },
-  shorts:    { label: "🩳 Krótkie spodenki",    top: 53, width: 40, height: 25, scaleX: 0.78, scaleY: 0.96, clipLegs: 70 },
-  goldPants: { label: "🥾 Spodnie z butami",    top: 52, width: 48, height: 43, scaleX: 0.84, scaleY: 1.04, hideLegs: true }
+  cap:         { label: "🧢 Czapki zwykłe",          top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
+  helmet:      { label: "🪖 Hełmy i Maski (Złote)",  top: 1,  width: 38, height: 29, scaleX: 1.02, scaleY: 1.02 },
+  shirt:       { label: "👕 Koszulki T-Shirt",       top: 29, width: 46, height: 34, scaleX: 0.94, scaleY: 1.00 },
+  armor:       { label: "🛡️ Kurtki i Zbroje (Złote)",top: 27, width: 52, height: 36, scaleX: 1.00, scaleY: 1.02 },
+  jeans:       { label: "👖 Jeansy (Brązowa - 1:1)", top: 0,  width: 100, height: 100, scaleX: 1.00, scaleY: 1.00 },
+  silverPants: { label: "👖 Długie spodnie (Srebrna)",top: 53, width: 36, height: 35, scaleX: 0.84, scaleY: 1.00 },
+  shorts:      { label: "🩳 Krótkie spodenki",       top: 52, width: 36, height: 23, scaleX: 0.84, scaleY: 0.95 },
+  goldPants:   { label: "🥾 Spodnie z butami (Złote)",top: 52, width: 44, height: 42, scaleX: 0.90, scaleY: 1.02 }
 };
 
 window._calibOpen = false;
@@ -2003,7 +2003,7 @@ window._calibActiveType = "jeans";
 
 function getAvatarCalibration() {
   try {
-    const saved = localStorage.getItem("akademia_avatar_calib_v2");
+    const saved = localStorage.getItem("akademia_avatar_calib_v3");
     if (saved) {
       const parsed = JSON.parse(saved);
       const merged = {};
@@ -2018,15 +2018,16 @@ function getAvatarCalibration() {
 
 function saveAvatarCalibration(cal) {
   try {
-    localStorage.setItem("akademia_avatar_calib_v2", JSON.stringify(cal));
+    localStorage.setItem("akademia_avatar_calib_v3", JSON.stringify(cal));
   } catch (e) {}
 }
 
 function classifyHeadItem(src) {
   if (!src) return "none";
   const fn = src.split("/").pop().toLowerCase();
-  if (fn.includes("hot-dog")) return "hotdogCap";
-  if (fn.startsWith("helmet_") || fn.startsWith("mask_")) return "helmet";
+  if (fn.startsWith("helmet_") || fn.startsWith("mask_") || fn.includes("hot-dog")) {
+    return "helmet";
+  }
   return "cap";
 }
 
@@ -2048,6 +2049,9 @@ function classifyTorsoItem(src) {
 function classifyLegsItem(src) {
   if (!src) return "none";
   const fn = src.split("/").pop().toLowerCase();
+  // 1. Tylko 8 plików jeans_* z brązowej skrzynki ma już wbudowane skalowanie 1:1
+  if (fn.startsWith("jeans_")) return "jeans";
+  // 2. Wszystkie krótkie spodenki (Brązowa, Srebrna oraz piłkarskie ze Złotej)
   if (
     fn.startsWith("short_") ||
     fn.startsWith("shorts_") ||
@@ -2056,8 +2060,48 @@ function classifyLegsItem(src) {
   ) {
     return "shorts";
   }
+  // 3. Długie spodnie z własnymi butami ze Złotej Skrzyni
   if (src.includes("/zlota/")) return "goldPants";
-  return "jeans";
+  // 4. Długie spodnie ze Srebrnej Skrzyni (bez butów)
+  return "silverPants";
+}
+
+function renderBoyAvatarSvg(playerKey, size = 80) {
+  const p = ensurePlayerStructure(state.stats[playerKey]);
+  state.stats[playerKey] = p;
+  const avatar = p.avatar || {};
+  const cal = getAvatarCalibration();
+
+  const headImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.head) : avatar.head;
+  const torsoImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.torso || avatar.top) : (avatar.torso || avatar.top);
+  const legsImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.legs || avatar.bottom) : (avatar.legs || avatar.bottom);
+
+  const headFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(headImg) : headImg;
+  const torsoFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(torsoImg) : torsoImg;
+  const legsFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(legsImg) : legsImg;
+
+  const headType = classifyHeadItem(headImg);
+  const torsoType = classifyTorsoItem(torsoImg);
+  const legsType = classifyLegsItem(legsImg);
+
+  const hCfg = cal[headType] || cal.cap;
+  const tCfg = cal[torsoType] || cal.shirt;
+  const lCfg = cal[legsType] || cal.jeans;
+
+  // Ręce, głowa i tułów chłopca są ZAWSZE widoczne.
+  // Jedynie gdy założymy długie spodnie z butami ze Złotej Skrzyni (goldPants),
+  // przycinamy sam dół nóg bazowego chłopca (od 56% w dół), żeby jego białe trampki nie wystawały spod butów rycerza/nurka.
+  const baseClip = legsType === "goldPants" ? "inset(0% 0% 44% 0%)" : "none";
+
+  return `
+    <div class="relative mx-auto select-none pointer-events-none overflow-hidden" style="width: ${size}px; height: ${size}px;">
+      <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${baseClip};" onerror="this.style.display='none';" />
+
+      ${legsImg ? `<img src="${legsImg}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
+      ${torsoImg ? `<img src="${torsoImg}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
+      ${headImg ? `<img src="${headImg}" class="absolute left-1/2 object-fill z-40" style="top: ${hCfg.top}%; width: ${hCfg.width}%; height: ${hCfg.height}%; transform: translateX(-50%) scale(${hCfg.scaleX}, ${hCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${headFb}'!=='${headImg}'){this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
+    </div>
+  `;
 }
 
 function renderBoyAvatarSvg(playerKey, size = 80) {
@@ -2170,7 +2214,7 @@ function changeCalibVal(typeKey, prop, val) {
 }
 
 function resetCalibDefaults() {
-  localStorage.removeItem("akademia_avatar_calib_v2");
+  localStorage.removeItem("akademia_avatar_calib_v3");
   updateAvatarPreviewWithCalibrator();
   updateHeaderUI();
 }

@@ -1005,986 +1005,8 @@ let state = {
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 5 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 5: STAN GRY, OSIĄGNIĘCIA, CHMURA, SÓWKA, SKRZYNIE I AUTO-GARDEROBA
+   CZĘŚĆ 3 z 5: STAN GRY, CHMURA, ZWIERZAK (TOWARZYSZ) I KALIBRACJA AWATARA
    ============================================================================ */
-
-// Pamięć podręczna dla automatycznie przyciętych grafik (bez pustych marginesów PNG)
-const _trimmedImageCache = {};
-let _boyAnatomyMetrics = null;
-let _boyAnatomyLoading = false;
-
-// Automatyczne skanowanie sylwetki boy_base.png w celu wykrycia głowy, ramion, pasa i nóg
-function analyzeBoyBaseAnatomy(callback) {
-  if (_boyAnatomyMetrics) {
-    if (callback) callback(_boyAnatomyMetrics);
-    return;
-  }
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.onload = function () {
-    try {
-      const cw = 200, ch = 200;
-      const canvas = document.createElement("canvas");
-      canvas.width = cw;
-      canvas.height = ch;
-      const ctx = canvas.getContext("2d");
-
-      // Rysujemy boy_base.png tak jak object-contain w kwadracie
-      const scale = Math.min(cw / img.width, ch / img.height);
-      const dw = img.width * scale, dh = img.height * scale;
-      const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
-      ctx.drawImage(img, dx, dy, dw, dh);
-
-      const data = ctx.getImageData(0, 0, cw, ch).data;
-      let minY = ch, maxY = 0, minX = cw, maxX = 0;
-
-      for (let y = 0; y < ch; y++) {
-        for (let x = 0; x < cw; x++) {
-          const alpha = data[(y * cw + x) * 4 + 3];
-          if (alpha > 25) {
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-          }
-        }
-      }
-
-      const bodyH = Math.max(40, maxY - minY);
-      const measureBand = (yStartRatio, yEndRatio) => {
-        const y0 = Math.floor(minY + bodyH * yStartRatio);
-        const y1 = Math.floor(minY + bodyH * yEndRatio);
-        let bMinX = cw, bMaxX = 0;
-        for (let y = y0; y <= y1; y++) {
-          for (let x = 0; x < cw; x++) {
-            if (data[(y * cw + x) * 4 + 3] > 25) {
-              if (x < bMinX) bMinX = x;
-              if (x > bMaxX) bMaxX = x;
-            }
-          }
-        }
-        if (bMaxX <= bMinX) return { widthPct: 30, centerPct: 50 };
-        return {
-          widthPct: ((bMaxX - bMinX) / cw) * 100,
-          centerPct: (((bMinX + bMaxX) / 2) / cw) * 100
-        };
-      };
-
-      const headBand = measureBand(0.03, 0.24);
-      const torsoBand = measureBand(0.33, 0.56);
-      const legsBand = measureBand(0.60, 0.88);
-
-      _boyAnatomyMetrics = {
-        topPct: (minY / ch) * 100,
-        bottomPct: (maxY / ch) * 100,
-        heightPct: (bodyH / ch) * 100,
-        centerPct: headBand.centerPct || 50,
-        headWidthPct: headBand.widthPct,
-        torsoWidthPct: torsoBand.widthPct,
-        legsWidthPct: legsBand.widthPct
-      };
-    } catch (e) {
-      _boyAnatomyMetrics = {
-        topPct: 8, bottomPct: 92, heightPct: 84, centerPct: 50,
-        headWidthPct: 26, torsoWidthPct: 34, legsWidthPct: 26
-      };
-    }
-    if (callback) callback(_boyAnatomyMetrics);
-  };
-  img.onerror = function () {
-    _boyAnatomyMetrics = {
-      topPct: 8, bottomPct: 92, heightPct: 84, centerPct: 50,
-      headWidthPct: 26, torsoWidthPct: 34, legsWidthPct: 26
-    };
-    if (callback) callback(_boyAnatomyMetrics);
-  };
-  img.src = "grafiki/boy_base.png";
-}
-
-// Automatyczne przycinanie pustych przezroczystych brzegów każdego ubrania PNG
-function getAutoTrimmedOutfit(src, callback) {
-  if (_trimmedImageCache[src]) {
-    callback(_trimmedImageCache[src]);
-    return;
-  }
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.onload = function () {
-    try {
-      const w = img.width, h = img.height;
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      const data = ctx.getImageData(0, 0, w, h).data;
-
-      let minX = w, minY = h, maxX = 0, maxY = 0;
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          if (data[(y * w + x) * 4 + 3] > 20) {
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-          }
-        }
-      }
-
-      if (maxX > minX && maxY > minY) {
-        const cropW = maxX - minX + 1;
-        const cropH = maxY - minY + 1;
-        const outCanvas = document.createElement("canvas");
-        outCanvas.width = cropW;
-        outCanvas.height = cropH;
-        outCanvas.getContext("2d").drawImage(img, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-
-        const result = {
-          dataUrl: outCanvas.toDataURL("image/png"),
-          aspect: cropW / cropH
-        };
-        _trimmedImageCache[src] = result;
-        callback(result);
-        return;
-      }
-    } catch (e) {}
-    const fallback = { dataUrl: src, aspect: 1 };
-    _trimmedImageCache[src] = fallback;
-    callback(fallback);
-  };
-  img.onerror = function () {
-    const fbSrc = getFallbackOutfitPath(src);
-    if (fbSrc !== src && !_trimmedImageCache[fbSrc]) {
-      getAutoTrimmedOutfit(fbSrc, callback);
-    } else {
-      callback({ dataUrl: src, aspect: 1 });
-    }
-  };
-  img.src = src;
-}
-
-// Funkcja wywoływana automatycznie po załadowaniu warstwy ubrania - dopasowuje ją do anatomii postaci
-function autoFitAvatarLayer(imgEl, slot, rawSrc) {
-  if (!imgEl || imgEl.dataset.autofitted === "1") return;
-  imgEl.dataset.autofitted = "1";
-
-  analyzeBoyBaseAnatomy(metrics => {
-    getAutoTrimmedOutfit(rawSrc, trimmed => {
-      if (trimmed && trimmed.dataUrl) {
-        imgEl.src = trimmed.dataUrl;
-      }
-      const low = (rawSrc || "").toLowerCase();
-      const aspect = (trimmed && trimmed.aspect) ? trimmed.aspect : 1;
-      const topY = metrics.topPct;
-      const bodyH = metrics.heightPct;
-      const centerX = metrics.centerPct;
-
-      let wPct = 30, hPct = 25, topPct = 10;
-
-      if (slot === "head") {
-        const isFullHead = low.includes("helmet_") || low.includes("mask_");
-        if (isFullHead) {
-          wPct = Math.max(22, metrics.headWidthPct * 1.18);
-          hPct = wPct / aspect;
-          const maxH = bodyH * 0.34;
-          if (hPct > maxH) { hPct = maxH; wPct = hPct * aspect; }
-          topPct = topY - bodyH * 0.02;
-        } else {
-          // Czapka z daszkiem (cap_)
-          wPct = Math.max(20, metrics.headWidthPct * 1.06);
-          hPct = wPct / aspect;
-          const maxH = bodyH * 0.22;
-          if (hPct > maxH) { hPct = maxH; wPct = hPct * aspect; }
-          topPct = topY - hPct * 0.22;
-        }
-      } else if (slot === "torso") {
-        const isSuit = low.includes("suit_") || low.includes("armor_");
-        wPct = Math.max(24, metrics.torsoWidthPct * (isSuit ? 1.08 : 1.02));
-        hPct = bodyH * (isSuit ? 0.38 : 0.33);
-        topPct = topY + bodyH * 0.29;
-      } else if (slot === "legs") {
-        const isShorts = low.includes("short_") || low.includes("shorts_");
-        wPct = Math.max(20, metrics.legsWidthPct * 1.08);
-        hPct = bodyH * (isShorts ? 0.20 : 0.33);
-        topPct = topY + bodyH * 0.57;
-      }
-
-      imgEl.style.left = `${centerX}%`;
-      imgEl.style.top = `${topPct}%`;
-      imgEl.style.width = `${wPct}%`;
-      imgEl.style.height = `${hPct}%`;
-      imgEl.style.transform = "translateX(-50%)";
-      imgEl.style.opacity = "1";
-    });
-  });
-}
-
-// Pomocnicza funkcja zwracająca przedmioty z danej skrzyni (bronze / silver / gold)
-function getAllClothingItems(tier) {
-  const folder = PATHS[tier];
-  const data = OUTFITS_DB[tier];
-  if (!data) return [];
-  const rarityMap = { bronze: "common", silver: "rare", gold: "epic" };
-  const tierNameMap = { bronze: "📦 Brązowa", silver: "🥈 Srebrna", gold: "👑 Złota" };
-  const items = [];
-
-  ["head", "torso", "legs"].forEach(slot => {
-    (data[slot] || []).forEach(filename => {
-      const cleanName = filename.replace(/\.png$/i, "");
-      items.push({
-        id: `${folder}${filename}`,
-        src: `${folder}${filename}`,
-        fallbackSrc: tier === "gold" ? `grafiki/srebrna/zlota/${filename}` : `${folder}${filename}`,
-        tier: tier,
-        tierLabel: tierNameMap[tier],
-        rarity: rarityMap[tier],
-        slot: slot,
-        filename: filename,
-        name: cleanName
-      });
-    });
-  });
-  return items;
-}
-
-// Pełna płaska lista wszystkich 131 ubrań ze wszystkich 3 skrzyń
-function getAll131OutfitsFlat() {
-  return [
-    ...getAllClothingItems("bronze"),
-    ...getAllClothingItems("silver"),
-    ...getAllClothingItems("gold")
-  ];
-}
-
-// Automatyczna konwersja i ujednolicenie wielkości liter pod GitHub Pages
-function resolveOutfitPath(pathOrId) {
-  if (!pathOrId) return "";
-  const legacyMap = {
-    red_cap: "grafiki/cap_red.png",
-    hero_shirt: "grafiki/shirt_blue.png",
-    jeans: "grafiki/jeans_blue.png",
-    space_helmet: "grafiki/zlota/helmet_astronaut.png"
-  };
-  let candidate = legacyMap[pathOrId] || pathOrId;
-  if (!candidate.includes("/")) {
-    candidate = "grafiki/" + candidate.replace(/\.png$/i, "") + ".png";
-  }
-  const all131 = getAll131OutfitsFlat();
-  const lowerCandidate = candidate.toLowerCase();
-  const matched = all131.find(it =>
-    it.src.toLowerCase() === lowerCandidate ||
-    it.fallbackSrc.toLowerCase() === lowerCandidate
-  );
-  return matched ? matched.src : candidate;
-}
-
-function getFallbackOutfitPath(src) {
-  if (!src) return "";
-  if (src.startsWith("grafiki/zlota/")) {
-    return src.replace("grafiki/zlota/", "grafiki/srebrna/zlota/");
-  }
-  const parts = src.split("/");
-  const file = parts.pop();
-  if (file && file.length > 1) {
-    const toggled = file[0] === file[0].toUpperCase()
-      ? file[0].toLowerCase() + file.slice(1)
-      : file[0].toUpperCase() + file.slice(1);
-    return [...parts, toggled].join("/");
-  }
-  return src;
-}
-
-function ensurePlayerStructure(p) {
-  const def = createDefaultPlayerStats();
-  if (!p) return def;
-
-  const rawUnlocked = Array.isArray(p.unlockedItems) && p.unlockedItems.length
-    ? p.unlockedItems.map(resolveOutfitPath)
-    : def.unlockedItems.map(resolveOutfitPath);
-
-  const rawAvatar = p.avatar || def.avatar;
-  const normalizedAvatar = {
-    head: resolveOutfitPath(rawAvatar.head !== undefined ? rawAvatar.head : def.avatar.head),
-    torso: resolveOutfitPath(rawAvatar.torso !== undefined ? rawAvatar.torso : (rawAvatar.top || def.avatar.torso)),
-    legs: resolveOutfitPath(rawAvatar.legs !== undefined ? rawAvatar.legs : (rawAvatar.bottom || def.avatar.legs))
-  };
-
-  return {
-    ...def,
-    ...p,
-    lessonCounts: p.lessonCounts || {},
-    badges: Array.isArray(p.badges) ? p.badges : [],
-    unlockedItems: Array.from(new Set(rawUnlocked)),
-    memoryAnimals: Array.isArray(p.memoryAnimals) && p.memoryAnimals.length ? p.memoryAnimals : def.memoryAnimals,
-    avatar: normalizedAvatar,
-    equipped: { ...def.equipped, ...(p.equipped || {}) }
-  };
-}
-
-function updateDailyStreakForPlayer(profKey) {
-  const p = state.stats[profKey];
-  if (!p) return;
-  const today = new Date().toISOString().slice(0, 10);
-  if (p.lastPlayDate === today) return;
-  if (!p.lastPlayDate) {
-    p.streakDays = 1;
-  } else {
-    const last = new Date(p.lastPlayDate);
-    const curr = new Date(today);
-    const diffDays = Math.round((curr - last) / (1000 * 60 * 60 * 24));
-    if (diffDays === 1) p.streakDays = (p.streakDays || 1) + 1;
-    else if (diffDays > 1) p.streakDays = 1;
-  }
-  p.lastPlayDate = today;
-}
-
-// Generator ponad 90 osiągnięć w 5 kategoriach
-function getAllAchievements() {
-  const list = [];
-
-  [10, 25, 50, 100, 200, 350, 500, 750, 1000].forEach(t => {
-    list.push({
-      id: `stars_${t}`,
-      cat: "stars",
-      icon: t >= 350 ? "🌟" : "⭐",
-      name: `${t} Gwiazdek`,
-      desc: `Zbierz łącznie ${t} złotych gwiazdek`,
-      check: p => p.stars >= t,
-      progress: p => `${Math.min(p.stars, t)}/${t}`
-    });
-  });
-
-  [
-    { d: 2, n: "2 Dni z rzędu" },
-    { d: 3, n: "3 Dni z rzędu" },
-    { d: 5, n: "5 Dni z rzędu" },
-    { d: 7, n: "Tydzień (7 dni)" },
-    { d: 14, n: "2 Tygodnie (14 dni)" },
-    { d: 21, n: "3 Tygodnie (21 dni)" },
-    { d: 30, n: "Miesiąc (30 dni)" },
-    { d: 60, n: "2 Miesiące (60 dni)" },
-    { d: 90, n: "3 Miesiące (90 dni)" },
-    { d: 120, n: "4 Miesiące (120 dni)" }
-  ].forEach(st => {
-    list.push({
-      id: `streak_${st.d}`,
-      cat: "streak",
-      icon: "🔥",
-      name: st.n,
-      desc: `Ćwicz angielski przez ${st.d} dni pod rząd!`,
-      check: p => (p.streakDays || 1) >= st.d,
-      progress: p => `${Math.min(p.streakDays || 1, st.d)}/${st.d}`
-    });
-  });
-
-  [1, 2, 3, 5, 8, 13, 21, 35].forEach(cnt => {
-    state.lessons.forEach(lesson => {
-      const shortTitle = lesson.title.replace(/^\d+\.\s*/, "");
-      list.push({
-        id: `lesson_${lesson.id}_${cnt}`,
-        cat: "lessons",
-        icon: lesson.icon ? Array.from(lesson.icon)[0] : "📘",
-        name: `${shortTitle} (${cnt}x)`,
-        desc: `Ukończ lekcję „${shortTitle}” ${cnt} razy!`,
-        check: p => ((p.lessonCounts && p.lessonCounts[lesson.id]) || 0) >= cnt,
-        progress: p => `${Math.min((p.lessonCounts && p.lessonCounts[lesson.id]) || 0, cnt)}/${cnt}`
-      });
-    });
-  });
-
-  [1, 3, 7, 15, 30].forEach(n => {
-    list.push({
-      id: `perf_${n}`,
-      cat: "special",
-      icon: "🎯",
-      name: `Snajper 100% (${n}x)`,
-      desc: `Ukończ ${n} rund bez żadnego błędu!`,
-      check: p => p.perfectRounds >= n,
-      progress: p => `${Math.min(p.perfectRounds, n)}/${n}`
-    });
-  });
-  [5, 15, 30, 60, 100].forEach(n => {
-    list.push({
-      id: `mic_${n}`,
-      cat: "special",
-      icon: "🎤",
-      name: `Mistrz Wymowy (${n}x)`,
-      desc: `Powiedz poprawnie ${n} słówek do mikrofonu!`,
-      check: p => p.micCount >= n,
-      progress: p => `${Math.min(p.micCount, n)}/${n}`
-    });
-  });
-  [1, 3, 7, 15].forEach(n => {
-    list.push({
-      id: `ex_${n}`,
-      cat: "special",
-      icon: "🎓",
-      name: `Bohater Sprawdzianu (${n}x)`,
-      desc: `Ukończ Wielki Sprawdzian ${n} razy!`,
-      check: p => p.examsDone >= n,
-      progress: p => `${Math.min(p.examsDone, n)}/${n}`
-    });
-  });
-  [1, 5, 10, 20].forEach(n => {
-    list.push({
-      id: `duel_${n}`,
-      cat: "special",
-      icon: "⚔️",
-      name: `Mistrz Pojedynków (${n}x)`,
-      desc: `Wygraj Pojedynek Braci ${n} razy!`,
-      check: p => p.duelsWon >= n,
-      progress: p => `${Math.min(p.duelsWon, n)}/${n}`
-    });
-  });
-  [10, 25, 45, 60].forEach(n => {
-    list.push({
-      id: `st_${n}`,
-      cat: "special",
-      icon: "🎁",
-      name: `Kolekcjoner Naklejek (${n})`,
-      desc: `Zbierz ${n} naklejek w klaserze!`,
-      check: () => (state.stats.stickers || []).length >= n,
-      progress: () => `${Math.min((state.stats.stickers || []).length, n)}/${n}`
-    });
-  });
-
-  [
-    { k: "stars", n: "Arcymistrz Gwiazdek", d: "Zbierz wszystkie odznaki za Gwiazdki!" },
-    { k: "streak", n: "Arcymistrz Systematyczności", d: "Zbierz wszystkie odznaki za Dni z rzędu!" },
-    { k: "lessons", n: "Arcymistrz Lekcji", d: "Zbierz wszystkie odznaki za Powtórki lekcji!" },
-    { k: "special", n: "Arcymistrz Wyzwań", d: "Zbierz wszystkie odznaki w kategorii Wyzwania!" }
-  ].forEach(mc => {
-    const subIds = list.filter(a => a.cat === mc.k).map(a => a.id);
-    list.push({
-      id: `master_${mc.k}`,
-      cat: "masters",
-      icon: "👑",
-      name: mc.n,
-      desc: mc.d,
-      check: p => subIds.length > 0 && subIds.every(id => p.badges.includes(id)),
-      progress: p => `${subIds.filter(id => p.badges.includes(id)).length}/${subIds.length}`
-    });
-  });
-
-  return list;
-}
-
-function checkAndUnlockAchievements(profKey) {
-  const p = state.stats[profKey];
-  if (!p) return;
-  const allAch = getAllAchievements();
-  let newly = [];
-  for (let pass = 0; pass < 2; pass++) {
-    allAch.forEach(ach => {
-      if (!p.badges.includes(ach.id) && ach.check(p)) {
-        p.badges.push(ach.id);
-        newly.push(ach);
-      }
-    });
-  }
-  if (newly.length > 0) {
-    newly.forEach(ach => state.rewardQueue.push({ profKey, achievement: ach }));
-    saveCloudData();
-    processNextRewardInQueue();
-  }
-}
-
-// =========================================================================
-// KOMUNIKACJA Z CHMURĄ (GOOGLE APPS SCRIPT) + ZAPIS LOKALNY
-// =========================================================================
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec";
-
-function loadCloudData() {
-  analyzeBoyBaseAnatomy();
-  try {
-    const localSaved = localStorage.getItem("akademia_save_v9");
-    if (localSaved) {
-      const parsed = JSON.parse(localSaved);
-      if (parsed.stats) {
-        state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
-        state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
-        if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
-        if (parsed.stats.avatarViewMode) state.stats.avatarViewMode = parsed.stats.avatarViewMode;
-      }
-    }
-  } catch (e) {}
-
-  fetch(GAS_API_URL)
-    .then(res => res.json())
-    .then(data => {
-      if (data.stats) {
-        const pStats = JSON.parse(data.stats);
-        state.stats.igor = ensurePlayerStructure({ ...state.stats.igor, ...pStats.igor });
-        state.stats.hubert = ensurePlayerStructure({ ...state.stats.hubert, ...pStats.hubert });
-        if (pStats.stickers) state.stats.stickers = pStats.stickers;
-      }
-      if (data.lessons) {
-        const custom = JSON.parse(data.lessons);
-        const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
-        state.lessons = state.lessons.filter(l => baseIds.includes(l.id));
-        state.lessons.push(...custom);
-      }
-      if (data.questionsPerRound) {
-        state.questionsPerRound = parseInt(data.questionsPerRound) || 8;
-      }
-      updateHeaderUI();
-      if (state.profile) showLessonMenu(); else showStartScreen();
-    })
-    .catch(err => {
-      console.error("Błąd pobierania danych:", err);
-      if (state.profile) showLessonMenu(); else showStartScreen();
-    });
-}
-
-function saveCloudData() {
-  try {
-    localStorage.setItem("akademia_save_v9", JSON.stringify({
-      stats: state.stats,
-      questionsPerRound: state.questionsPerRound
-    }));
-  } catch (e) {}
-
-  const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
-  const payload = {
-    action: "save",
-    data: {
-      stats: state.stats,
-      lessons: state.lessons.filter(l => !baseIds.includes(l.id)),
-      questionsPerRound: state.questionsPerRound
-    }
-  };
-  fetch(GAS_API_URL, {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: { "Content-Type": "text/plain;charset=utf-8" }
-  }).catch(err => console.error("Błąd zapisu:", err));
-}
-
-function parentScanWorksheetAI(inputEl) {
-  const file = inputEl.files && inputEl.files[0];
-  const apiKey = document.getElementById("parentGeminiKey").value.trim();
-  const targetAge = document.getElementById("parentAiTargetAge").value;
-  if (!file) return;
-  if (!apiKey) { alert("Wpisz najpierw darmowy klucz Gemini API!"); return; }
-  showParentStatus("⏳ Sówka AI analizuje zdjęcie kartki... Poczekaj ok. 10-15 sekund...");
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64 = e.target.result.split(",")[1];
-    fetch(GAS_API_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "scanAI", base64: base64, mimeType: file.type, targetAge: targetAge, apiKey: apiKey }),
-      headers: { "Content-Type": "text/plain;charset=utf-8" }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === "success") {
-        state.lessons.push(data.lesson);
-        saveCloudData();
-        showParentStatus(`✅ Sówka AI utworzyła lekcję: "${data.lesson.title}" (${data.lesson.items.length} słówek)!`);
-        openParentDashboard();
-      } else {
-        alert("Błąd AI: " + data.message);
-      }
-    })
-    .catch(err => alert("Błąd połączenia: " + err.message));
-  };
-  reader.readAsDataURL(file);
-}
-
-// Efekty dźwiękowe i głosowe
-function playEffect(type) {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === "suspended") audioCtx.resume();
-    const now = audioCtx.currentTime;
-    const notes = type === "success" ? [523.25, 659.25, 783.99, 1046.5]
-                : type === "wrong" ? [240, 180]
-                : type === "beep" ? [880]
-                : [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
-    notes.forEach((freq, idx) => {
-      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-      osc.type = type === "wrong" ? "sawtooth" : "triangle";
-      osc.frequency.setValueAtTime(freq, now + idx * 0.09);
-      gain.gain.setValueAtTime(0.18, now + idx * 0.09);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.24);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now + idx * 0.09);
-      osc.stop(now + idx * 0.09 + 0.25);
-    });
-  } catch (e) {}
-}
-
-let activeSpeechToken = 0;
-let pendingAdvanceTimer = null;
-
-function cancelAllSpeechAndTimers() {
-  activeSpeechToken++;
-  if (pendingAdvanceTimer) { clearTimeout(pendingAdvanceTimer); pendingAdvanceTimer = null; }
-  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-  document.querySelectorAll(".tutorial-highlight").forEach(el => el.classList.remove("tutorial-highlight"));
-}
-
-function speakSequence(segments, onComplete = null) {
-  cancelAllSpeechAndTimers();
-  const myToken = activeSpeechToken;
-  if (!("speechSynthesis" in window) || !segments || !segments.length) {
-    if (onComplete) pendingAdvanceTimer = setTimeout(onComplete, 800);
-    return;
-  }
-  const voices = window.speechSynthesis.getVoices();
-  let idx = 0;
-  function next() {
-    if (myToken !== activeSpeechToken) return;
-    if (idx >= segments.length) {
-      if (onComplete) {
-        pendingAdvanceTimer = setTimeout(() => { if (myToken === activeSpeechToken) onComplete(); }, 500);
-      }
-      return;
-    }
-    const seg = segments[idx++];
-    if (seg.onStart) seg.onStart();
-    const utter = new SpeechSynthesisUtterance(seg.text);
-    window._activeUtterance = utter;
-    if (seg.lang === "en") {
-      utter.lang = "en-GB";
-      const enV = voices.find(v => v.lang.startsWith("en-GB") || v.lang.startsWith("en-US") || v.lang.startsWith("en"));
-      if (enV) utter.voice = enV;
-      utter.rate = state.turtleMode ? 0.6 : 0.85;
-    } else {
-      utter.lang = "pl-PL";
-      const plV = voices.find(v => v.lang.startsWith("pl"));
-      if (plV) utter.voice = plV;
-      utter.rate = 1.02;
-    }
-    let done = false;
-    const finish = () => {
-      if (done || myToken !== activeSpeechToken) return;
-      done = true;
-      if (seg.onEnd) seg.onEnd();
-      next();
-    };
-    const safety = setTimeout(finish, Math.max(3600, seg.text.length * 140));
-    utter.onend = () => { clearTimeout(safety); finish(); };
-    utter.onerror = () => { clearTimeout(safety); finish(); };
-    window.speechSynthesis.speak(utter);
-  }
-  next();
-}
-
-function toggleTurtle() {
-  state.turtleMode = !state.turtleMode;
-  const lbl = document.getElementById("turtleLabel");
-  if (lbl) lbl.textContent = state.turtleMode ? "Żółwik" : "Normalnie";
-}
-
-function startKidVoiceTour() {
-  if (!state.profile) return;
-  if (state.currentLessonId) showLessonMenu();
-  const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : "Chłopaki";
-  const hl = (id, on) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.classList.toggle("tutorial-highlight", on);
-      if (on) el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  };
-  speakSequence([
-    { lang: "pl", text: `Cześć ${kidName}! Pokażę Ci co gdzie jest! Na środku ekranu masz kolorowe kafelki z lekcjami. Kliknij lekcję, aby zbierać gwiazdki!`, onStart: () => hl("lessonsGridBox", true), onEnd: () => hl("lessonsGridBox", false) },
-    { lang: "pl", text: "Tutaj na górze świeci przycisk Odznaki! Za gwiazdki, powtarzanie lekcji i codzienne ćwiczenia zdobywasz medale, a za każdy medal od razu losujesz Skrzynię albo Naklejkę!", onStart: () => hl("navBadgesBtn", true), onEnd: () => hl("navBadgesBtn", false) },
-    { lang: "pl", text: "Obok świeci różowy przycisk Naklejki! Tam zobaczysz swój klaser z kosmosem, zwierzętami, owocami i autami!", onStart: () => hl("navStickersBtn", true), onEnd: () => hl("navStickersBtn", false) },
-    { lang: "pl", text: "Tutaj jest przycisk Awatar! W nim przebierasz swoją postać w czapki, koszulki, zbroje i stroje ze skrzyń!", onStart: () => hl("navAvatarBtn", true), onEnd: () => hl("navAvatarBtn", false) },
-    { lang: "pl", text: "Gdy klikniesz zielonego Żółwika, lektor będzie mówił bardzo powoli!", onStart: () => hl("btnTurtle", true), onEnd: () => hl("btnTurtle", false) },
-    { lang: "pl", text: "A ten duży przycisk to Wielki Sprawdzian, w którym zawsze wygrywasz Skrzynię! Powodzenia!", onStart: () => hl("btnExamMain", true), onEnd: () => hl("btnExamMain", false) }
-  ]);
-}
-
-// =========================================================================
-// NAGRODY ZA OSIĄGNIĘCIA I LOSOWANIE ZE SKRZYŃ (131 UBRAŃ + MEMORY + NAKLEJKI)
-// =========================================================================
-function processNextRewardInQueue() {
-  const modal = document.getElementById("rewardPopupModal");
-  if (!modal || !modal.classList.contains("hidden") || !state.rewardQueue.length) return;
-  const { profKey, achievement } = state.rewardQueue.shift();
-  const lockedStickers = STICKER_POOL.filter(s => !state.stats.stickers.includes(s.id));
-  const giveSticker = lockedStickers.length > 0 && Math.random() < 0.35;
-
-  playEffect("fanfare");
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-
-  if (giveSticker) {
-    const wonSt = lockedStickers[Math.floor(Math.random() * lockedStickers.length)];
-    state.stats.stickers.push(wonSt.id);
-    saveCloudData();
-    document.getElementById("rewardPopupContent").innerHTML = `
-      <div class="text-xs font-bold uppercase px-3 py-1 rounded-full bg-amber-100 text-amber-800 inline-block mb-1">🏅 Nowe Osiągnięcie!</div>
-      <h3 class="text-xl font-extrabold text-slate-900">${achievement.icon} ${achievement.name}</h3>
-      <p class="text-xs text-slate-500 mb-3">${achievement.desc}</p>
-      <div class="p-4 rounded-3xl bg-pink-50 border-4 border-pink-300 my-2">
-        <div class="text-xs font-bold text-pink-700 uppercase">🎁 Nagroda: Nowa Naklejka!</div>
-        <div class="text-6xl my-2 float-anim">${wonSt.icon}</div>
-        <div class="text-lg font-extrabold text-slate-800">${wonSt.name}</div>
-      </div>
-      <button onclick="closeRewardPopup()" class="w-full py-3 rounded-2xl bg-pink-500 text-white font-bold text-base shadow">Odbieram!</button>
-    `;
-    speakSequence([{ lang: "pl", text: `Brawo! Zdobywasz osiągnięcie: ${achievement.name} oraz nową naklejkę: ${wonSt.name}!` }]);
-  } else {
-    const r = Math.random() * 100;
-    const chestType = r < 55 ? "bronze" : r < 85 ? "silver" : "gold";
-    renderChestOpeningInsidePopup(profKey, chestType, `🏅 Nagroda za: ${achievement.name}`);
-  }
-}
-
-function rollRewardFromChest(profKey, chestType) {
-  const p = ensurePlayerStructure(state.stats[profKey]);
-  state.stats[profKey] = p;
-
-  const lockedMemory = MEMORY_ANIMALS_POOL.filter(a => !p.memoryAnimals.includes(a.id));
-  const lockedStickers = STICKER_POOL.filter(s => !state.stats.stickers.includes(s.id));
-
-  const rollSpecial = Math.random() * 100;
-  if (rollSpecial < 15 && lockedMemory.length > 0) {
-    const wonAnimal = lockedMemory[Math.floor(Math.random() * lockedMemory.length)];
-    p.memoryAnimals.push(wonAnimal.id);
-    saveCloudData();
-    return { rewardCategory: "memory_animal", item: wonAnimal };
-  }
-  if (rollSpecial >= 15 && rollSpecial < 27 && lockedStickers.length > 0) {
-    const wonSt = lockedStickers[Math.floor(Math.random() * lockedStickers.length)];
-    state.stats.stickers.push(wonSt.id);
-    saveCloudData();
-    return { rewardCategory: "sticker", item: wonSt };
-  }
-
-  const weights = chestType === "gold"
-    ? { bronze: 10, silver: 35, gold: 55 }
-    : chestType === "silver"
-    ? { bronze: 30, silver: 55, gold: 15 }
-    : { bronze: 75, silver: 20, gold: 5 };
-
-  const r = Math.random() * 100;
-  const targetTier = r < weights.gold ? "gold" : r < (weights.gold + weights.silver) ? "silver" : "bronze";
-
-  const tierItems = getAllClothingItems(targetTier);
-  const all131 = getAll131OutfitsFlat();
-
-  let pool = tierItems.filter(it => !p.unlockedItems.includes(it.src));
-  if (!pool.length) pool = getAllClothingItems(chestType).filter(it => !p.unlockedItems.includes(it.src));
-  if (!pool.length) pool = all131.filter(it => !p.unlockedItems.includes(it.src));
-  if (!pool.length) pool = getAllClothingItems(chestType);
-
-  const wonOutfit = pool[Math.floor(Math.random() * pool.length)];
-  if (!p.unlockedItems.includes(wonOutfit.src)) {
-    p.unlockedItems.push(wonOutfit.src);
-  }
-  p.avatar[wonOutfit.slot] = wonOutfit.src;
-  saveCloudData();
-  return { rewardCategory: "clothing", item: wonOutfit };
-}
-
-function renderChestOpeningInsidePopup(profKey, chestType, headerLabel) {
-  const meta = {
-    bronze: { icon: "📦", name: "Brązowa Skrzynia", c: "border-amber-600 bg-amber-50", d: "30 ubrań codziennych + szansa na Srebrne, Złote, Naklejki i Memory!" },
-    silver: { icon: "🥈", name: "Srebrna Skrzynia", c: "border-slate-400 bg-slate-50", d: "56 przebrań tematycznych + szansa na Złote stroje, Naklejki i Memory!" },
-    gold: { icon: "👑", name: "Złota Skrzynia!", c: "border-yellow-400 bg-yellow-50", d: "45 epickich strojów specjalnych + Naklejki i Zwierzaki Memory!" }
-  }[chestType];
-  const modal = document.getElementById("rewardPopupModal");
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  document.getElementById("rewardPopupContent").innerHTML = `
-    <div class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full inline-block mb-2">${headerLabel}</div>
-    <div class="p-4 rounded-3xl border-4 ${meta.c} my-2">
-      <div class="text-6xl my-2 animate-bounce">${meta.icon}</div>
-      <h3 class="text-2xl font-extrabold text-slate-900">${meta.name}</h3>
-      <p class="text-xs text-slate-500 mt-1">${meta.d}</p>
-    </div>
-    <button onclick="openRolledChestNow('${profKey}','${chestType}')" class="w-full py-3.5 mt-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold text-lg shadow">🔑 Otwórz skrzynię!</button>
-  `;
-  speakSequence([{ lang: "pl", text: `Wygrywasz nagrodę: ${meta.name}! Kliknij, aby ją otworzyć!` }]);
-}
-
-function openRolledChestNow(profKey, chestType) {
-  playEffect("fanfare");
-  const result = rollRewardFromChest(profKey, chestType);
-
-  if (result.rewardCategory === "memory_animal") {
-    const an = result.item;
-    document.getElementById("rewardPopupContent").innerHTML = `
-      <div class="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 inline-block mb-2">🐾 NOWY ZWIERZAK DO MEMORY!</div>
-      <h3 class="text-xl font-extrabold text-slate-900 mb-1">${an.en} – ${an.pl}</h3>
-      <div class="text-7xl my-3 float-anim">${an.icon}</div>
-      <p class="text-xs text-slate-500 mb-3">Odblokowano nową parę zwierzaków w pamięci!</p>
-      <button onclick="closeRewardPopup()" class="w-full py-3 rounded-2xl bg-emerald-500 text-white font-bold text-lg shadow">Super!</button>
-    `;
-    speakSequence([{ lang: "pl", text: `W skrzyni był nowy zwierzak do gry Memory: ${an.pl}!` }]);
-    return;
-  }
-
-  if (result.rewardCategory === "sticker") {
-    const st = result.item;
-    document.getElementById("rewardPopupContent").innerHTML = `
-      <div class="text-xs font-extrabold px-3 py-1 rounded-full bg-pink-100 text-pink-900 inline-block mb-2">🎁 NOWA NAKLEJKA ZE SKRZYNI!</div>
-      <h3 class="text-xl font-extrabold text-slate-900 mb-1">${st.name}</h3>
-      <div class="text-7xl my-3 float-anim">${st.icon}</div>
-      <button onclick="closeRewardPopup()" class="w-full py-3 rounded-2xl bg-pink-500 text-white font-bold text-lg shadow">Super!</button>
-    `;
-    speakSequence([{ lang: "pl", text: `W skrzyni była nowa naklejka: ${st.name}!` }]);
-    return;
-  }
-
-  const won = result.item;
-  const badge = won.tier === "gold" ? "👑 ZŁOTA SKRZYNIA – EPICKI STRÓJ!" : won.tier === "silver" ? "🥈 SREBRNA SKRZYNIA – RZADKI STRÓJ!" : "📦 BRĄZOWA SKRZYNIA – UBRANIE";
-  document.getElementById("rewardPopupContent").innerHTML = `
-    <div class="text-xs font-extrabold px-3 py-1 rounded-full bg-indigo-100 text-indigo-900 inline-block mb-2">${badge}</div>
-    <h3 class="text-lg font-extrabold text-slate-900 mb-1">Wylosowano: ${won.name}</h3>
-    <div class="my-2 p-3 rounded-3xl bg-sky-50 border border-sky-200 flex flex-col items-center justify-center">
-      ${renderBoyAvatarSvg(profKey, 120)}
-      <span class="text-[11px] font-bold text-slate-500 mt-1">Założono na postać!</span>
-    </div>
-    <button onclick="closeRewardPopup()" class="w-full py-3 mt-2 rounded-2xl bg-emerald-500 text-white font-bold text-lg shadow">Super!</button>
-  `;
-  speakSequence([{ lang: "pl", text: "Super! Masz nowe przebranie dla swojego bohatera!" }]);
-}
-
-function closeRewardPopup() {
-  const modal = document.getElementById("rewardPopupModal");
-  modal.classList.add("hidden");
-  modal.classList.remove("flex");
-  updateHeaderUI();
-  if (state.rewardQueue.length > 0) setTimeout(processNextRewardInQueue, 300);
-}
-
-// =========================================================================
-// PANEL RODZICA: ODBLOKOWANIE WSZYSTKICH 131 PRZEBRAŃ DO TESTÓW
-// =========================================================================
-function unlockAllOutfitsForTesting() {
-  const allPaths = getAll131OutfitsFlat().map(it => it.src);
-  const allMemIds = MEMORY_ANIMALS_POOL.map(a => a.id);
-
-  ["igor", "hubert"].forEach(pk => {
-    state.stats[pk] = ensurePlayerStructure(state.stats[pk]);
-    state.stats[pk].unlockedItems = [...allPaths];
-    state.stats[pk].memoryAnimals = [...allMemIds];
-  });
-
-  saveCloudData();
-  updateHeaderUI();
-  if (typeof showParentStatus === "function") {
-    showParentStatus(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań (Brązowa, Srebrna i Złota skrzynka) dla Igora i Huberta!`);
-  }
-  alert(`🔓 Odblokowano wszystkie ${allPaths.length} przebrań (131/131) oraz zwierzaki Memory!`);
-}
-
-function lockAllOutfitsAfterTesting() {
-  if (!confirm("Czy chcesz zablokować testowe ubrania i zostawić tylko zestaw startowy?")) return;
-  const def = createDefaultPlayerStats();
-  ["igor", "hubert"].forEach(pk => {
-    state.stats[pk].unlockedItems = def.unlockedItems.map(resolveOutfitPath);
-    state.stats[pk].avatar = {
-      head: resolveOutfitPath(def.avatar.head),
-      torso: resolveOutfitPath(def.avatar.torso),
-      legs: resolveOutfitPath(def.avatar.legs)
-    };
-  });
-  saveCloudData();
-  updateHeaderUI();
-  if (typeof showParentStatus === "function") {
-    showParentStatus("🔒 Przywrócono startowy stan garderoby.");
-  }
-}
-
-// =========================================================================
-// MODALE KOLEKCJI: NAKLEJKI I ODZNAKI
-// =========================================================================
-function openStickersModal(cat = null) {
-  if (cat) state.selectedStickerCat = cat;
-  const modal = document.getElementById("stickersModal");
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  document.getElementById("stickerModalTotal").textContent = (state.stats.stickers || []).length;
-  document.getElementById("stickerCategoryTabs").innerHTML = STICKER_CATEGORIES.map(c => `
-    <button onclick="openStickersModal('${c.id}')" class="px-3 py-1 rounded-xl font-bold text-xs border-2 ${state.selectedStickerCat === c.id ? 'bg-pink-500 text-white border-pink-700' : 'bg-white text-slate-700'}">
-      ${c.icon} ${c.name}
-    </button>
-  `).join("");
-  const list = state.selectedStickerCat === "all" ? STICKER_POOL : STICKER_POOL.filter(s => s.cat === state.selectedStickerCat);
-  document.getElementById("stickersGrid").innerHTML = list.map(st => {
-    const ok = (state.stats.stickers || []).includes(st.id);
-    return `
-      <div class="p-2 rounded-2xl border-2 ${ok ? 'border-pink-400 bg-white shadow' : 'border-slate-200 bg-slate-100 opacity-50'} flex flex-col items-center">
-        <div class="text-4xl mb-1">${ok ? st.icon : '🔒'}</div>
-        <div class="text-[11px] font-bold text-slate-800">${st.name}</div>
-      </div>
-    `;
-  }).join("");
-}
-
-function closeStickersModal() {
-  const m = document.getElementById("stickersModal");
-  m.classList.add("hidden"); m.classList.remove("flex");
-}
-
-function openBadgesModal(cat = null) {
-  if (cat) state.selectedBadgeCat = cat;
-  const profKey = state.profile === "hubert" ? "hubert" : "igor";
-  const p = state.stats[profKey], allAch = getAllAchievements();
-  document.getElementById("badgesModalPlayerName").textContent = profKey === "igor" ? "IGOR" : "HUBERT";
-  const cats = [
-    { id: "all", name: "Wszystkie", icon: "🏅" },
-    { id: "streak", name: "Dni z rzędu", icon: "🔥" },
-    { id: "lessons", name: "Lekcje i Powtórki", icon: "📚" },
-    { id: "stars", name: "Gwiazdki", icon: "⭐" },
-    { id: "special", name: "Wyzwania", icon: "🎯" },
-    { id: "masters", name: "Arcymistrzowie", icon: "👑" }
-  ];
-  document.getElementById("badgeCategoryTabs").innerHTML = cats.map(c => `
-    <button onclick="openBadgesModal('${c.id}')" class="px-3 py-1 rounded-xl font-bold text-xs border-2 ${state.selectedBadgeCat === c.id ? 'bg-amber-500 text-white border-amber-700' : 'bg-white text-slate-700'}">
-      ${c.icon} ${c.name}
-    </button>
-  `).join("");
-  const list = state.selectedBadgeCat === "all" ? allAch : allAch.filter(a => a.cat === state.selectedBadgeCat);
-  document.getElementById("badgesGrid").innerHTML = list.map(ach => {
-    const done = p.badges.includes(ach.id);
-    return `
-      <div class="p-2.5 rounded-2xl border-2 ${done ? 'border-amber-400 bg-white shadow' : 'border-slate-200 bg-slate-100 opacity-65'} flex items-center gap-2.5">
-        <div class="text-3xl">${done ? ach.icon : '🔒'}</div>
-        <div>
-          <div class="font-extrabold text-xs text-slate-900">${ach.name}</div>
-          <div class="text-[11px] text-slate-600">${ach.desc}</div>
-          <div class="text-[10px] font-bold ${done ? 'text-emerald-600' : 'text-amber-700'}">${done ? '✅ Zdobyto!' : 'Postęp: ' + ach.progress(p)}</div>
-        </div>
-      </div>
-    `;
-  }).join("");
-  const footer = document.getElementById("badgesSummaryFooter");
-  if (footer) footer.textContent = `🏅 Odblokowano łącznie: ${p.badges.length} z ${allAch.length} wszystkich osiągnięć!`;
-  const modal = document.getElementById("badgesModal");
-  modal.classList.remove("hidden"); modal.classList.add("flex");
-}
-
-function closeBadgesModal() {
-  const m = document.getElementById("badgesModal");
-  m.classList.add("hidden"); m.classList.remove("flex");
-}
-
-// ============================================================================
-// AUTOMATYCZNE RENDEROWANIE POSTACI (CANVAS AUTO-TRIM + TRYB KART BOHATERA)
-// ============================================================================
-function toggleAvatarViewMode(mode) {
-  state.stats.avatarViewMode = mode;
-  saveCloudData();
-  if (state.profile && state.profile !== "duel") {
-    document.getElementById("avatarPreviewBox").innerHTML = renderBoyAvatarSvg(state.profile, 175);
-    renderAvatarItems();
-  }
-  updateHeaderUI();
-}
-
-// ============================================================================
-// INTELIGENTNE DOPASOWANIE AWATARA (CLIP-PATH + SUWAKI KALIBRACJI NA ŻYWO)
-// ============================================================================
 
 const DEFAULT_AVATAR_CALIBRATION = {
   cap:         { label: "🧢 Czapki (Brązowa i Srebrna)", top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
@@ -2023,44 +1045,75 @@ function saveAvatarCalibration(cal) {
   } catch (e) {}
 }
 
+function resolveOutfitPath(pathOrId) {
+  if (!pathOrId) return "";
+  const legacyMap = {
+    red_cap: "grafiki/cap_red.png",
+    hero_shirt: "grafiki/Shirt_blue.png",
+    jeans: "grafiki/jeans_blue.png",
+    space_helmet: "grafiki/zlota/helmet_astronaut.png"
+  };
+  if (legacyMap[pathOrId]) return legacyMap[pathOrId];
+  if (pathOrId.includes("/")) return pathOrId;
+  return "grafiki/" + pathOrId.replace(/\.png$/i, "") + ".png";
+}
+
+function getFallbackOutfitPath(src) {
+  if (!src) return "";
+  if (src.startsWith("grafiki/zlota/")) return src.replace("grafiki/zlota/", "grafiki/srebrna/zlota/");
+  return src;
+}
+
+function ensurePlayerStructure(p) {
+  const def = createDefaultPlayerStats();
+  if (!p) return def;
+
+  const rawUnlocked = Array.isArray(p.unlockedItems) && p.unlockedItems.length
+    ? p.unlockedItems.map(resolveOutfitPath)
+    : def.unlockedItems;
+
+  const rawAvatar = p.avatar || def.avatar;
+  const normalizedAvatar = {
+    head: resolveOutfitPath(rawAvatar.head !== undefined ? rawAvatar.head : def.avatar.head),
+    torso: resolveOutfitPath(rawAvatar.torso !== undefined ? rawAvatar.torso : (rawAvatar.top || def.avatar.torso)),
+    legs: resolveOutfitPath(rawAvatar.legs !== undefined ? rawAvatar.legs : (rawAvatar.bottom || def.avatar.legs)),
+    pet: rawAvatar.pet || ""
+  };
+
+  return {
+    ...def,
+    ...p,
+    lessonCounts: p.lessonCounts || {},
+    badges: Array.isArray(p.badges) ? p.badges : [],
+    unlockedItems: Array.from(new Set(rawUnlocked)),
+    memoryAnimals: Array.isArray(p.memoryAnimals) && p.memoryAnimals.length ? p.memoryAnimals : def.memoryAnimals,
+    avatar: normalizedAvatar,
+    equipped: { ...def.equipped, ...(p.equipped || {}) }
+  };
+}
+
 function classifyHeadItem(src) {
   if (!src) return "none";
   const fn = src.split("/").pop().toLowerCase();
-  if (fn.startsWith("helmet_") || fn.startsWith("mask_") || fn.includes("hot-dog")) {
-    return "helmet";
-  }
-  if (src.includes("/zlota/")) {
-    return "goldCap";
-  }
+  if (fn.startsWith("helmet_") || fn.startsWith("mask_") || fn.includes("hot-dog")) return "helmet";
+  if (src.includes("/zlota/")) return "goldCap";
   return "cap";
 }
 
 function classifyTorsoItem(src) {
   if (!src) return "none";
   const fn = src.split("/").pop().toLowerCase();
-  if (
-    fn.startsWith("armor_") ||
-    fn.startsWith("jacket_") ||
-    fn.startsWith("suit_") ||
-    fn === "shirt_commando.png" ||
-    fn === "shirt_soldier.png"
-  ) {
-    return "armor";
-  }
+  if (fn.startsWith("armor_") || fn.startsWith("jacket_") || fn.startsWith("suit_") || fn === "shirt_commando.png" || fn === "shirt_soldier.png") return "armor";
   return "shirt";
 }
 
 function classifyLegsItem(src) {
   if (!src) return "none";
   const fn = src.split("/").pop().toLowerCase();
-  
   if (fn.startsWith("jeans_")) return "jeans";
   if (fn === "pants_barcelona.png" || fn === "pants_poland.png") return "goldShorts";
   if (fn.startsWith("short_") || fn.startsWith("shorts_")) return "shorts";
-  
-  // Wyjątki dla złotych spodni bez butów (Ratownik i Policjant)
   if (fn === "pants_paramedic.png" || fn === "pants_police.png") return "silverPants";
-  
   if (src.includes("/zlota/")) return "goldPants";
   return "silverPants";
 }
@@ -2071,13 +1124,13 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   const avatar = p.avatar || {};
   const cal = getAvatarCalibration();
 
-  const headImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.head) : avatar.head;
-  const torsoImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.torso || avatar.top) : (avatar.torso || avatar.top);
-  const legsImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.legs || avatar.bottom) : (avatar.legs || avatar.bottom);
+  const headImg = resolveOutfitPath(avatar.head);
+  const torsoImg = resolveOutfitPath(avatar.torso);
+  const legsImg = resolveOutfitPath(avatar.legs);
 
-  const headFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(headImg) : headImg;
-  const torsoFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(torsoImg) : torsoImg;
-  const legsFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(legsImg) : legsImg;
+  const headFb = getFallbackOutfitPath(headImg);
+  const torsoFb = getFallbackOutfitPath(torsoImg);
+  const legsFb = getFallbackOutfitPath(legsImg);
 
   const headType = classifyHeadItem(headImg);
   const torsoType = classifyTorsoItem(torsoImg);
@@ -2092,9 +1145,9 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 
   if (headType === "helmet") {
     if (headImg && (headImg.includes("firefighter") || headImg.includes("electrician") || headImg.includes("soldier"))) {
-      baseClip = "inset(15% 0% 0% 0%)";
+      baseClip = "inset(15% 0% 0% 0%)"; // Odkryta twarz, ucięte włosy
     } else if (headImg && !(headImg.includes("hot-dog"))) {
-      baseClip = "inset(28% 0% 0% 0%)";
+      baseClip = "inset(28% 0% 0% 0%)"; // Cała twarz schowana pod hełmem/maską
     }
   } else if (headType === "cap" || headType === "goldCap") {
     baseClip = "inset(12% 0% 0% 0%)";
@@ -2103,16 +1156,14 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   // Generowanie Towarzysza (Zwierzaka)
   let petHtml = "";
   if (avatar.pet) {
-    const petObj = (window.MEMORY_ANIMALS_POOL || []).find(a => a.id === avatar.pet);
+    const memoryPool = typeof MEMORY_ANIMALS_POOL !== "undefined" ? MEMORY_ANIMALS_POOL : [];
+    const petObj = memoryPool.find(a => a.id === avatar.pet);
     if (petObj) {
-      // Dynamiczny rozmiar zwierzaka zależy od rozmiaru całej grafiki (ok. 40% wielkości postaci)
       const petSize = Math.max(16, Math.floor(size * 0.40));
-      // Ustawiamy zwierzaka w prawym dolnym rogu (będzie widoczny wszędzie, nawet na Ekranie Startowym)
       petHtml = `<div class="absolute bottom-0 -right-4 z-50 float-anim drop-shadow-md" style="font-size: ${petSize}px; line-height: 1;">${petObj.icon}</div>`;
     }
   }
 
-  // UWAGA: Zmieniono 'overflow-hidden' na 'overflow-visible', by zwierzak z boku mógł wystawać
   return `
     <div class="relative mx-auto select-none pointer-events-none overflow-visible" style="width: ${size}px; height: ${size}px;">
       ${showBaseBoy ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${baseClip};" onerror="this.style.display='none';" />` : ""}
@@ -2126,28 +1177,29 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   `;
 }
 
-// Panel suwaków do precyzyjnego dopasowania w Garderobie
+// ------------------------------------------------------------------------
+// PANEL KALIBRACJI SUWAKAMI
+// ------------------------------------------------------------------------
 function updateAvatarPreviewWithCalibrator() {
   const box = document.getElementById("avatarPreviewBox");
   if (!box || !state.profile) return;
 
   const cal = getAvatarCalibration();
-  const activeKey = window._calibActiveType || "jeans";
+  const activeKey = window._calibActiveType || "shirt";
   const cfg = cal[activeKey];
 
   box.innerHTML = `
     <div class="flex flex-col items-center w-full">
       ${renderBoyAvatarSvg(state.profile, 165)}
-      <button onclick="window._calibOpen=!window._calibOpen;updateAvatarPreviewWithCalibrator();" class="mt-2 px-3 py-1 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-[11px] border border-indigo-300">
+      <button onclick="window._calibOpen=!window._calibOpen;updateAvatarPreviewWithCalibrator();" class="mt-4 px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-xs border border-indigo-300">
         🔧 ${window._calibOpen ? "Ukryj suwaki dopasowania" : "Dopasuj wymiary (Suwaki)"}
       </button>
       ${window._calibOpen ? `
         <div class="w-full mt-2 p-2.5 bg-white rounded-2xl border-2 border-indigo-300 text-left text-[11px] space-y-1.5 shadow-sm">
           <div class="font-extrabold text-indigo-950 mb-1">Wybierz typ ubrania do regulacji:</div>
-          <select onchange="window._calibActiveType=this.value;updateAvatarPreviewWithCalibrator();" class="w-full p-1 rounded-lg border border-slate-300 font-bold text-xs mb-1">
+          <select onchange="window._calibActiveType=this.value;updateAvatarPreviewWithCalibrator();" class="w-full p-1 rounded-lg border border-slate-300 font-bold text-xs mb-1 bg-slate-50">
             ${Object.keys(cal).map(k => `<option value="${k}" ${k === activeKey ? "selected" : ""}>${cal[k].label}</option>`).join("")}
           </select>
-
           <div>
             <div class="flex justify-between font-bold"><span>⬆️⬇️ Pozycja Góra/Dół (top):</span><span>${cfg.top}%</span></div>
             <input type="range" min="-15" max="75" step="1" value="${cfg.top}" oninput="changeCalibVal('${activeKey}','top',this.value)" class="w-full accent-indigo-600" />
@@ -2161,8 +1213,8 @@ function updateAvatarPreviewWithCalibrator() {
             <input type="range" min="0.50" max="1.60" step="0.02" value="${cfg.scaleY}" oninput="changeCalibVal('${activeKey}','scaleY',this.value)" class="w-full accent-indigo-600" />
           </div>
           <div class="pt-1 flex justify-between gap-1">
-            <button onclick="resetCalibDefaults()" class="px-2 py-1 bg-rose-100 text-rose-800 font-bold rounded-lg text-[10px]">Resetuj wymiary</button>
-            <span class="text-[10px] text-emerald-700 font-bold self-center">✓ Zapisuje się automatycznie</span>
+            <button onclick="resetCalibDefaults()" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold rounded-lg text-[10px]">Resetuj wymiary</button>
+            <span class="text-[10px] text-emerald-700 font-bold self-center">✓ Automatyczny zapis</span>
           </div>
         </div>
       ` : ""}
@@ -2175,37 +1227,18 @@ function changeCalibVal(typeKey, prop, val) {
   cal[typeKey][prop] = parseFloat(val);
   saveAvatarCalibration(cal);
   updateAvatarPreviewWithCalibrator();
-  updateHeaderUI();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
 }
 
 function resetCalibDefaults() {
   localStorage.removeItem("akademia_avatar_calib_v4");
   updateAvatarPreviewWithCalibrator();
-  updateHeaderUI();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
 }
 
-function openAvatarModal() {
-  if (!state.profile || state.profile === "duel") return;
-  document.getElementById("avatarModalPlayerName").textContent = state.profile === "igor" ? "IGOR" : "HUBERT";
-  updateAvatarPreviewWithCalibrator();
-  renderAvatarItems();
-
-  const m = document.getElementById("avatarModal");
-  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-}
-
-function closeAvatarModal() {
-  saveCloudData();
-  updateHeaderUI();
-  const m = document.getElementById("avatarModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
-}
-
-function setWardrobeTierFilter(tier) {
-  state.selectedWardrobeTier = tier;
-  renderAvatarItems();
-}
-
+// =========================================================================
+// RENDEROWANIE ZWIERZAKA (TOWARZYSZA) I LISTY W GARDEROBIE
+// =========================================================================
 function renderAvatarItems() {
   const p = ensurePlayerStructure(state.stats[state.profile]);
   state.stats[state.profile] = p;
@@ -2279,8 +1312,10 @@ function renderAvatarItems() {
     html += `</div></div>`;
   });
 
-  // NOWA SEKCJA: ZWIERZAK TOWARZYSZ
-  const myAnimals = (window.MEMORY_ANIMALS_POOL || []).filter(a => (p.memoryAnimals || []).includes(a.id));
+  // Dodana sekcja: Zwierzak Towarzysz (z weryfikacją na żywo)
+  const memoryPool = typeof MEMORY_ANIMALS_POOL !== "undefined" ? MEMORY_ANIMALS_POOL : [];
+  const myAnimals = memoryPool.filter(a => (p.memoryAnimals || []).includes(a.id));
+  
   html += `<div class="mb-4 pt-2">
     <h3 class="text-sm font-extrabold text-amber-700 mb-2 border-b border-amber-200 pb-1">🐾 Twój Towarzysz (Zwierzak)</h3>
     <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
@@ -2305,75 +1340,10 @@ function renderAvatarItems() {
   });
 
   if (myAnimals.length === 0) {
-    html += `<div class="col-span-3 text-xs text-slate-500 p-2">Zdobądź zwierzaki ze skrzyń nagród!</div>`;
+    html += `<div class="col-span-3 text-xs text-slate-500 p-2 font-bold">Otwórz skrzynie z nagrodami, by zdobyć pierwsze zwierzaki!</div>`;
   }
   
   html += `</div></div>`;
-  container.innerHTML = html;
-}
-
-  const tierTabs = [
-    { id: "all", label: "Wszystkie (131)" },
-    { id: "bronze", label: "📦 Brązowa (30)" },
-    { id: "silver", label: "🥈 Srebrna (56)" },
-    { id: "gold", label: "👑 Złota (45)" }
-  ];
-
-  let html = `
-    <div class="flex flex-wrap gap-1.5 mb-3 pb-2 border-b border-indigo-100">
-      ${tierTabs.map(t => `
-        <button onclick="setWardrobeTierFilter('${t.id}')" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedWardrobeTier === t.id ? 'bg-indigo-600 text-white border-indigo-800' : 'bg-white text-slate-700 border-slate-200'}">
-          ${t.label}
-        </button>
-      `).join("")}
-    </div>
-  `;
-
-  const categories = [
-    { key: "head", title: "🧢 Nakrycia głowy i Hełmy" },
-    { key: "torso", title: "👕 Koszulki, Kurtki i Zbroje" },
-    { key: "legs", title: "👖 Spodnie i Szorty" }
-  ];
-
-  const filteredOutfits = state.selectedWardrobeTier === "all"
-    ? all131
-    : all131.filter(it => it.tier === state.selectedWardrobeTier);
-
-  categories.forEach(cat => {
-    const catItems = filteredOutfits.filter(it => it.slot === cat.key);
-    html += `<div class="mb-4">
-      <h3 class="text-sm font-extrabold text-slate-700 mb-2 border-b pb-1">${cat.title} (${catItems.length})</h3>
-      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
-
-    catItems.forEach(item => {
-      const isUnlocked = unlockedLower.includes(item.src.toLowerCase());
-      const currentEquipped = (p.avatar && p.avatar[cat.key]) ? p.avatar[cat.key].toLowerCase() : "";
-      const isEquipped = currentEquipped === item.src.toLowerCase();
-      const tierBadgeColor = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-800" : "bg-amber-700 text-white";
-      const altCaseSrc = getFallbackOutfitPath(item.src);
-
-      if (isUnlocked) {
-        html += `
-          <div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm">
-            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span>
-            <img src="${item.src}" class="w-14 h-14 object-contain mb-1 drop-shadow" alt="${item.name}" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${altCaseSrc}';}else if(this.src.indexOf('srebrna/zlota')===-1){this.src='${item.fallbackSrc}';}" />
-            <div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>
-            ${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : `<div class="text-[9px] mt-1 text-indigo-600 font-bold">Załóż</div>`}
-          </div>
-        `;
-      } else {
-        html += `
-          <div class="rounded-2xl border-2 border-slate-200 bg-slate-100 p-2 flex flex-col items-center justify-between text-center opacity-55">
-            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span>
-            <div class="text-2xl my-2">🔒</div>
-            <div class="text-[10px] font-bold text-slate-500 leading-tight break-all">${item.name}</div>
-          </div>
-        `;
-      }
-    });
-    html += `</div></div>`;
-  });
-
   container.innerHTML = html;
 }
 
@@ -2392,7 +1362,7 @@ function equipAvatarItem(category, itemSrc) {
     if (category === "legs") window._calibActiveType = classifyLegsItem(itemSrc);
   }
 
-  playEffect("beep");
+  if (typeof playEffect === "function") playEffect("beep");
 
   if (typeof updateAvatarPreviewWithCalibrator === "function") {
     updateAvatarPreviewWithCalibrator();
@@ -2402,11 +1372,74 @@ function equipAvatarItem(category, itemSrc) {
   }
 
   renderAvatarItems();
-  saveCloudData();
   
-  // Odświeżamy nagłówek, żeby zmiana zwierzaka od razu pojawiła się na górnym pasku!
+  if (typeof saveCloudData === "function") saveCloudData();
   if (typeof updateHeaderUI === "function") updateHeaderUI();
 }
+
+function setWardrobeTierFilter(tier) {
+  state.selectedWardrobeTier = tier;
+  renderAvatarItems();
+}
+
+function getAllAchievements() {
+  const list = [];
+  [10, 25, 50, 100, 200, 350, 500, 750, 1000].forEach(t => {
+    list.push({ id: `stars_${t}`, cat: "stars", icon: t >= 350 ? "🌟" : "⭐", name: `${t} Gwiazdek`, desc: `Zbierz łącznie ${t} złotych gwiazdek`, check: p => p.stars >= t, progress: p => `${Math.min(p.stars, t)}/${t}` });
+  });
+  [{ d: 2, n: "2 Dni z rzędu" }, { d: 3, n: "3 Dni z rzędu" }, { d: 5, n: "5 Dni z rzędu" }, { d: 7, n: "Tydzień (7 dni)" }, { d: 14, n: "2 Tygodnie (14 dni)" }, { d: 21, n: "3 Tygodnie (21 dni)" }, { d: 30, n: "Miesiąc (30 dni)" }, { d: 60, n: "2 Miesiące (60 dni)" }, { d: 90, n: "3 Miesiące (90 dni)" }, { d: 120, n: "4 Miesiące (120 dni)" }].forEach(st => {
+    list.push({ id: `streak_${st.d}`, cat: "streak", icon: "🔥", name: st.n, desc: `Ćwicz angielski przez ${st.d} dni pod rząd!`, check: p => (p.streakDays || 1) >= st.d, progress: p => `${Math.min(p.streakDays || 1, st.d)}/${st.d}` });
+  });
+  [1, 2, 3, 5, 8, 13, 21, 35].forEach(cnt => {
+    (state.lessons || []).forEach(lesson => {
+      const shortTitle = lesson.title.replace(/^\d+\.\s*/, "");
+      list.push({ id: `lesson_${lesson.id}_${cnt}`, cat: "lessons", icon: lesson.icon ? Array.from(lesson.icon)[0] : "📘", name: `${shortTitle} (${cnt}x)`, desc: `Ukończ lekcję „${shortTitle}” ${cnt} razy!`, check: p => ((p.lessonCounts && p.lessonCounts[lesson.id]) || 0) >= cnt, progress: p => `${Math.min((p.lessonCounts && p.lessonCounts[lesson.id]) || 0, cnt)}/${cnt}` });
+    });
+  });
+  [1, 3, 7, 15, 30].forEach(n => {
+    list.push({ id: `perf_${n}`, cat: "special", icon: "🎯", name: `Snajper 100% (${n}x)`, desc: `Ukończ ${n} rund bez żadnego błędu!`, check: p => p.perfectRounds >= n, progress: p => `${Math.min(p.perfectRounds, n)}/${n}` });
+  });
+  [5, 15, 30, 60, 100].forEach(n => {
+    list.push({ id: `mic_${n}`, cat: "special", icon: "🎤", name: `Mistrz Wymowy (${n}x)`, desc: `Powiedz poprawnie ${n} słówek do mikrofonu!`, check: p => p.micCount >= n, progress: p => `${Math.min(p.micCount, n)}/${n}` });
+  });
+  [1, 3, 7, 15].forEach(n => {
+    list.push({ id: `ex_${n}`, cat: "special", icon: "🎓", name: `Bohater Sprawdzianu (${n}x)`, desc: `Ukończ Wielki Sprawdzian ${n} razy!`, check: p => p.examsDone >= n, progress: p => `${Math.min(p.examsDone, n)}/${n}` });
+  });
+  [1, 5, 10, 20].forEach(n => {
+    list.push({ id: `duel_${n}`, cat: "special", icon: "⚔️", name: `Mistrz Pojedynków (${n}x)`, desc: `Wygraj Pojedynek Braci ${n} razy!`, check: p => p.duelsWon >= n, progress: p => `${Math.min(p.duelsWon, n)}/${n}` });
+  });
+  [10, 25, 45, 60].forEach(n => {
+    list.push({ id: `st_${n}`, cat: "special", icon: "🎁", name: `Kolekcjoner Naklejek (${n})`, desc: `Zbierz ${n} naklejek w klaserze!`, check: () => (state.stats.stickers || []).length >= n, progress: () => `${Math.min((state.stats.stickers || []).length, n)}/${n}` });
+  });
+  [{ k: "stars", n: "Arcymistrz Gwiazdek", d: "Zbierz wszystkie odznaki za Gwiazdki!" }, { k: "streak", n: "Arcymistrz Systematyczności", d: "Zbierz wszystkie odznaki za Dni z rzędu!" }, { k: "lessons", n: "Arcymistrz Lekcji", d: "Zbierz wszystkie odznaki za Powtórki lekcji!" }, { k: "special", n: "Arcymistrz Wyzwań", d: "Zbierz wszystkie odznaki w kategorii Wyzwania!" }].forEach(mc => {
+    const subIds = list.filter(a => a.cat === mc.k).map(a => a.id);
+    list.push({ id: `master_${mc.k}`, cat: "masters", icon: "👑", name: mc.n, desc: mc.d, check: p => subIds.length > 0 && subIds.every(id => p.badges.includes(id)), progress: p => `${subIds.filter(id => p.badges.includes(id)).length}/${subIds.length}` });
+  });
+  return list;
+}
+
+function checkAndUnlockAchievements(profKey) {
+  const p = state.stats[profKey];
+  if (!p) return;
+  const allAch = getAllAchievements();
+  let newly = [];
+  for (let pass = 0; pass < 2; pass++) {
+    allAch.forEach(ach => {
+      if (!p.badges.includes(ach.id) && ach.check(p)) {
+        p.badges.push(ach.id);
+        newly.push(ach);
+      }
+    });
+  }
+  if (newly.length > 0) {
+    newly.forEach(ach => state.rewardQueue.push({ profKey, achievement: ach }));
+    saveCloudData();
+    if (typeof processNextRewardInQueue === "function") processNextRewardInQueue();
+  }
+}
+</script>
+<!-- ======================== KONIEC CZĘŚCI 3 z 5 ======================== -->
+  
 /* ============================================================================
    CZĘŚĆ 4 z 5: EKRAN STARTOWY, MENU LEKCJI, SPRAWDZIAN I POJEDYNEK BRACI
    ============================================================================ */

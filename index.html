@@ -891,7 +891,7 @@ function openChestReal(profKey, tier) {
   const content = document.getElementById("rewardPopupContent");
   const p = ensurePlayerStructure(state.stats[profKey]);
   
-  const allOutfits = getAll131OutfitsFlat().filter(o => o.tier === tier);
+  const allOutfits = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat().filter(o => o.tier === tier) : [];
   const unownedOutfits = allOutfits.filter(o => !p.unlockedItems.includes(o.src));
   const memoryPool = typeof MEMORY_ANIMALS_POOL !== "undefined" ? MEMORY_ANIMALS_POOL : [];
   const unownedAnimals = memoryPool.filter(a => !(p.memoryAnimals || []).includes(a.id));
@@ -899,32 +899,28 @@ function openChestReal(profKey, tier) {
   let rewardHtml = "";
   let rewardName = "";
   
-  // Losujemy: Jeśli są dostępne zwierzaki i ubrania, jest 30% szans na zwierzaka
   const canDropAnimal = unownedAnimals.length > 0;
   const canDropOutfit = unownedOutfits.length > 0;
   let dropType = "none";
   
-  if (canDropAnimal && canDropOutfit) {
-    dropType = Math.random() < 0.3 ? "animal" : "outfit";
-  } else if (canDropAnimal) {
-    dropType = "animal";
-  } else if (canDropOutfit) {
-    dropType = "outfit";
-  }
+  if (canDropAnimal && canDropOutfit) dropType = Math.random() < 0.35 ? "animal" : "outfit";
+  else if (canDropAnimal) dropType = "animal";
+  else if (canDropOutfit) dropType = "outfit";
 
   if (dropType === "animal") {
     const animal = unownedAnimals[Math.floor(Math.random() * unownedAnimals.length)];
     p.memoryAnimals.push(animal.id);
     rewardName = `Towarzysz: ${animal.pl}`;
-    rewardHtml = `<div class="text-8xl my-4 drop-shadow-lg pop-correct bg-white/50 rounded-full w-32 h-32 mx-auto flex items-center justify-center">${animal.icon}</div>`;
+    // Usunięto problematyczne wymiary CSS dla emoji, zastąpiono font-size
+    rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">${animal.icon}</div>`;
   } else if (dropType === "outfit") {
     const outfit = unownedOutfits[Math.floor(Math.random() * unownedOutfits.length)];
     p.unlockedItems.push(outfit.src);
     rewardName = `Ubranie: ${outfit.name}`;
-    rewardHtml = `<img src="${outfit.src}" class="w-32 h-32 object-contain mx-auto my-4 drop-shadow-xl pop-correct bg-white/50 rounded-full p-2" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${outfit.fallbackSrc}';}" />`;
+    rewardHtml = `<img src="${outfit.src}" class="w-32 h-32 object-contain mx-auto my-4 drop-shadow-xl pop-correct bg-white/60 rounded-full p-2" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${outfit.fallbackSrc}';}else{this.style.display='none';}" />`;
   } else {
     rewardName = "Garść monet!";
-    rewardHtml = `<div class="text-8xl my-4 drop-shadow-lg pop-correct">🪙🪙</div>`;
+    rewardHtml = `<div class="text-7xl my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center">🪙</div>`;
   }
 
   state.stats[profKey] = p;
@@ -1257,7 +1253,7 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-5xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 10.0
+        🌟 Akademia Angielskiego • Wersja 10.1
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
@@ -1266,7 +1262,7 @@ function showStartScreen() {
           ${renderBoyAvatarSvg('igor', 95)}
           <h2 class="text-2xl font-extrabold text-amber-950 mt-1">IGOR (4 l.)</h2>
           <div class="text-[11px] font-bold text-amber-900 my-2 bg-white px-3 py-1.5 rounded-xl border border-amber-300 w-full">
-            ⭐ ${state.stats.igor.stars} | 🏆 ${state.stats.igor.cups} | 🏅 ${state.stats.igor.badges.length} | 🔥 ${state.stats.igor.streakDays} dni
+            ⭐ ${state.stats.igor.stars} | 🏆 ${state.stats.igor.cups} | 🔥 ${state.stats.igor.streakDays} dni
           </div>
           <span class="w-full py-2.5 bg-amber-500 text-white font-extrabold rounded-2xl shadow">Graj jako Igor ▶</span>
         </div>
@@ -1275,7 +1271,7 @@ function showStartScreen() {
           ${renderBoyAvatarSvg('hubert', 95)}
           <h2 class="text-2xl font-extrabold text-sky-950 mt-1">HUBERT (6 l.)</h2>
           <div class="text-[11px] font-bold text-sky-900 my-2 bg-white px-3 py-1.5 rounded-xl border border-sky-300 w-full">
-            ⭐ ${state.stats.hubert.stars} | 🏆 ${state.stats.hubert.cups} | 🏅 ${state.stats.hubert.badges.length} | 🔥 ${state.stats.hubert.streakDays} dni
+            ⭐ ${state.stats.hubert.stars} | 🏆 ${state.stats.hubert.cups} | 🔥 ${state.stats.hubert.streakDays} dni
           </div>
           <span class="w-full py-2.5 bg-sky-600 text-white font-extrabold rounded-2xl shadow">Graj jako Hubert ▶</span>
         </div>
@@ -1784,11 +1780,16 @@ function flipMemoryCard(idx) {
 function renderMicGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const isHubert = state.profile === "hubert" || (state.profile === "duel" && state.duelTurn === "hubert");
+  
+  // Utrudnienie dla Huberta: co drugie pytanie (nieparzyste) to wyzwanie z tłumaczeniem!
+  const isTranslation = isHubert && (state.roundIndex % 2 === 1);
+  window._micTranslationMode = isTranslation;
+
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
 
-  const displayTitle = isHubert ? `<span class="text-slate-500 font-normal">Jak powiesz: </span>"${q.pl}"?` : `"${q.en}"`;
-  const subTitle = isHubert ? `<span class="text-rose-600">Nie podglądaj! Wymów słowo po angielsku.</span>` : `${q.pl} ${q.phonetic ? '[' + q.phonetic + ']' : ''}`;
+  const displayTitle = isTranslation ? `<span class="text-slate-500 font-normal">Jak powiesz: </span>"${q.pl}"?` : `"${q.en}"`;
+  const subTitle = isTranslation ? `<span class="text-rose-600">Nie podglądaj! Przetłumacz i wymów.</span>` : `${q.pl} ${q.phonetic ? '[' + q.phonetic + ']' : ''}`;
 
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
@@ -1797,8 +1798,9 @@ function renderMicGame(lesson) {
       <div class="text-6xl md:text-7xl my-3 float-anim drop-shadow-sm">${q.icon || '⭐'}</div>
       <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1 tracking-wide">${displayTitle}</h2>
       <p class="text-sm font-bold text-slate-500 mb-4">${subTitle}</p>
+      
       <div id="micStatusBox" class="p-4 rounded-3xl bg-slate-50 border-2 border-slate-200 font-bold text-sm text-slate-700 mb-5 flex flex-col items-center justify-center gap-2">
-        <div>1. Kliknij 🔊 Posłuchaj &nbsp;➔&nbsp; 2. Kliknij 🎤 Kliknij i Mów!</div>
+        <div>1. Kliknij 🔊 Posłuchaj &nbsp;➔&nbsp; 2. Kliknij 🎤 Mów!</div>
         <div id="eqVisualizer" class="hidden items-end gap-1 h-10 my-1">
           <div class="w-1.5 bg-rose-500 rounded-full eq-bar-1"></div><div class="w-1.5 bg-rose-500 rounded-full eq-bar-2"></div>
           <div class="w-1.5 bg-rose-500 rounded-full eq-bar-3"></div><div class="w-1.5 bg-rose-500 rounded-full eq-bar-4"></div>
@@ -1808,12 +1810,16 @@ function renderMicGame(lesson) {
       <div class="flex flex-wrap justify-center gap-3">
         <button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card px-5 py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-base shadow">🔊 Posłuchaj</button>
         <button id="btnStartMic" onclick="startSpeechCheck()" class="kid-card px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-base shadow-lg">🎤 Mów!</button>
-        <button onclick="requestParentMicApproval()" class="kid-card px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-emerald-950 font-bold text-sm shadow opacity-80 border-2 border-emerald-600 flex items-center gap-1">🔒 Zalicz (Tata)</button>
+        <button onclick="requestParentMicApproval()" class="kid-card px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-emerald-950 font-bold text-sm shadow border-2 border-emerald-600">🔒 Zalicz (Tata)</button>
       </div>
     </div>
   `;
-  speakSequence([{ lang: "pl", text: isHubert ? `Powiedz głośno po angielsku: ${q.pl}!` : "Posłuchaj i powtórz do mikrofonu:" }]);
-  if (!isHubert) speakSequence([{ lang: "en", text: q.en }]);
+  
+  if (isTranslation) {
+    speakSequence([{ lang: "pl", text: `Powiedz głośno po angielsku: ${q.pl}!` }]);
+  } else {
+    speakSequence([{ lang: "pl", text: "Posłuchaj i powtórz:" }, { lang: "en", text: q.en }]);
+  }
 }
 
 function startSpeechCheck() {
@@ -1827,7 +1833,8 @@ function startSpeechCheck() {
   
   if (box) {
     box.className = "p-4 rounded-3xl bg-emerald-100 border-4 border-emerald-500 font-extrabold text-base text-emerald-950 mb-5 flex flex-col items-center justify-center gap-2 text-center";
-    box.innerHTML = `🟢 TERAZ MÓW GŁOŚNO! 🎙️<br><span class="text-[11px] font-bold text-emerald-700">Oczekiwane: "${q.en}"</span><div id="eqVisualizer" class="flex items-end gap-1 h-10 mt-1"><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-1"></div><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-2"></div><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-3"></div><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-4"></div><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-5"></div></div>`;
+    const helperTxt = window._micTranslationMode ? `Tłumaczysz: "${q.pl}"` : `Oczekiwane: "${q.en}"`;
+    box.innerHTML = `🟢 MÓW GŁOŚNO! 🎙️<br><span class="text-[11px] font-bold text-emerald-700">${helperTxt}</span><div id="eqVisualizer" class="flex items-end gap-1 h-10 mt-1"><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-1"></div><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-2"></div><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-3"></div><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-4"></div><div class="w-1.5 bg-emerald-600 rounded-full eq-bar-5"></div></div>`;
   }
 
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1841,19 +1848,20 @@ function startSpeechCheck() {
 
   try {
     const rec = new SpeechRec();
-    rec.lang = "en-US"; rec.interimResults = true; rec.maxAlternatives = 1;
+    rec.lang = "en-US"; 
+    rec.interimResults = true; 
+    rec.continuous = true; // ZWRÓCONY PARAMETR - MIKROFON JUŻ SIĘ NIE WYŁĄCZY ZBYT SZYBKO!
     
     rec.onresult = (e) => {
       if (handled) return;
       let currentTranscript = "";
       for (let i = e.resultIndex; i < e.results.length; i++) { currentTranscript += e.results[i][0].transcript.toLowerCase(); }
       finalHeard = currentTranscript.trim();
-      if (finalHeard.length < 2 && finalHeard !== "a" && finalHeard !== "i") return; 
-
+      
       const target = q.en.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
       let isCorrect = false;
       if (finalHeard.includes(target)) isCorrect = true;
-      else if (target.length > 2 && finalHeard.length >= 3 && finalHeard.includes(target.slice(0, 3))) isCorrect = true;
+      else if (target.length > 3 && finalHeard.includes(target.slice(0, 4))) isCorrect = true; // lekka tolerancja
       
       if (isCorrect) {
         handled = true; try { rec.stop(); } catch(err){}
@@ -1865,19 +1873,19 @@ function startSpeechCheck() {
       if (handled) return; handled = true;
       if (box) {
         box.className = "p-4 rounded-3xl bg-amber-100 border-2 border-amber-400 font-bold text-sm text-amber-950 mb-5 flex flex-col items-center justify-center text-center";
-        box.innerHTML = finalHeard ? `🎧 System usłyszał: "${finalHeard}".<br>Jeśli powiedziałeś dobrze, niech Tata kliknie 🔒 Zalicz!` : `🎧 Cicho... Nic nie usłyszałem. Spróbuj jeszcze raz!`;
+        box.innerHTML = finalHeard ? `🎧 Usłyszałem: "${finalHeard}".<br>Jeśli było dobrze, niech Tata kliknie 🔒 Zalicz!` : `🎧 Cicho... Nic nie usłyszałem. Spróbuj jeszcze raz!`;
       }
       fallbackMicTimer(box);
     };
     
     rec.onerror = (e) => { 
       if (handled) return; handled = true; 
-      if (box) box.innerHTML = `❌ Błąd mikrofonu: ${e.error}. Jeśli to problem z urządzeniem, poproś Tatę o zaliczenie.`;
+      if (box) box.innerHTML = `❌ Błąd mikrofonu. Kliknij Mów jeszcze raz lub Zalicz(Tata).`;
       fallbackMicTimer(box); 
     };
     
     rec.start();
-    setTimeout(() => { if (!handled) { handled = true; try { rec.stop(); } catch(e){} fallbackMicTimer(box); } }, 10000);
+    setTimeout(() => { if (!handled) { handled = true; try { rec.stop(); } catch(e){} fallbackMicTimer(box); } }, 8000);
   } catch (e) {
     if (box) box.innerHTML = `❌ Błąd uruchamiania mikrofonu.`; fallbackMicTimer(box);
   }

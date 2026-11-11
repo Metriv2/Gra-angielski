@@ -2070,6 +2070,10 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   const torsoImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.torso || avatar.top) : (avatar.torso || avatar.top);
   const legsImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.legs || avatar.bottom) : (avatar.legs || avatar.bottom);
 
+  const headFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(headImg) : headImg;
+  const torsoFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(torsoImg) : torsoImg;
+  const legsFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(legsImg) : legsImg;
+
   const headType = classifyHeadItem(headImg);
   const torsoType = classifyTorsoItem(torsoImg);
   const legsType = classifyLegsItem(legsImg);
@@ -2078,55 +2082,38 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   const tCfg = cal[torsoType] || cal.shirt;
   const lCfg = cal[legsType] || cal.jeans;
 
-  // Głowa - wycinamy czubek włosów, żeby nie wystawały nad hełmem/czapką, ale zostawiamy dół twarzy.
-  let showBaseHead = true;
-  let headClip = "inset(0% 0% 66% 0%)"; // Standardowa głowa
-  if (headType === "helmet" && !(headImg && headImg.toLowerCase().includes("hot-dog"))) {
-     // Jeśli to pełna maska ze Złotej Skrzyni (Batman, itp.), ukrywamy bazową głowę
-     showBaseHead = false;
+  // 1. Decydujemy o przycięciu głowy.
+  // Domyślnie chłopak jest pokazany w całości (włosy, dłonie, stopy).
+  let baseClip = "none";
+  let showBaseBoy = true;
+
+  if (headType === "helmet") {
+    // Jeśli hełm to strażak lub elektryk (odkryta twarz), przycinamy TYLKO górne włosy
+    if (headImg && (headImg.includes("firefighter") || headImg.includes("electrician") || headImg.includes("soldier"))) {
+      baseClip = "inset(15% 0% 0% 0%)";
+    } 
+    // Pełne maski (Batman, Skeleton, Commando, Astronaut) ukrywają całą twarz, ale dłonie i nogi muszą zostać!
+    else if (headImg && !(headImg.includes("hot-dog"))) {
+      baseClip = "inset(28% 0% 0% 0%)"; // Ukrywamy całą głowę chłopca, zostawiając resztę ciała
+    }
   } else if (headType === "cap" || headType === "goldCap") {
-     // Dla czapek ścinamy górę włosów, zostawiamy uszy i twarz
-     headClip = `inset(18% 25% 66% 25%)`;
+    // Przy zwykłych czapkach ukrywamy tylko czubek fryzury, by nie wystawał
+    baseClip = "inset(12% 0% 0% 0%)";
   }
 
-  // Tułów i ręce - zostawiamy ręce zawsze widoczne!
-  let showBaseTorso = true;
-  // Ukrywamy brzuch i miednicę (aby nie wystawały spod ubrań), ale dłonie musimy zostawić.
-  // Ponieważ w boy_base dłonie są na tej samej warstwie, obcinamy tylko spód pępka.
-  let torsoClip = "inset(33% 0% 43% 0%)";
-  if (torsoType === "armor") {
-    // Jeżeli ma złotą zbroję z rękawami, możemy ściąć mocniej, ale dłonie (część dolna rąk) 
-    // mogą być potrzebne, jeśli zbroja ich nie ma. Tutaj zostawiamy tułów chłopca (ramiona).
-    torsoClip = "inset(33% 10% 45% 10%)"; 
-  }
-
-  // Nogi
-  let showLowerBody = true;
-  let lowerBodyClip = "inset(55% 0% 0% 0%)"; // Standardowy dół (spodenki + nogi + buty)
-  if (legsType === "goldPants") {
-    // Przy spodniach ze Złotej skrzyni (np. strażak), które mają własne buty,
-    // całkowicie chowamy bazowe nogi chłopca.
-    showLowerBody = false; 
-  } else if (legsType === "silverPants") {
-    // Przy srebrnych spodniach chowamy uda, zostawiamy tylko dolne 15% z butami
-    lowerBodyClip = "inset(85% 20% 0% 20%)";
-  } else if (legsType === "shorts" || legsType === "goldShorts") {
-    // Przy szortach chowamy pas (55-70%), zostawiamy nogi z butami
-    lowerBodyClip = "inset(70% 20% 0% 20%)";
-  }
-
+  // W tej nowej strukturze renderujemy "boy_base.png" tylko RAZ, co rozwiązuje problem gubiących się dłoni i stóp!
   return `
     <div class="relative mx-auto select-none pointer-events-none overflow-hidden" style="width: ${size}px; height: ${size}px;">
-      <!-- Górna połowa bazowego chłopca (głowa + ręce + tułów) -->
-      ${showBaseHead ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${headClip};" onerror="this.style.display='none';" />` : ""}
-      ${showBaseTorso ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${torsoClip};" onerror="this.style.display='none';" />` : ""}
       
-      <!-- Dolna połowa bazowego chłopca (łydki / buty zależnie od spodni) -->
-      ${showLowerBody ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${lowerBodyClip};" onerror="this.style.display='none';" />` : ""}
+      <!-- BAZOWA POSTAĆ CHŁOPCA (Twarz, dłonie, nogi) - wycinana z góry tylko, gdy założono hełm -->
+      ${showBaseBoy ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${baseClip};" onerror="this.style.display='none';" />` : ""}
 
-      ${legsImg ? `<img src="${legsImg}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="this.style.display='none';" />` : ""}
-      ${torsoImg ? `<img src="${torsoImg}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="this.style.display='none';" />` : ""}
-      ${headImg ? `<img src="${headImg}" class="absolute left-1/2 object-fill z-40" style="top: ${hCfg.top}%; width: ${hCfg.width}%; height: ${hCfg.height}%; transform: translateX(-50%) scale(${hCfg.scaleX}, ${hCfg.scaleY});" onerror="this.style.display='none';" />` : ""}
+      <!-- UBRANIA -->
+      ${legsImg ? `<img src="${legsImg}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
+      
+      ${torsoImg ? `<img src="${torsoImg}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
+      
+      ${headImg ? `<img src="${headImg}" class="absolute left-1/2 object-fill z-40" style="top: ${hCfg.top}%; width: ${hCfg.width}%; height: ${hCfg.height}%; transform: translateX(-50%) scale(${hCfg.scaleX}, ${hCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${headFb}'!=='${headImg}'){this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
     </div>
   `;
 }

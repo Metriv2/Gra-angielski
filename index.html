@@ -2295,20 +2295,33 @@ function renderAvatarItems() {
 }
 
 function equipAvatarItem(category, itemSrc) {
-  const p = ensurePlayerStructure(state.stats[state.profile]);
-  p.avatar[category] = p.avatar[category] === itemSrc ? "" : itemSrc;
-  if (category === "head") window._calibActiveType = classifyHeadItem(itemSrc);
-  if (category === "torso") window._calibActiveType = classifyTorsoItem(itemSrc);
-  if (category === "legs") window._calibActiveType = classifyLegsItem(itemSrc);
-  playEffect("beep");
-  updateAvatarPreviewWithCalibrator();
-  renderAvatarItems();
-}
-</script>
-<!-- ======================== KONIEC CZĘŚCI 3 z 5 ======================== -->
+  const profKey = state.profile === "hubert" ? "hubert" : "igor";
+  const p = ensurePlayerStructure(state.stats[profKey]);
   
-<!-- ======================= POCZĄTEK CZĘŚCI 4 z 5 ======================= -->
-<script>
+  if (!p.avatar) p.avatar = { head: "", torso: "", legs: "" };
+  p.avatar[category] = p.avatar[category] === itemSrc ? "" : itemSrc;
+  
+  // Zapisujemy zmieniony strój z powrotem do stanu gracza
+  state.stats[profKey] = p;
+
+  if (typeof classifyHeadItem === "function") {
+    if (category === "head") window._calibActiveType = classifyHeadItem(itemSrc);
+    if (category === "torso") window._calibActiveType = classifyTorsoItem(itemSrc);
+    if (category === "legs") window._calibActiveType = classifyLegsItem(itemSrc);
+  }
+
+  playEffect("beep");
+
+  if (typeof updateAvatarPreviewWithCalibrator === "function") {
+    updateAvatarPreviewWithCalibrator();
+  } else {
+    const preview = document.getElementById("avatarPreviewBox");
+    if (preview) preview.innerHTML = renderBoyAvatarSvg(profKey, 155);
+  }
+
+  renderAvatarItems();
+  saveCloudData();
+}
 /* ============================================================================
    CZĘŚĆ 4 z 5: EKRAN STARTOWY, MENU LEKCJI, SPRAWDZIAN I POJEDYNEK BRACI
    ============================================================================ */

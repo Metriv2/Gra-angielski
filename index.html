@@ -456,8 +456,56 @@ const FULL_LESSONS_DATABASE = [
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 6: STAN GRY, CHMURA, AUDIO, LEKTOR I MECHANIKA AWATARA
+   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CHMURA, AUDIO, LEKTOR I MECHANIKA AWATARA
    ============================================================================ */
+
+const PROFILE_META = {
+  igor:   { name: "IGOR",   birthDate: "2022-06-29", icon: "👦" },
+  hubert: { name: "HUBERT", birthDate: "2020-08-17", icon: "🧑" },
+  tata:   { name: "TATA",   birthDate: "1989-08-06", icon: "👨‍💻" }
+};
+
+function getPlayerAge(profKey) {
+  const meta = PROFILE_META[profKey];
+  if (!meta || !meta.birthDate) return 0;
+  const today = new Date();
+  const [y, m, d] = meta.birthDate.split("-").map(Number);
+  let age = today.getFullYear() - y;
+  const mDiff = (today.getMonth() + 1) - m;
+  if (mDiff < 0 || (mDiff === 0 && today.getDate() < d)) {
+    age--;
+  }
+  return age;
+}
+
+function isPlayerBirthdayToday(profKey) {
+  const meta = PROFILE_META[profKey];
+  if (!meta || !meta.birthDate) return false;
+  const today = new Date();
+  const [y, m, d] = meta.birthDate.split("-").map(Number);
+  return (today.getMonth() + 1) === m && today.getDate() === d;
+}
+
+function checkAndAwardBirthdayChest(profKey) {
+  if (!PROFILE_META[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  state.stats[profKey] = p;
+  const currentYear = new Date().getFullYear();
+  if (isPlayerBirthdayToday(profKey) && p.lastBirthdayRewardYear !== currentYear) {
+    p.lastBirthdayRewardYear = currentYear;
+    saveCloudData();
+    const age = getPlayerAge(profKey);
+    const name = PROFILE_META[profKey].name;
+    setTimeout(() => {
+      if (typeof renderChestOpeningInsidePopup === "function") {
+        renderChestOpeningInsidePopup(profKey, "gold", `🎂 Sto lat ${name}! Dziś kończysz ${age} lat! Oto Urodzinowa Złota Skrzynia!`);
+      }
+      speakSequence([
+        { lang: "pl", text: `Sto lat, sto lat! Wszystkiego najlepszego z okazji ${age} urodzin ${name}! W nagrodę otrzymujesz urodzinową złotą skrzynię!` }
+      ]);
+    }, 550);
+  }
+}
 
 const DEFAULT_AVATAR_CALIBRATION = {
   cap:         { label: "🧢 Czapki (Brązowa i Srebrna)", top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
@@ -508,9 +556,10 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrn
 function createDefaultPlayerStats() {
   return {
     stars: 0, cups: 0, perfectRounds: 0, examsDone: 0, duelsWon: 0, streakDays: 0, lastPlayDate: "", micCount: 0,
-    badges: [], avatar: { head: "grafiki/cap_red.png", torso: "grafiki/shirt_blue.png", legs: "grafiki/jeans_blue.png", pet: "" },
-    unlockedItems: ["grafiki/cap_red.png", "grafiki/shirt_blue.png", "grafiki/jeans_blue.png"],
-    memoryAnimals: ["p_dog", "p_cat", "p_rabbit", "p_fox"],
+    lastBirthdayRewardYear: 0, nakedStartMigrated: true,
+    badges: [], avatar: { head: "", torso: "", legs: "", pet: "" },
+    unlockedItems: [],
+    memoryAnimals: [],
     lessonCounts: {}, equipped: {}
   };
 }
@@ -538,20 +587,33 @@ function getFallbackOutfitPath(src) {
 function ensurePlayerStructure(p) {
   const def = createDefaultPlayerStats();
   if (!p) return def;
-  const rawUnlocked = Array.isArray(p.unlockedItems) && p.unlockedItems.length ? p.unlockedItems.map(resolveOutfitPath) : def.unlockedItems;
-  const rawAnimals = Array.isArray(p.memoryAnimals) && p.memoryAnimals.length
-    ? p.memoryAnimals.map(id => String(id).replace(/^mem_/, "p_"))
-    : def.memoryAnimals;
+
+  // Jednorazowa migracja do gołego awatara na starcie (usuwa dawny zestaw startowy)
+  if (!p.nakedStartMigrated) {
+    const oldStarter = ["grafiki/cap_red.png", "grafiki/shirt_blue.png", "grafiki/Shirt_blue.png", "grafiki/jeans_blue.png"];
+    p.unlockedItems = (p.unlockedItems || []).filter(it => !oldStarter.includes(it));
+    p.memoryAnimals = (p.memoryAnimals || []).filter(id => !["mem_dog", "mem_cat", "mem_rabbit", "mem_fox", "p_dog", "p_cat", "p_rabbit", "p_fox"].includes(id));
+    p.avatar = { head: "", torso: "", legs: "", pet: "" };
+    p.nakedStartMigrated = true;
+  }
+
+  const rawUnlocked = Array.isArray(p.unlockedItems) ? p.unlockedItems.map(resolveOutfitPath).filter(Boolean) : [];
+  const rawAnimals = Array.isArray(p.memoryAnimals)
+    ? p.memoryAnimals.map(id => String(id).replace(/^mem_/, "p_")).filter(Boolean)
+    : [];
   const rawAvatar = p.avatar || def.avatar;
+
   return {
     ...def, ...p, lessonCounts: p.lessonCounts || {},
+    lastBirthdayRewardYear: p.lastBirthdayRewardYear || 0,
+    nakedStartMigrated: true,
     badges: Array.isArray(p.badges) ? p.badges : [],
     unlockedItems: Array.from(new Set(rawUnlocked)),
     memoryAnimals: Array.from(new Set(rawAnimals)),
     avatar: {
-      head: resolveOutfitPath(rawAvatar.head !== undefined ? rawAvatar.head : def.avatar.head),
-      torso: resolveOutfitPath(rawAvatar.torso !== undefined ? rawAvatar.torso : (rawAvatar.top || def.avatar.torso)),
-      legs: resolveOutfitPath(rawAvatar.legs !== undefined ? rawAvatar.legs : (rawAvatar.bottom || def.avatar.legs)),
+      head: rawAvatar.head ? resolveOutfitPath(rawAvatar.head) : "",
+      torso: rawAvatar.torso ? resolveOutfitPath(rawAvatar.torso) : "",
+      legs: rawAvatar.legs ? resolveOutfitPath(rawAvatar.legs) : "",
       pet: rawAvatar.pet ? String(rawAvatar.pet).replace(/^mem_/, "p_") : ""
     },
     equipped: { ...def.equipped, ...(p.equipped || {}) }
@@ -566,7 +628,12 @@ let state = {
   selectedStickerCat: "all", selectedBadgeCat: "all", selectedWardrobeTier: "all", rewardQueue: [],
   lessons: JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE)),
   calibration: JSON.parse(JSON.stringify(DEFAULT_AVATAR_CALIBRATION)),
-  stats: { igor: createDefaultPlayerStats(), hubert: createDefaultPlayerStats(), stickers: [] },
+  stats: {
+    igor: createDefaultPlayerStats(),
+    hubert: createDefaultPlayerStats(),
+    tata: createDefaultPlayerStats(),
+    stickers: []
+  },
   memoryGameCards: [], memoryFlippedIndexes: [], memoryMatchedPairs: 0
 };
 
@@ -581,6 +648,7 @@ function loadCloudData() {
       if (parsed.stats) {
         state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
         state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
+        state.stats.tata = ensurePlayerStructure(parsed.stats.tata);
         if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
       }
       if (parsed.calibration) {
@@ -596,6 +664,7 @@ function loadCloudData() {
         const pStats = JSON.parse(data.stats);
         state.stats.igor = ensurePlayerStructure({ ...state.stats.igor, ...pStats.igor });
         state.stats.hubert = ensurePlayerStructure({ ...state.stats.hubert, ...pStats.hubert });
+        state.stats.tata = ensurePlayerStructure({ ...state.stats.tata, ...(pStats.tata || {}) });
         if (pStats.stickers) state.stats.stickers = pStats.stickers;
       }
       if (data.calibration) {
@@ -608,8 +677,15 @@ function loadCloudData() {
       if (data.lessons) {
         const custom = JSON.parse(data.lessons);
         const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
-        state.lessons = state.lessons.filter(l => baseIds.includes(l.id));
-        state.lessons.push(...custom);
+        state.lessons = JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE));
+        custom.forEach(cl => {
+          if (baseIds.includes(cl.id)) {
+            const target = state.lessons.find(l => l.id === cl.id);
+            if (target && Array.isArray(cl.items)) target.items = cl.items;
+          } else {
+            state.lessons.push(cl);
+          }
+        });
       }
       if (data.questionsPerRound) state.questionsPerRound = parseInt(data.questionsPerRound) || 8;
       if (typeof updateHeaderUI === "function") updateHeaderUI();
@@ -632,13 +708,12 @@ function saveCloudData() {
     }));
   } catch (e) {}
 
-  const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
   const payload = {
     action: "save",
     data: {
       stats: state.stats,
       calibration: state.calibration,
-      lessons: state.lessons.filter(l => !baseIds.includes(l.id)),
+      lessons: state.lessons,
       questionsPerRound: state.questionsPerRound
     }
   };
@@ -722,7 +797,7 @@ function speakSequence(segments, onComplete = null) {
     }
     let done = false;
     const finish = () => { if (done || myToken !== activeSpeechToken) return; done = true; if (seg.onEnd) seg.onEnd(); next(); };
-    const safety = setTimeout(finish, Math.max(3600, seg.text.length * 140));
+    const safety = setTimeout(finish, Math.max(4200, seg.text.length * 145));
     utter.onend = () => { clearTimeout(safety); finish(); };
     utter.onerror = () => { clearTimeout(safety); finish(); };
     window.speechSynthesis.speak(utter);
@@ -738,14 +813,69 @@ function toggleTurtle() {
 
 function startKidVoiceTour() {
   if (!state.profile) return;
+  if (typeof closeBadgesModal === "function") closeBadgesModal();
+  if (typeof closeStickersModal === "function") closeStickersModal();
+  if (typeof closeAvatarModal === "function") closeAvatarModal();
   if (state.currentLessonId && typeof showLessonMenu === "function") showLessonMenu();
-  const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : "Chłopaki";
-  const hl = (id, on) => { const el = document.getElementById(id); if (el) { el.classList.toggle("tutorial-highlight", on); if (on) el.scrollIntoView({ behavior: "smooth", block: "center" }); } };
+
+  const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : state.profile === "tata" ? "Tato" : "Chłopaki";
+  const hl = (id, on) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.toggle("tutorial-highlight", on);
+      if (on) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   speakSequence([
-    { lang: "pl", text: `Cześć ${kidName}! Pokażę Ci co gdzie jest! Na środku ekranu masz kolorowe kafelki z lekcjami. Kliknij lekcję, aby zbierać gwiazdki!`, onStart: () => hl("lessonsGridBox", true), onEnd: () => hl("lessonsGridBox", false) },
-    { lang: "pl", text: "Tutaj na górze świeci przycisk Odznaki! Za gwiazdki zdobywasz medale i losujesz nagrody!", onStart: () => hl("navBadgesBtn", true), onEnd: () => hl("navBadgesBtn", false) },
-    { lang: "pl", text: "Obok świeci przycisk Naklejki! Tam zobaczysz swój klaser.", onStart: () => hl("navStickersBtn", true), onEnd: () => hl("navStickersBtn", false) },
-    { lang: "pl", text: "Tutaj jest przycisk Awatar! Przebierasz w nim swoją postać!", onStart: () => hl("navAvatarBtn", true), onEnd: () => hl("navAvatarBtn", false) }
+    {
+      lang: "pl",
+      text: `Cześć ${kidName}! Pokażę Ci co gdzie jest! Na środku ekranu masz kolorowe kafelki z lekcjami. Kliknij lekcję, aby zbierać gwiazdki!`,
+      onStart: () => hl("lessonsGridBox", true),
+      onEnd: () => hl("lessonsGridBox", false)
+    },
+    {
+      lang: "pl",
+      text: "Teraz wchodzimy w Odznaki! Zobacz, gdy ukończysz jakieś osiągnięcie, otrzymasz w nagrodę skrzynię! Możesz też kliknąć w dowolne osiągnięcie na liście, a powiem Ci dokładnie, co trzeba zrobić, aby je zdobyć!",
+      onStart: () => {
+        hl("navBadgesBtn", true);
+        if (state.profile !== "duel" && typeof openBadgesModal === "function") {
+          openBadgesModal();
+          setTimeout(() => hl("badgesGrid", true), 200);
+        }
+      },
+      onEnd: () => {
+        hl("badgesGrid", false);
+        hl("navBadgesBtn", false);
+        if (typeof closeBadgesModal === "function") closeBadgesModal();
+      }
+    },
+    {
+      lang: "pl",
+      text: "Obok świeci przycisk Naklejki! Tam zobaczysz swój klaser z naklejkami.",
+      onStart: () => hl("navStickersBtn", true),
+      onEnd: () => hl("navStickersBtn", false)
+    },
+    {
+      lang: "pl",
+      text: "A teraz wchodzimy w Awatar! Tutaj możesz edytować wygląd swojego bohatera. Ze skrzyń możesz wylosować lepsze ubrania i zbroje, a na samym dole wybrać swojego zwierzaka towarzysza!",
+      onStart: () => {
+        hl("navAvatarBtn", true);
+        if (state.profile !== "duel" && typeof openAvatarModal === "function") {
+          openAvatarModal();
+          setTimeout(() => {
+            hl("avatarPreviewBox", true);
+            const cont = document.getElementById("avatarItemsContainer");
+            if (cont) setTimeout(() => cont.scrollTo({ top: cont.scrollHeight, behavior: "smooth" }), 2200);
+          }, 200);
+        }
+      },
+      onEnd: () => {
+        hl("avatarPreviewBox", false);
+        hl("navAvatarBtn", false);
+        if (typeof closeAvatarModal === "function") closeAvatarModal();
+      }
+    }
   ]);
 }
 
@@ -778,8 +908,9 @@ function classifyLegsItem(src) {
 }
 
 function renderBoyAvatarSvg(playerKey, size = 80) {
-  const p = ensurePlayerStructure(state.stats[playerKey]);
-  state.stats[playerKey] = p;
+  const key = PROFILE_META[playerKey] ? playerKey : "igor";
+  const p = ensurePlayerStructure(state.stats[key]);
+  state.stats[key] = p;
   const avatar = p.avatar || {};
   const cal = getAvatarCalibration();
 
@@ -831,6 +962,16 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
    CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE Z NAGRODAMI, KLASERY, GARDEROBA
    ============================================================================ */
 
+function getActiveProfileKey() {
+  return (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+}
+
+function getActiveProfileLabel() {
+  if (state.profile === "hubert") return "HUBERT";
+  if (state.profile === "tata") return "TATA (TESTOWY)";
+  return "IGOR";
+}
+
 function getAll131OutfitsFlat() {
   const flat = [];
   ["bronze", "silver", "gold"].forEach(tier => {
@@ -862,8 +1003,9 @@ function getAllAchievements() {
   [{ d: 2, n: "2 Dni z rzędu" }, { d: 3, n: "3 Dni z rzędu" }, { d: 5, n: "5 Dni z rzędu" }, { d: 7, n: "Tydzień (7 dni)" }, { d: 14, n: "2 Tygodnie (14 dni)" }, { d: 21, n: "3 Tygodnie (21 dni)" }, { d: 30, n: "Miesiąc (30 dni)" }, { d: 60, n: "2 Miesiące (60 dni)" }, { d: 90, n: "3 Miesiące (90 dni)" }].forEach(st => {
     list.push({ id: `streak_${st.d}`, cat: "streak", icon: "🔥", name: st.n, desc: `Ćwicz angielski przez ${st.d} dni pod rząd!`, check: p => (p.streakDays || 1) >= st.d, progress: p => `${Math.min(p.streakDays || 1, st.d)}/${st.d}` });
   });
+  const visibleLessons = (state.lessons || []).filter(l => !l.testOnly || state.profile === "tata");
   [1, 2, 3, 5, 8, 13, 21, 35].forEach(cnt => {
-    (state.lessons || []).forEach(lesson => {
+    visibleLessons.forEach(lesson => {
       const shortTitle = lesson.title.replace(/^\d+\.\s*/, "");
       list.push({ id: `lesson_${lesson.id}_${cnt}`, cat: "lessons", icon: lesson.icon ? Array.from(lesson.icon)[0] : "📘", name: `${shortTitle} (${cnt}x)`, desc: `Ukończ lekcję „${shortTitle}” ${cnt} razy!`, check: p => ((p.lessonCounts && p.lessonCounts[lesson.id]) || 0) >= cnt, progress: p => `${Math.min((p.lessonCounts && p.lessonCounts[lesson.id]) || 0, cnt)}/${cnt}` });
     });
@@ -924,6 +1066,7 @@ function renderChestOpeningInsidePopup(profKey, tier, title) {
   
   modal.classList.remove("hidden"); modal.classList.add("flex");
   const p = ensurePlayerStructure(state.stats[profKey]);
+  state.stats[profKey] = p;
   
   const bg = tier === "gold" ? "from-amber-200 to-yellow-500" : tier === "silver" ? "from-slate-200 to-slate-400" : "from-orange-200 to-amber-700";
   const border = tier === "gold" ? "border-amber-400" : tier === "silver" ? "border-slate-400" : "border-amber-800";
@@ -1063,7 +1206,7 @@ function renderStickers() {
 function openBadgesModal() {
   if (!state.profile || state.profile === "duel") return;
   state.selectedBadgeCat = "all";
-  document.getElementById("badgesModalPlayerName").textContent = state.profile === "igor" ? "IGOR" : "HUBERT";
+  document.getElementById("badgesModalPlayerName").textContent = getActiveProfileLabel();
   renderBadges();
   const m = document.getElementById("badgesModal");
   if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
@@ -1076,7 +1219,7 @@ function renderBadges() {
   const tabs = document.getElementById("badgeCategoryTabs");
   const grid = document.getElementById("badgesGrid");
   if (!tabs || !grid) return;
-  const p = state.stats[state.profile === "hubert" ? "hubert" : "igor"];
+  const p = state.stats[getActiveProfileKey()];
   if (!p) return;
 
   const cats = [{id:"all", n:"Wszystkie"}, {id:"stars", n:"⭐ Gwiazdki"}, {id:"streak", n:"🔥 Dni"}, {id:"lessons", n:"📘 Lekcje"}, {id:"special", n:"🏆 Wyzwania"}, {id:"masters", n:"👑 Arcymistrz"}];
@@ -1101,7 +1244,7 @@ function renderBadges() {
 // ------------------------------------------------------------------------
 function openAvatarModal() {
   if (!state.profile || state.profile === "duel") return;
-  document.getElementById("avatarModalPlayerName").textContent = state.profile === "igor" ? "IGOR" : "HUBERT";
+  document.getElementById("avatarModalPlayerName").textContent = getActiveProfileLabel();
   updateAvatarPreviewWithCalibrator();
   renderAvatarItems();
   const m = document.getElementById("avatarModal");
@@ -1123,7 +1266,7 @@ function updateAvatarPreviewWithCalibrator() {
 
   box.innerHTML = `
     <div class="flex flex-col items-center w-full">
-      ${renderBoyAvatarSvg(state.profile, 165)}
+      ${renderBoyAvatarSvg(getActiveProfileKey(), 165)}
       <button onclick="window._calibOpen=!window._calibOpen;updateAvatarPreviewWithCalibrator();" class="mt-4 px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-xs border border-indigo-300">
         🔧 ${window._calibOpen ? "Ukryj suwaki dopasowania" : "Dopasuj wymiary (Suwaki)"}
       </button>
@@ -1172,8 +1315,9 @@ function resetCalibDefaults() {
 }
 
 function renderAvatarItems() {
-  const p = ensurePlayerStructure(state.stats[state.profile]);
-  state.stats[state.profile] = p;
+  const profKey = getActiveProfileKey();
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  state.stats[profKey] = p;
   const container = document.getElementById("avatarItemsContainer");
   if (!container) return;
 
@@ -1241,7 +1385,7 @@ function renderAvatarItems() {
   const allPets = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
   const ownedPetsCount = allPets.filter(a => (p.memoryAnimals || []).includes(a.id)).length;
   
-  html += `<div class="mb-4 pt-2">
+  html += `<div id="companionPetsSection" class="mb-4 pt-2">
     <div class="flex items-center justify-between border-b border-amber-200 pb-1 mb-2">
       <h3 class="text-sm font-extrabold text-amber-800">🐾 Twój Towarzysz (Zwierzak)</h3>
       <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">${ownedPetsCount}/${allPets.length}</span>
@@ -1285,7 +1429,7 @@ function renderAvatarItems() {
 }
 
 function equipAvatarItem(category, itemSrc) {
-  const profKey = state.profile === "hubert" ? "hubert" : "igor";
+  const profKey = getActiveProfileKey();
   const p = ensurePlayerStructure(state.stats[profKey]);
   
   if (!p.avatar) p.avatar = { head: "", torso: "", legs: "", pet: "" };
@@ -1319,19 +1463,33 @@ function setWardrobeTierFilter(tier) {
    CZĘŚĆ 5 z 6: EKRAN STARTOWY, MENU LEKCJI, GŁÓWNY SILNIK RUND I QUIZY
    ============================================================================ */
 
+function getVisibleLessonItems(items) {
+  if (!Array.isArray(items)) return [];
+  if (state.profile === "tata") return items;
+  return items.filter(it => !it.testOnly);
+}
+
 function updateHeaderUI() {
   const badge = document.getElementById("activeProfileBadge");
   const stBadge = document.getElementById("stickerCountBadge");
   const bdTop = document.getElementById("badgeCountTop");
   if (stBadge) stBadge.textContent = (state.stats.stickers || []).length;
-  const activeProf = state.profile === "hubert" ? "hubert" : "igor";
-  if (bdTop) bdTop.textContent = (state.stats[activeProf].badges || []).length;
+  const activeProf = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  if (bdTop && state.stats[activeProf]) bdTop.textContent = (state.stats[activeProf].badges || []).length;
   if (!badge || !state.profile) return;
 
   if (state.profile === "igor") {
-    badge.innerHTML = `${renderBoyAvatarSvg('igor', 26)} 👦 IGOR • ⭐ ${state.stats.igor.stars} | 🏆 ${state.stats.igor.cups} | 🔥 ${state.stats.igor.streakDays} dni`;
+    const age = getPlayerAge("igor");
+    const bday = isPlayerBirthdayToday("igor") ? " 🎂" : "";
+    badge.innerHTML = `${renderBoyAvatarSvg('igor', 26)} 👦 IGOR (${age} l.)${bday} • ⭐ ${state.stats.igor.stars} | 🏆 ${state.stats.igor.cups} | 🔥 ${state.stats.igor.streakDays} dni`;
   } else if (state.profile === "hubert") {
-    badge.innerHTML = `${renderBoyAvatarSvg('hubert', 26)} 🧑 HUBERT • ⭐ ${state.stats.hubert.stars} | 🏆 ${state.stats.hubert.cups} | 🔥 ${state.stats.hubert.streakDays} dni`;
+    const age = getPlayerAge("hubert");
+    const bday = isPlayerBirthdayToday("hubert") ? " 🎂" : "";
+    badge.innerHTML = `${renderBoyAvatarSvg('hubert', 26)} 🧑 HUBERT (${age} l.)${bday} • ⭐ ${state.stats.hubert.stars} | 🏆 ${state.stats.hubert.cups} | 🔥 ${state.stats.hubert.streakDays} dni`;
+  } else if (state.profile === "tata") {
+    const age = getPlayerAge("tata");
+    const bday = isPlayerBirthdayToday("tata") ? " 🎂" : "";
+    badge.innerHTML = `${renderBoyAvatarSvg('tata', 26)} 👨‍💻 TATA (${age} l. • TEST)${bday} • ⭐ ${state.stats.tata.stars} | 🏆 ${state.stats.tata.cups} | 🔥 ${state.stats.tata.streakDays} dni`;
   } else {
     badge.innerHTML = `⚔️ POJEDYNEK BRACI (16 pytań)`;
   }
@@ -1347,39 +1505,68 @@ function showStartScreen() {
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
 
+  const igorAge = getPlayerAge("igor");
+  const hubertAge = getPlayerAge("hubert");
+  const tataAge = getPlayerAge("tata");
+
+  const igorBday = isPlayerBirthdayToday("igor") ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold animate-bounce">🎂 DZIŚ URODZINY! ZŁOTA SKRZYNIA!</div>` : `<div class="text-[10px] font-bold text-amber-700">🎂 ur. 29.06.2022</div>`;
+  const hubertBday = isPlayerBirthdayToday("hubert") ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold animate-bounce">🎂 DZIŚ URODZINY! ZŁOTA SKRZYNIA!</div>` : `<div class="text-[10px] font-bold text-sky-700">🎂 ur. 17.08.2020</div>`;
+  const tataBday = isPlayerBirthdayToday("tata") ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold animate-bounce">🎂 DZIŚ URODZINY!</div>` : `<div class="text-[10px] font-bold text-emerald-700">🧪 Konto Testowe (PIN)</div>`;
+
   mc.innerHTML = `
-    <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-5xl mx-auto w-full">
+    <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
         🌟 Akademia Angielskiego • Wersja 10.2
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-        <div onclick="chooseProfile('igor')" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-400 bg-gradient-to-b from-amber-50 to-amber-100 p-5 shadow-lg flex flex-col items-center justify-between">
-          ${renderBoyAvatarSvg('igor', 95)}
-          <h2 class="text-2xl font-extrabold text-amber-950 mt-1">IGOR (4 l.)</h2>
-          <div class="text-[11px] font-bold text-amber-900 my-2 bg-white px-3 py-1.5 rounded-xl border border-amber-300 w-full">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div onclick="chooseProfile('igor')" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-400 bg-gradient-to-b from-amber-50 to-amber-100 p-4 shadow-lg flex flex-col items-center justify-between">
+          ${renderBoyAvatarSvg('igor', 90)}
+          <div class="mt-1">
+            <h2 class="text-xl font-extrabold text-amber-950">IGOR (${igorAge} l.)</h2>
+            ${igorBday}
+          </div>
+          <div class="text-[11px] font-bold text-amber-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-amber-300 w-full">
             ⭐ ${state.stats.igor.stars} | 🏆 ${state.stats.igor.cups} | 🔥 ${state.stats.igor.streakDays} dni
           </div>
-          <span class="w-full py-2.5 bg-amber-500 text-white font-extrabold rounded-2xl shadow">Graj jako Igor ▶</span>
+          <span class="w-full py-2.5 bg-amber-500 text-white font-extrabold rounded-2xl shadow text-sm">Graj jako Igor ▶</span>
         </div>
 
-        <div onclick="chooseProfile('hubert')" class="kid-card cursor-pointer rounded-3xl border-4 border-sky-400 bg-gradient-to-b from-sky-50 to-sky-100 p-5 shadow-lg flex flex-col items-center justify-between">
-          ${renderBoyAvatarSvg('hubert', 95)}
-          <h2 class="text-2xl font-extrabold text-sky-950 mt-1">HUBERT (6 l.)</h2>
-          <div class="text-[11px] font-bold text-sky-900 my-2 bg-white px-3 py-1.5 rounded-xl border border-sky-300 w-full">
+        <div onclick="chooseProfile('hubert')" class="kid-card cursor-pointer rounded-3xl border-4 border-sky-400 bg-gradient-to-b from-sky-50 to-sky-100 p-4 shadow-lg flex flex-col items-center justify-between">
+          ${renderBoyAvatarSvg('hubert', 90)}
+          <div class="mt-1">
+            <h2 class="text-xl font-extrabold text-sky-950">HUBERT (${hubertAge} l.)</h2>
+            ${hubertBday}
+          </div>
+          <div class="text-[11px] font-bold text-sky-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-sky-300 w-full">
             ⭐ ${state.stats.hubert.stars} | 🏆 ${state.stats.hubert.cups} | 🔥 ${state.stats.hubert.streakDays} dni
           </div>
-          <span class="w-full py-2.5 bg-sky-600 text-white font-extrabold rounded-2xl shadow">Graj jako Hubert ▶</span>
+          <span class="w-full py-2.5 bg-sky-600 text-white font-extrabold rounded-2xl shadow text-sm">Graj jako Hubert ▶</span>
         </div>
 
-        <div onclick="chooseProfile('duel')" class="kid-card cursor-pointer rounded-3xl border-4 border-purple-400 bg-gradient-to-b from-purple-50 to-indigo-100 p-5 shadow-lg flex flex-col items-center justify-between">
+        <div onclick="chooseProfile('duel')" class="kid-card cursor-pointer rounded-3xl border-4 border-purple-400 bg-gradient-to-b from-purple-50 to-indigo-100 p-4 shadow-lg flex flex-col items-center justify-between">
           <div class="text-6xl my-4 float-anim drop-shadow-md">⚔️🏆</div>
-          <h2 class="text-2xl font-extrabold text-purple-950">POJEDYNEK</h2>
-          <div class="text-xs font-bold text-purple-900 my-2 bg-white px-3 py-1.5 rounded-xl border border-purple-300 w-full">
-            16 pytań (po 8 na brata) • 1 szansa!
+          <div>
+            <h2 class="text-xl font-extrabold text-purple-950">POJEDYNEK</h2>
+            <div class="text-[10px] font-bold text-purple-700">Igor vs Hubert</div>
           </div>
-          <span class="w-full py-2.5 bg-purple-600 text-white font-extrabold rounded-2xl shadow">Start Pojedynku ▶</span>
+          <div class="text-[11px] font-bold text-purple-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-purple-300 w-full">
+            16 pytań (po 8) • 1 szansa!
+          </div>
+          <span class="w-full py-2.5 bg-purple-600 text-white font-extrabold rounded-2xl shadow text-sm">Start Pojedynku ▶</span>
+        </div>
+
+        <div onclick="openParentPinModal('tata_login')" class="kid-card cursor-pointer rounded-3xl border-4 border-emerald-400 bg-gradient-to-b from-emerald-50 to-teal-100 p-4 shadow-lg flex flex-col items-center justify-between">
+          ${renderBoyAvatarSvg('tata', 90)}
+          <div class="mt-1">
+            <h2 class="text-xl font-extrabold text-emerald-950">🔒 TATA (${tataAge} l.)</h2>
+            ${tataBday}
+          </div>
+          <div class="text-[11px] font-bold text-emerald-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-emerald-300 w-full">
+            ⭐ ${state.stats.tata.stars} | 🏆 ${state.stats.tata.cups} | 🔥 ${state.stats.tata.streakDays} dni
+          </div>
+          <span class="w-full py-2.5 bg-emerald-600 text-white font-extrabold rounded-2xl shadow text-sm">Konto Testowe 🔒</span>
         </div>
       </div>
 
@@ -1393,9 +1580,11 @@ function showStartScreen() {
 
 function chooseProfile(prof) {
   state.profile = prof;
-  if (prof === "igor" || prof === "hubert") {
+  if (prof === "igor" || prof === "hubert" || prof === "tata") {
+    state.stats[prof] = ensurePlayerStructure(state.stats[prof]);
     updateDailyStreakForPlayer(prof);
     checkAndUnlockAchievements(prof);
+    checkAndAwardBirthdayChest(prof);
   } else {
     updateDailyStreakForPlayer("igor");
     updateDailyStreakForPlayer("hubert");
@@ -1413,19 +1602,25 @@ function showLessonMenu() {
   state.currentLessonId = null;
   state.isExamMode = false;
 
-  const visibleLessons = state.profile === "duel" ? state.lessons.filter(l => l.type !== "mic_only" && l.type !== "memory_game") : state.lessons;
+  const baseVisible = state.lessons.filter(l => !l.testOnly || state.profile === "tata");
+  const visibleLessons = state.profile === "duel"
+    ? baseVisible.filter(l => l.type !== "mic_only" && l.type !== "memory_game")
+    : baseVisible;
 
   let topActionHtml = "";
   if (state.profile === "duel") {
     topActionHtml = `<button onclick="startDuelAllWords()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-extrabold text-sm shadow-lg">⚔️🎲 Pojedynek: Wszystkie Słówka</button>`;
-  } else if (state.profile === "hubert") {
-    topActionHtml = `<button onclick="startGrandExam()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex flex-col"><span class="text-base text-center">🎓👑 Sprawdzian Huberta</span><span class="text-[10px] font-bold text-center text-amber-100">10 pytań + 5 x Wymowa na głos!</span></button>`;
+  } else if (state.profile === "hubert" || state.profile === "tata") {
+    const examLabel = state.profile === "tata" ? "🎓👑 Sprawdzian (Tryb Testowy)" : "🎓👑 Sprawdzian Huberta";
+    topActionHtml = `<button onclick="startGrandExam()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex flex-col"><span class="text-base text-center">${examLabel}</span><span class="text-[10px] font-bold text-center text-amber-100">10 pytań + 5 x Wymowa na głos!</span></button>`;
   } else {
     topActionHtml = `<button onclick="startGrandExam()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex items-center gap-2">🎓👑 Wielki Sprawdzian (Wygraj Skrzynię!)</button>`;
   }
 
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
+
+  const pKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
 
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-xl border-4 border-sky-200 p-4 md:p-6">
@@ -1438,14 +1633,20 @@ function showLessonMenu() {
 
       <div id="lessonsGridBox" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 rounded-2xl p-1">
         ${visibleLessons.map(l => {
-          const pKey = state.profile === "hubert" ? "hubert" : "igor";
           const doneCount = (state.stats[pKey].lessonCounts && state.stats[pKey].lessonCounts[l.id]) || 0;
+          const testWordsCount = Array.isArray(l.items) ? l.items.filter(it => it.testOnly).length : 0;
+          const testBadge = l.testOnly
+            ? `<span class="px-2 py-0.5 rounded-full bg-amber-300 text-amber-950 font-extrabold text-[10px] border border-amber-500">🧪 TESTOWA (TYLKO TATA)</span>`
+            : (state.profile === "tata" && testWordsCount > 0 ? `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold text-[10px] border border-amber-400">🧪 +${testWordsCount} słówek testowych</span>` : "");
           return `
             <div onclick="startLesson('${l.id}')" class="kid-card cursor-pointer rounded-3xl border-4 ${l.borderColor} bg-white hover:bg-slate-50 p-4 shadow-md flex flex-col justify-between">
               <div>
-                <div class="flex justify-between items-center mb-2">
+                <div class="flex justify-between items-center mb-2 gap-1 flex-wrap">
                   <span class="text-4xl drop-shadow-sm">${l.icon}</span>
-                  <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-bold text-[10px] border border-emerald-200">Powtórki: ${doneCount}x</span>
+                  <div class="flex flex-col items-end gap-1">
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-bold text-[10px] border border-emerald-200">Powtórki: ${doneCount}x</span>
+                    ${testBadge}
+                  </div>
                 </div>
                 <h3 class="text-lg font-extrabold text-slate-900 leading-tight">${l.title}</h3>
                 <p class="text-[11px] text-slate-500 mt-1">${l.subtitle}</p>
@@ -1491,10 +1692,11 @@ function startLesson(lessonId, subMode = null) {
   state.duelScores = { igor: 0, hubert: 0 }; state.duelTurn = "igor"; state.duelReadyWaiting = state.profile === "duel";
 
   const totalQ = state.profile === "duel" ? 16 : state.questionsPerRound;
-  let pool = lesson.items;
-  if (subMode === "shop_cart_game") pool = lesson.items.filter(i => i.isProduct);
-  else if (subMode === "shop_phrases_game") pool = lesson.items.filter(i => i.isPhrase);
-  if (!pool || !pool.length) pool = lesson.items;
+  const visibleItems = getVisibleLessonItems(lesson.items);
+  let pool = visibleItems;
+  if (subMode === "shop_cart_game") pool = visibleItems.filter(i => i.isProduct);
+  else if (subMode === "shop_phrases_game") pool = visibleItems.filter(i => i.isPhrase);
+  if (!pool || !pool.length) pool = visibleItems.length ? visibleItems : lesson.items;
 
   const shuffled = shuffleArray(pool);
   state.roundQuestions = [];
@@ -1510,7 +1712,11 @@ function startDuelAllWords() {
   state.duelTurn = "igor"; state.duelReadyWaiting = true;
 
   let all = [];
-  state.lessons.forEach(l => { if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") l.items.forEach(it => all.push(it)); });
+  state.lessons.filter(l => !l.testOnly).forEach(l => {
+    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
+      getVisibleLessonItems(l.items).forEach(it => all.push(it));
+    }
+  });
   const shuffled = shuffleArray(all);
   state.roundQuestions = [];
   for (let i = 0; i < 16; i++) state.roundQuestions.push(shuffled[i % shuffled.length]);
@@ -1523,18 +1729,21 @@ function startGrandExam() {
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
 
   let allListen = [];
-  state.lessons.forEach(l => { if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") l.items.forEach(it => allListen.push(it)); });
+  state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
+    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
+      getVisibleLessonItems(l.items).forEach(it => allListen.push(it));
+    }
+  });
   let allMic = [];
   const pStudio = state.lessons.find(l => l.id === "pronunciation_studio");
-  if (pStudio) pStudio.items.forEach(it => allMic.push(it));
+  if (pStudio) getVisibleLessonItems(pStudio.items).forEach(it => allMic.push(it));
 
   const totalQs = 15;
   state.roundQuestions = [];
   const shuffledListen = shuffleArray(allListen);
   const shuffledMic = shuffleArray(allMic);
 
-  if (state.profile === "hubert") {
-    // Sprawdzian Huberta: 10 quizów wizualnych + 5 wyzwań mikrofonowych
+  if (state.profile === "hubert" || state.profile === "tata") {
     for (let i = 0; i < 10; i++) {
       let q = Object.assign({}, shuffledListen[i % shuffledListen.length]);
       q._examModeType = "listen_pick";
@@ -1545,9 +1754,8 @@ function startGrandExam() {
       q._examModeType = "mic_game";
       state.roundQuestions.push(q);
     }
-    state.roundQuestions = shuffleArray(state.roundQuestions); // Mieszamy pytania i mikrofon
+    state.roundQuestions = shuffleArray(state.roundQuestions);
   } else {
-    // Sprawdzian Igora: 15 zwykłych pytań wizualnych
     for (let i = 0; i < totalQs; i++) {
       let q = Object.assign({}, shuffledListen[i % shuffledListen.length]);
       q._examModeType = "listen_pick";
@@ -1588,9 +1796,9 @@ function renderTopGameBar(lesson) {
 
   const duelBar = state.profile === "duel" ? `<div class="mb-2 p-2.5 rounded-2xl bg-gradient-to-r from-amber-100 via-purple-100 to-sky-100 border-2 border-purple-400 flex justify-between items-center font-extrabold text-[10px] md:text-xs"><div>👦 IGOR: ${state.duelScores.igor} pkt ⚡ VS ⚡ 🧑 HUBERT: ${state.duelScores.hubert} pkt</div><div class="px-3 py-1 rounded-xl ${state.duelTurn === 'igor' ? 'bg-amber-500' : 'bg-sky-600'} text-white">Teraz: ${state.duelTurn === 'igor' ? 'IGOR' : 'HUBERT'}</div></div>` : "";
   const examBar = state.isExamMode ? `<div class="mb-2 p-2 rounded-2xl bg-orange-100 border-2 border-orange-400 text-orange-950 font-extrabold text-center text-xs shadow-sm uppercase">🎓 Wielki Sprawdzian (Pytanie ${state.roundIndex+1}/15)</div>` : "";
-const titleBar = lesson && lesson.id !== "grand_exam" && lesson.id !== "memory_game" ? `<div class="w-full text-center text-slate-500 font-extrabold text-[11px] uppercase tracking-wider mb-2">Lekcja: ${lesson.title}</div>` : '';
+  const titleBar = lesson && lesson.id !== "grand_exam" && lesson.id !== "memory_game" ? `<div class="w-full text-center text-slate-500 font-extrabold text-[11px] uppercase tracking-wider mb-2">Lekcja: ${lesson.title}</div>` : '';
   return `
-  ${titleBar}
+    ${titleBar}
     ${duelBar} ${examBar}
     <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-sky-200 flex flex-col gap-2 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-2">
@@ -1640,12 +1848,17 @@ function renderCurrentQuestion() {
 
 function renderUniversalVisualQuiz(lesson) {
   const q = state.roundQuestions[state.roundIndex];
-  const isHubert = state.profile === "hubert" || (state.profile === "duel" && state.duelTurn === "hubert");
-  const numChoices = isHubert ? 6 : 3;
+  const isAdvanced = state.profile === "hubert" || state.profile === "tata" || (state.profile === "duel" && state.duelTurn === "hubert");
+  const numChoices = isAdvanced ? 6 : 3;
 
   let allPool = [];
-  state.lessons.forEach(l => { if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") l.items.forEach(it => allPool.push(it)); });
-  let src = lesson.items && lesson.items.length >= numChoices ? lesson.items : allPool;
+  state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
+    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
+      getVisibleLessonItems(l.items).forEach(it => allPool.push(it));
+    }
+  });
+  const visLessonItems = getVisibleLessonItems(lesson.items);
+  let src = visLessonItems.length >= numChoices ? visLessonItems : allPool;
 
   const choices = shuffleArray([q, ...shuffleArray(src.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);
   window._currentChoices = choices;
@@ -1659,7 +1872,7 @@ function renderUniversalVisualQuiz(lesson) {
       <div class="flex items-center justify-between bg-sky-50 p-3 rounded-2xl border border-sky-200 mb-3 drop-shadow-sm">
         <button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-12 h-12 rounded-2xl bg-sky-500 text-white text-2xl shadow flex items-center justify-center">🔊</button>
         <div class="text-xl md:text-3xl font-extrabold text-slate-900 flex-1 px-2 tracking-wide">"${q.en}" ${q.phonetic ? '[' + q.phonetic + ']' : ''}</div>
-        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-sky-300 text-slate-600">${isHubert ? '🧑 6 opcji' : '👦 3 opcje'}</span>
+        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-sky-300 text-slate-600">${isAdvanced ? '🧑 6 opcji' : '👦 3 opcje'}</span>
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
@@ -1707,6 +1920,7 @@ function awardCorrectAnswer() {
 
   if (state.profile === "igor") state.stats.igor.stars++;
   else if (state.profile === "hubert") state.stats.hubert.stars++;
+  else if (state.profile === "tata") state.stats.tata.stars++;
   else if (state.profile === "duel") {
     if (state.duelTurn === "igor") { state.duelScores.igor++; state.stats.igor.stars++; }
     else { state.duelScores.hubert++; state.stats.hubert.stars++; }
@@ -1724,7 +1938,8 @@ function advanceNextQuestion() {
 
 function renderEndRoundScreen() {
   cancelAllSpeechAndTimers(); playEffect("fanfare");
-  const profKey = state.profile === "hubert" ? "hubert" : "igor", p = state.stats[profKey];
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  const p = state.stats[profKey];
   
   if (state.profile === "duel") {
     state.stats.igor.cups++; state.stats.hubert.cups++;
@@ -1773,19 +1988,21 @@ function renderEndRoundScreen() {
    ============================================================================ */
 
 // ------------------------------------------------------------------------
-// GRA MEMORY (IGOR: OBRAZEK-OBRAZEK, HUBERT: SŁOWO-OBRAZEK)
+// GRA MEMORY (IGOR: OBRAZEK-OBRAZEK, HUBERT/TATA: SŁOWO-OBRAZEK)
 // ------------------------------------------------------------------------
 function startMemoryGame() {
   cancelAllSpeechAndTimers();
   state.currentLessonId = "memory_game";
   state.isExamMode = false;
   
-  const isHubert = state.profile === "hubert";
-  const numPairs = isHubert ? 8 : 6;
+  const isAdvanced = state.profile === "hubert" || state.profile === "tata";
+  const numPairs = isAdvanced ? 8 : 6;
   
   let pool = [];
-  state.lessons.forEach(l => {
-    if (l.type === "vocab" && l.id !== "memory_game") l.items.forEach(it => pool.push(it));
+  state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
+    if (l.type === "vocab" && l.id !== "memory_game") {
+      getVisibleLessonItems(l.items).forEach(it => pool.push(it));
+    }
   });
   
   pool = shuffleArray(pool).slice(0, numPairs);
@@ -1793,7 +2010,7 @@ function startMemoryGame() {
   
   pool.forEach(item => {
     cards.push({ id: (item.id || item.en) + "_1", matchId: item.en, type: 'pic', content: item.icon, en: item.en, pl: item.pl });
-    cards.push({ id: (item.id || item.en) + "_2", matchId: item.en, type: isHubert ? 'text' : 'pic', content: isHubert ? item.en : item.icon, en: item.en, pl: item.pl });
+    cards.push({ id: (item.id || item.en) + "_2", matchId: item.en, type: isAdvanced ? 'text' : 'pic', content: isAdvanced ? item.en : item.icon, en: item.en, pl: item.pl });
   });
   
   state.memoryGameCards = shuffleArray(cards);
@@ -1803,7 +2020,7 @@ function startMemoryGame() {
 }
 
 function renderMemoryGame() {
-  const isHubert = state.profile === "hubert";
+  const isAdvanced = state.profile === "hubert" || state.profile === "tata";
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
 
@@ -1814,7 +2031,7 @@ function renderMemoryGame() {
       <button onclick="showLessonMenu()" class="px-3 py-1.5 rounded-xl bg-slate-100 font-bold text-xs hover:bg-slate-200">Koniec ⏹️</button>
     </div>
     <div class="bg-white rounded-3xl shadow-xl border-4 border-fuchsia-300 p-4 md:p-6 text-center">
-      <p class="text-xs font-bold text-slate-500 mb-4">${isHubert ? "Połącz słowo z obrazkiem!" : "Znajdź dwie takie same karty!"}</p>
+      <p class="text-xs font-bold text-slate-500 mb-4">${isAdvanced ? "Połącz słowo z obrazkiem!" : "Znajdź dwie takie same karty!"}</p>
       <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 max-w-2xl mx-auto" id="memoryGrid">
         ${state.memoryGameCards.map((card, idx) => `
           <div id="memCard_${idx}" onclick="flipMemoryCard(${idx})" class="memory-card h-24 sm:h-32">
@@ -1827,7 +2044,7 @@ function renderMemoryGame() {
       </div>
     </div>
   `;
-  speakSequence([{ lang: "pl", text: isHubert ? "Znajdź obrazek pasujący do słowa!" : "Znajdź dwie takie same karty!" }]);
+  speakSequence([{ lang: "pl", text: isAdvanced ? "Znajdź obrazek pasujący do słowa!" : "Znajdź dwie takie same karty!" }]);
 }
 
 function flipMemoryCard(idx) {
@@ -1872,8 +2089,8 @@ function flipMemoryCard(idx) {
 // ------------------------------------------------------------------------
 function renderMicGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
-  const isHubert = state.profile === "hubert" || (state.profile === "duel" && state.duelTurn === "hubert");
-  const isTranslation = isHubert && (state.roundIndex % 2 === 1);
+  const isAdvanced = state.profile === "hubert" || state.profile === "tata" || (state.profile === "duel" && state.duelTurn === "hubert");
+  const isTranslation = isAdvanced && (state.roundIndex % 2 === 1);
   window._micTranslationMode = isTranslation;
 
   const mc = document.getElementById("mainContainer");
@@ -1969,7 +2186,7 @@ function startSpeechCheck() {
       fallbackMicTimer(box);
     };
     
-    rec.onerror = (e) => { 
+    rec.onerror = () => { 
       if (handled) return; handled = true; 
       if (box) box.innerHTML = `❌ Błąd mikrofonu. Kliknij Mów jeszcze raz lub Zalicz (Tata).`;
       fallbackMicTimer(box); 
@@ -1994,7 +2211,8 @@ function requestParentMicApproval() {
 function approveMicAnswer(msg) {
   if (state.answeredCurrent) return;
   state.answeredCurrent = true;
-  const q = state.roundQuestions[state.roundIndex], profKey = state.profile === "hubert" ? "hubert" : "igor";
+  const q = state.roundQuestions[state.roundIndex];
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
   state.stats[profKey].micCount = (state.stats[profKey].micCount || 0) + 1;
   playEffect("success");
   const box = document.getElementById("micStatusBox");
@@ -2047,29 +2265,23 @@ function startPrepositionExplain(lesson) {
 function renderPrepChooseWord(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const choices = ["In", "On", "Under"];
-  
-  let emojiHtml = "";
-  if (q.prep === "In") emojiHtml = `<span class="absolute z-20 text-3xl md:text-5xl left-6 bottom-4 md:bottom-8">${q.animal}</span>`;
-  else if (q.prep === "On") emojiHtml = `<span class="absolute z-20 text-3xl md:text-5xl left-6 -top-4 md:-top-8">${q.animal}</span>`;
-  else if (q.prep === "Under") emojiHtml = `<span class="absolute z-20 text-3xl md:text-5xl left-6 -bottom-5 md:-bottom-10">${q.animal}</span>`;
-
+  let emojiHtml = q.prep === "In"
+    ? `<span class="absolute z-20 text-3xl md:text-5xl left-6 bottom-4 md:bottom-8">${q.animal}</span>`
+    : q.prep === "On"
+    ? `<span class="absolute z-20 text-3xl md:text-5xl left-6 -top-4 md:-top-8">${q.animal}</span>`
+    : `<span class="absolute z-20 text-3xl md:text-5xl left-6 -bottom-5 md:-bottom-10">${q.animal}</span>`;
   const bObj = { box: "📦", bag: "🎒", table: "🪑", chair: "🪑", basket: "🧺", bed: "🛏️", tree: "🌳" };
   const baseEm = bObj[q.container] || "📦";
-
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
     <div class="bg-white rounded-3xl shadow-xl border-4 border-sky-300 p-4 md:p-6 text-center">
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2"></div>
-      <div class="relative text-7xl md:text-9xl mb-8 float-anim mt-4 mx-auto w-32 md:w-48 flex items-center justify-center">
-        ${baseEm} ${emojiHtml}
-      </div>
+      <div class="relative text-7xl md:text-9xl mb-8 float-anim mt-4 mx-auto w-32 md:w-48 flex items-center justify-center">${baseEm} ${emojiHtml}</div>
       <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 mb-6">Wybierz słowo:</h2>
       <div class="flex justify-center gap-3">
-        ${choices.map(c => `
-          <button id="pBtn_${c}" onclick="checkPrepWord('${c}')" class="kid-card px-6 py-4 rounded-2xl border-4 border-slate-200 bg-slate-50 hover:bg-sky-50 font-extrabold text-2xl shadow w-32 uppercase tracking-wider">${c}</button>
-        `).join("")}
+        ${choices.map(c => `<button id="pBtn_${c}" onclick="checkPrepWord('${c}')" class="kid-card px-6 py-4 rounded-2xl border-4 border-slate-200 bg-slate-50 hover:bg-sky-50 font-extrabold text-2xl shadow w-32 uppercase tracking-wider">${c}</button>`).join("")}
       </div>
     </div>
   `;
@@ -2102,7 +2314,6 @@ function renderPrepChoosePic(lesson) {
   window._currentChoices = choices;
   const bObj = { box: "📦", bag: "🎒", table: "🪑", chair: "🪑", basket: "🧺", bed: "🛏️", tree: "🌳" };
   const baseEm = bObj[q.container] || "📦";
-
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
   mc.innerHTML = `
@@ -2115,15 +2326,10 @@ function renderPrepChoosePic(lesson) {
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2"></div>
       <div class="grid grid-cols-3 gap-3">
         ${choices.map((c, idx) => {
-          let html = "";
-          if (c === "In") html = `<span class="absolute z-20 text-3xl left-2 bottom-1 md:left-4 md:bottom-2">${q.animal}</span>`;
-          else if (c === "On") html = `<span class="absolute z-20 text-3xl left-2 -top-4 md:left-4 md:-top-5">${q.animal}</span>`;
-          else if (c === "Under") html = `<span class="absolute z-20 text-3xl left-2 -bottom-5 md:left-4 md:-bottom-6">${q.animal}</span>`;
-          return `
-            <div id="pCard_${idx}" onclick="checkPrepPic(${idx})" class="kid-card cursor-pointer rounded-2xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 py-6 px-2 shadow flex items-center justify-center relative">
-              <div class="text-6xl md:text-7xl relative mx-auto w-16 md:w-20 float-anim">${baseEm}${html}</div>
-            </div>
-          `;
+          let html = c === "In" ? `<span class="absolute z-20 text-3xl left-2 bottom-1 md:left-4 md:bottom-2">${q.animal}</span>`
+                   : c === "On" ? `<span class="absolute z-20 text-3xl left-2 -top-4 md:left-4 md:-top-5">${q.animal}</span>`
+                   : `<span class="absolute z-20 text-3xl left-2 -bottom-5 md:left-4 md:-bottom-6">${q.animal}</span>`;
+          return `<div id="pCard_${idx}" onclick="checkPrepPic(${idx})" class="kid-card cursor-pointer rounded-2xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 py-6 px-2 shadow flex items-center justify-center relative"><div class="text-6xl md:text-7xl relative mx-auto w-16 md:w-20 float-anim">${baseEm}${html}</div></div>`;
         }).join("")}
       </div>
     </div>
@@ -2135,7 +2341,6 @@ function checkPrepPic(idx) {
   if (state.answeredCurrent) return;
   const q = state.roundQuestions[state.roundIndex], chosen = window._currentChoices[idx];
   const card = document.getElementById(`pCard_${idx}`), fb = document.getElementById("feedbackBanner");
-
   if (chosen === q.prep) {
     state.answeredCurrent = true; playEffect("success"); card.classList.add("pop-correct");
     fb.innerHTML = `<span class="text-emerald-600">✅ Dobrze! ${q.plDesc}</span>`;
@@ -2164,8 +2369,10 @@ function startFlashcards(lessonId) {
   renderFlashcard(lesson);
 }
 function renderFlashcard(lesson) {
-  if (state.flashcardIndex >= lesson.items.length) state.flashcardIndex = 0;
-  const item = lesson.items[state.flashcardIndex];
+  const visItems = getVisibleLessonItems(lesson.items);
+  const list = visItems.length ? visItems : lesson.items;
+  if (state.flashcardIndex >= list.length) state.flashcardIndex = 0;
+  const item = list[state.flashcardIndex];
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
   mc.innerHTML = `
@@ -2194,7 +2401,7 @@ function nextFlashcard() {
 }
 
 // ------------------------------------------------------------------------
-// PIN I PANEL RODZICA
+// PIN, KONTO TESTOWE TATY I PANEL RODZICA
 // ------------------------------------------------------------------------
 function initPinKeyboard() {
   const grid = document.getElementById("pinKeyboardGrid");
@@ -2224,6 +2431,9 @@ function openParentPinModal(target = "dashboard") {
     if (target === "mic_approve") {
       title.textContent = "Zatwierdź Wymowę";
       desc.textContent = "Tato, wpisz PIN, aby uznać słowo za zaliczone:";
+    } else if (target === "tata_login") {
+      title.textContent = "🔒 Profil: TATA (Konto Testowe)";
+      desc.textContent = "Wpisz 4-cyfrowy kod PIN, aby wejść na profil Taty:";
     } else {
       title.textContent = "Panel Rodzica";
       desc.textContent = "Wpisz 4-cyfrowy kod PIN:";
@@ -2246,6 +2456,8 @@ function verifyParentPin() {
     closeParentPinModal();
     if (window._pinModalTarget === "mic_approve") {
       approveMicAnswer("Tata potwierdza!");
+    } else if (window._pinModalTarget === "tata_login") {
+      chooseProfile("tata");
     } else {
       openParentDashboard();
     }
@@ -2261,13 +2473,119 @@ function closeParentPinModal() {
   if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
 }
 
+function renderParentTestCenter() {
+  const statusEl = document.getElementById("parentStatusMsg");
+  if (!statusEl) return;
+  let box = document.getElementById("parentTestCenterBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "parentTestCenterBox";
+    box.className = "mb-5 p-4 rounded-3xl bg-teal-50/95 border-2 border-teal-400 shadow-sm";
+    statusEl.parentNode.insertBefore(box, statusEl.nextSibling);
+  }
+
+  const testLessons = state.lessons.filter(l => l.testOnly);
+  const testWords = [];
+  state.lessons.forEach(l => {
+    if (!l.testOnly && Array.isArray(l.items)) {
+      l.items.forEach((it, idx) => {
+        if (it.testOnly) testWords.push({ lessonId: l.id, lessonTitle: l.title, wordIdx: idx, en: it.en, pl: it.pl, icon: it.icon || "📝" });
+      });
+    }
+  });
+
+  const totalPending = testLessons.length + testWords.length;
+
+  let pendingListHtml = "";
+  if (totalPending === 0) {
+    pendingListHtml = `<div class="text-xs font-bold text-teal-800 bg-white/80 p-3 rounded-2xl border border-teal-200">✓ Wszystkie nowości zostały już wdrożone na profile Igora i Huberta. Nowe słówka i lekcje dodane poniżej trafią najpierw tylko na konto <strong>TATA</strong> do przetestowania!</div>`;
+  } else {
+    pendingListHtml = `
+      <div class="space-y-1.5 mb-3 max-h-40 overflow-y-auto pr-1">
+        ${testLessons.map(l => `
+          <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-teal-300 text-xs font-bold">
+            <span>📚 Nowa lekcja: <strong>${l.title}</strong> (${l.items.length} słówek)</span>
+            <button onclick="parentDeleteTestLesson('${l.id}')" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[10px]">🗑️ Usuń</button>
+          </div>
+        `).join("")}
+        ${testWords.map(w => `
+          <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-teal-300 text-xs font-bold">
+            <span>${w.icon} Nowe słówko: <strong>${w.en}</strong> (${w.pl}) w „${w.lessonTitle}”</span>
+            <button onclick="parentDeleteTestWord('${w.lessonId}', ${w.wordIdx})" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[10px]">🗑️ Usuń</button>
+          </div>
+        `).join("")}
+      </div>
+      <button onclick="parentPublishAllTestItems()" class="kid-card w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-extrabold rounded-xl text-xs shadow">
+        ✅ Wdróż przetestowane nowości (${totalPending}) na profile Igora i Huberta
+      </button>
+    `;
+  }
+
+  box.innerHTML = `
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 10.2)</h3>
+      <span class="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-950 font-extrabold text-xs">Oczekujące nowości: ${totalPending}</span>
+    </div>
+    ${pendingListHtml}
+    <div class="mt-3 pt-3 border-t border-teal-200 flex flex-wrap gap-2">
+      <button onclick="unlockAllForTataOnly()" class="kid-card py-2 px-3 bg-emerald-700 text-white font-bold rounded-xl text-xs">🔓 Odblokuj 131 ubrań i 50 zwierzaków TYLKO u Taty</button>
+      <button onclick="parentGiveTestChest('tata','gold')" class="kid-card py-2 px-3 bg-amber-400 text-amber-950 font-bold rounded-xl text-xs">👑 Złota Skrzynia (Tata)</button>
+    </div>
+  `;
+}
+
+function parentPublishAllTestItems() {
+  if (!confirm("Czy na pewno wdrożyć wszystkie przetestowane lekcje i słówka na profile Igora i Huberta?")) return;
+  let count = 0;
+  state.lessons.forEach(l => {
+    if (l.testOnly) { delete l.testOnly; count++; }
+    if (Array.isArray(l.items)) {
+      l.items.forEach(it => { if (it.testOnly) { delete it.testOnly; count++; } });
+    }
+  });
+  saveCloudData();
+  renderParentTestCenter();
+  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+  showParentMsg(`✓ Wdrożono ${count} nowości na profile Igora i Huberta!`);
+  alert(`✓ Wykonano! Wdrożono ${count} nowości na profile chłopców.`);
+}
+
+function parentDeleteTestLesson(lessonId) {
+  if (!confirm("Czy na pewno usunąć tę testową lekcję?")) return;
+  state.lessons = state.lessons.filter(l => l.id !== lessonId);
+  saveCloudData();
+  renderParentTestCenter();
+  showParentMsg("✓ Usunięto testową lekcję.");
+}
+
+function parentDeleteTestWord(lessonId, wordIdx) {
+  if (!confirm("Czy na pewno usunąć to testowe słówko?")) return;
+  const l = state.lessons.find(x => x.id === lessonId);
+  if (l && l.items[wordIdx]) l.items.splice(wordIdx, 1);
+  saveCloudData();
+  renderParentTestCenter();
+  showParentMsg("✓ Usunięto testowe słówko.");
+}
+
+function unlockAllForTataOnly() {
+  if (!confirm("Czy na pewno odblokować wszystkie 131 ubrań i 50 zwierzaków na koncie testowym TATA?")) return;
+  state.stats.tata = ensurePlayerStructure(state.stats.tata);
+  state.stats.tata.unlockedItems = getAll131OutfitsFlat().map(o => o.src);
+  state.stats.tata.memoryAnimals = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(a => a.id);
+  saveCloudData();
+  showParentMsg("✓ Odblokowano wszystko na profilu TATA!");
+  alert("✓ Wykonano! Wszystkie 131 ubrań i 50 zwierzaków jest dostępnych na profilu TATA.");
+}
+
 function openParentDashboard() {
   const m = document.getElementById("parentDashboardModal");
   if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
   
+  renderParentTestCenter();
+
   const sel = document.getElementById("parentSelectLesson");
   if (sel) {
-    sel.innerHTML = state.lessons.filter(l => l.type === "vocab" || l.type === "vocab_and_shop").map(l => `<option value="${l.id}">${l.title}</option>`).join("");
+    sel.innerHTML = state.lessons.filter(l => l.type === "vocab" || l.type === "vocab_and_shop").map(l => `<option value="${l.id}">${l.title}${l.testOnly ? ' (🧪 TEST)' : ''}</option>`).join("");
   }
   
   const lenBox = document.getElementById("roundLengthButtons");
@@ -2286,7 +2604,7 @@ function showParentMsg(txt, isErr = false) {
   if (!m) return;
   m.textContent = txt; m.className = `mb-4 p-3 rounded-2xl border-2 font-bold text-sm text-center ${isErr ? 'bg-rose-100 border-rose-400 text-rose-900' : 'bg-emerald-100 border-emerald-400 text-emerald-900'}`;
   m.classList.remove("hidden");
-  setTimeout(() => m.classList.add("hidden"), 3500);
+  setTimeout(() => m.classList.add("hidden"), 4000);
 }
 
 function parentSetQuestionsPerRound(v) {
@@ -2295,6 +2613,7 @@ function parentSetQuestionsPerRound(v) {
   saveCloudData();
   openParentDashboard();
   showParentMsg(`✓ Ustawiono liczbę pytań w rundzie na: ${v}`);
+  alert(`✓ Wykonano! Liczba pytań w rundzie wynosi teraz ${v}.`);
 }
 
 function parentAddSingleWord() {
@@ -2309,11 +2628,13 @@ function parentAddSingleWord() {
   const lesson = state.lessons.find(l => l.id === lid);
   if (!lesson) return;
 
-  if (!confirm(`Czy na pewno dodać nowe słówko "${en}" (${pl}) do lekcji "${lesson.title}"?`)) return;
+  if (!confirm(`Czy na pewno dodać nowe słówko "${en}" (${pl}) do lekcji "${lesson.title}" (najpierw w trybie testowym na koncie TATA)?`)) return;
 
-  lesson.items.push({ en, pl, phonetic: ph, icon: ic || "📝", age: age.includes(",") ? [4, 6] : [parseInt(age)] });
+  lesson.items.push({ en, pl, phonetic: ph, icon: ic || "📝", age: age.includes(",") ? [4, 6] : [parseInt(age)], testOnly: true });
   saveCloudData();
-  showParentMsg(`✓ Pomyślnie dodano: "${en}" do lekcji "${lesson.title}"!`);
+  renderParentTestCenter();
+  showParentMsg(`✓ Dodano słówko "${en}" na konto testowe TATA! Po przetestowaniu kliknij Wdróż wyżej.`);
+  alert(`✓ Wykonano! Słówko "${en}" zostało dodane do testów na profilu TATA.`);
   document.getElementById("parentWordEn").value = ""; document.getElementById("parentWordPl").value = "";
   document.getElementById("parentWordPhonetic").value = ""; document.getElementById("parentWordIcon").value = "";
 }
@@ -2333,12 +2654,14 @@ function parentCreateNewLesson() {
 
   if (items.length === 0) return showParentMsg("Nie rozpoznałem słówek. Użyj formatu: En - Pl - Ikona", true);
 
-  if (!confirm(`Czy na pewno utworzyć nową lekcję "${t}" z ${items.length} słówkami?`)) return;
+  if (!confirm(`Czy na pewno utworzyć nową lekcję "${t}" (${items.length} słówek) najpierw w trybie testowym na profilu TATA?`)) return;
 
   const nid = "custom_" + Date.now();
-  state.lessons.push({ id: nid, title: t, subtitle: "Nowa lekcja (Rodzic)", icon: ic || "📚", color: "from-sky-400 to-indigo-500", borderColor: "border-sky-400", type: "vocab", items });
+  state.lessons.push({ id: nid, title: t, subtitle: "Nowa lekcja (Rodzic)", icon: ic || "📚", color: "from-sky-400 to-indigo-500", borderColor: "border-sky-400", type: "vocab", testOnly: true, items });
   saveCloudData();
-  showParentMsg(`✓ Utworzono lekcję "${t}" z ${items.length} słówkami!`);
+  openParentDashboard();
+  showParentMsg(`✓ Utworzono lekcję testową "${t}" na profilu TATA!`);
+  alert(`✓ Wykonano! Lekcja "${t}" jest gotowa do testów na profilu TATA.`);
   document.getElementById("newLessonTitle").value = ""; document.getElementById("newLessonIcon").value = ""; document.getElementById("newLessonLines").value = "";
 }
 
@@ -2369,6 +2692,7 @@ function parentScanWorksheetAI(input) {
       const title = document.getElementById("newLessonTitle");
       if (!title.value) title.value = "Lekcja z karty (" + new Date().toLocaleDateString() + ")";
       showParentMsg("✓ Sukces! Słówka zostały rozpoznane i wstawione do pola.");
+      alert("✓ Wykonano! Słówka ze zdjęcia zostały odczytane. Kliknij 'Utwórz lekcję', aby zapisać je do testów.");
     } catch (err) {
       showParentMsg("Błąd połączenia z AI. Sprawdź klucz i internet.", true);
     }
@@ -2377,44 +2701,49 @@ function parentScanWorksheetAI(input) {
 }
 
 function parentGiveTestChest(profKey, tier) {
-  const kidName = profKey === "hubert" ? "Huberta" : "Igora";
+  const kidName = profKey === "hubert" ? "Huberta" : profKey === "tata" ? "Taty" : "Igora";
   const tierName = tier === "gold" ? "Złotą" : tier === "silver" ? "Srebrną" : "Brązową";
   if (!confirm(`Czy na pewno przyznać ${tierName} skrzynię dla gracza: ${kidName}?`)) return;
   closeParentDashboard();
-  renderChestOpeningInsidePopup(profKey, tier, `🛠️ Testowa Skrzynia (${tier})`);
-  showParentMsg(`✓ Przyznano skrzynię (${tierName}) dla: ${kidName}!`);
+  renderChestOpeningInsidePopup(profKey, tier, `🛠️ Testowa Skrzynia (${tierName} - ${kidName})`);
 }
 
 function unlockAllOutfitsForTesting() {
-  if (!confirm("Czy na pewno odblokować wszystkie 131 przebrań i 50 zwierzaków u obu chłopców?")) return;
-  ["igor", "hubert"].forEach(p => {
+  if (!confirm("Czy na pewno odblokować wszystkie 131 przebrań i 50 zwierzaków u WSZYSTKICH graczy (Igor, Hubert, Tata)?")) return;
+  ["igor", "hubert", "tata"].forEach(p => {
     state.stats[p] = ensurePlayerStructure(state.stats[p]);
-    const all = getAll131OutfitsFlat().map(o => o.src);
-    state.stats[p].unlockedItems = all;
+    state.stats[p].unlockedItems = getAll131OutfitsFlat().map(o => o.src);
     state.stats[p].memoryAnimals = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(a => a.id);
   });
   saveCloudData();
-  showParentMsg("✓ Odblokowano 131 przebrań i 50 zwierzaków u obu graczy!");
+  showParentMsg("✓ Odblokowano 131 przebrań i 50 zwierzaków u wszystkich graczy!");
+  alert("✓ Wykonano! Odblokowano wszystkie przebrania i zwierzaki.");
 }
 
 function lockAllOutfitsAfterTesting() {
-  if (!confirm("Czy na pewno zablokować ubrania i przywrócić tylko początkowe stroje?")) return;
-  ["igor", "hubert"].forEach(p => {
+  if (!confirm("Czy na pewno zablokować wszystkie ubrania oraz zwierzaki i przywrócić gołego awatara u wszystkich graczy?")) return;
+  ["igor", "hubert", "tata"].forEach(p => {
     state.stats[p] = ensurePlayerStructure(state.stats[p]);
-    state.stats[p].unlockedItems = ["grafiki/cap_red.png", "grafiki/shirt_blue.png", "grafiki/jeans_blue.png"];
-    state.stats[p].memoryAnimals = ["p_dog", "p_cat", "p_rabbit", "p_fox"];
-    state.stats[p].avatar = { head: "grafiki/cap_red.png", torso: "grafiki/shirt_blue.png", legs: "grafiki/jeans_blue.png", pet: "" };
+    state.stats[p].unlockedItems = [];
+    state.stats[p].memoryAnimals = [];
+    state.stats[p].avatar = { head: "", torso: "", legs: "", pet: "" };
   });
   saveCloudData();
-  showParentMsg("✓ Zablokowano ubrania i przywrócono stan początkowy.");
+  showParentMsg("✓ Zablokowano ubrania i zwierzaki (awatary są teraz bez przebrań).");
+  alert("✓ Wykonano! Ubrania zostały zablokowane, a awatary są nieubrane.");
 }
 
 function resetEverythingAll() {
-  if (confirm("⚠️ OSTRZEŻENIE: Czy na pewno usunąć WSZYSTKIE postępy, gwiazdki, puchary i naklejki obu chłopców?")) {
+  if (confirm("⚠️ OSTRZEŻENIE: Czy na pewno usunąć WSZYSTKIE postępy, gwiazdki, puchary i naklejki obu chłopców oraz Taty?")) {
     if (confirm("Czy jesteś w 100% pewien? Tej operacji nie można cofnąć!")) {
-      state.stats = { igor: createDefaultPlayerStats(), hubert: createDefaultPlayerStats(), stickers: [] };
+      state.stats = {
+        igor: createDefaultPlayerStats(),
+        hubert: createDefaultPlayerStats(),
+        tata: createDefaultPlayerStats(),
+        stickers: []
+      };
       saveCloudData();
-      alert("✓ Gra została zresetowana.");
+      alert("✓ Wykonano! Cała gra została zresetowana do stanu początkowego.");
       location.reload();
     }
   }

@@ -505,16 +505,22 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrn
 function createDefaultPlayerStats() {
   return {
     stars: 0, cups: 0, perfectRounds: 0, examsDone: 0, duelsWon: 0, streakDays: 0, lastPlayDate: "", micCount: 0,
-    badges: [], avatar: { head: "grafiki/cap_red.png", torso: "grafiki/Shirt_blue.png", legs: "grafiki/jeans_blue.png", pet: "" },
-    unlockedItems: ["grafiki/cap_red.png", "grafiki/Shirt_blue.png", "grafiki/jeans_blue.png"],
-    memoryAnimals: ["mem_dog", "mem_cat", "mem_rabbit", "mem_fox"],
+    badges: [], avatar: { head: "grafiki/cap_red.png", torso: "grafiki/shirt_blue.png", legs: "grafiki/jeans_blue.png", pet: "" },
+    unlockedItems: ["grafiki/cap_red.png", "grafiki/shirt_blue.png", "grafiki/jeans_blue.png"],
+    memoryAnimals: ["p_dog", "p_cat", "p_rabbit", "p_fox"],
     lessonCounts: {}, equipped: {}
   };
 }
 
 function resolveOutfitPath(pathOrId) {
   if (!pathOrId) return "";
-  const legacyMap = { red_cap: "grafiki/cap_red.png", hero_shirt: "grafiki/Shirt_blue.png", jeans: "grafiki/jeans_blue.png", space_helmet: "grafiki/zlota/helmet_astronaut.png" };
+  const legacyMap = {
+    red_cap: "grafiki/cap_red.png",
+    hero_shirt: "grafiki/shirt_blue.png",
+    "grafiki/Shirt_blue.png": "grafiki/shirt_blue.png",
+    jeans: "grafiki/jeans_blue.png",
+    space_helmet: "grafiki/zlota/helmet_astronaut.png"
+  };
   if (legacyMap[pathOrId]) return legacyMap[pathOrId];
   if (pathOrId.includes("/")) return pathOrId;
   return "grafiki/" + pathOrId.replace(/\.png$/i, "") + ".png";
@@ -530,17 +536,20 @@ function ensurePlayerStructure(p) {
   const def = createDefaultPlayerStats();
   if (!p) return def;
   const rawUnlocked = Array.isArray(p.unlockedItems) && p.unlockedItems.length ? p.unlockedItems.map(resolveOutfitPath) : def.unlockedItems;
+  const rawAnimals = Array.isArray(p.memoryAnimals) && p.memoryAnimals.length
+    ? p.memoryAnimals.map(id => String(id).replace(/^mem_/, "p_"))
+    : def.memoryAnimals;
   const rawAvatar = p.avatar || def.avatar;
   return {
     ...def, ...p, lessonCounts: p.lessonCounts || {},
     badges: Array.isArray(p.badges) ? p.badges : [],
     unlockedItems: Array.from(new Set(rawUnlocked)),
-    memoryAnimals: Array.isArray(p.memoryAnimals) && p.memoryAnimals.length ? p.memoryAnimals : def.memoryAnimals,
+    memoryAnimals: Array.from(new Set(rawAnimals)),
     avatar: {
       head: resolveOutfitPath(rawAvatar.head !== undefined ? rawAvatar.head : def.avatar.head),
       torso: resolveOutfitPath(rawAvatar.torso !== undefined ? rawAvatar.torso : (rawAvatar.top || def.avatar.torso)),
       legs: resolveOutfitPath(rawAvatar.legs !== undefined ? rawAvatar.legs : (rawAvatar.bottom || def.avatar.legs)),
-      pet: rawAvatar.pet || ""
+      pet: rawAvatar.pet ? String(rawAvatar.pet).replace(/^mem_/, "p_") : ""
     },
     equipped: { ...def.equipped, ...(p.equipped || {}) }
   };
@@ -781,7 +790,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 
   let petHtml = "";
   if (avatar.pet) {
-    const memoryPool = typeof COMPANION_PETS !== "undefined" ? MEMORY_ANIMALS_POOL : [];
+    const memoryPool = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
     const petObj = memoryPool.find(a => a.id === avatar.pet);
     if (petObj) {
       const petSize = Math.max(16, Math.floor(size * 0.40));
@@ -885,7 +894,7 @@ function checkAndUnlockAchievements(profKey) {
 }
 
 // ------------------------------------------------------------------------
-// SYSTEM SKRZYŃ I NAGRÓD (UBRANIA + ZWIERZAKI MEMORY)
+// SYSTEM SKRZYŃ I NAGRÓD (UBRANIA + ZWIERZAKI TOWARZYSZE)
 // ------------------------------------------------------------------------
 function processNextRewardInQueue() {
   if (state.rewardQueue.length === 0) return;
@@ -904,7 +913,6 @@ function renderChestOpeningInsidePopup(profKey, tier, title) {
   
   const bg = tier === "gold" ? "from-amber-200 to-yellow-500" : tier === "silver" ? "from-slate-200 to-slate-400" : "from-orange-200 to-amber-700";
   const border = tier === "gold" ? "border-amber-400" : tier === "silver" ? "border-slate-400" : "border-amber-800";
-  const icon = tier === "gold" ? "👑" : tier === "silver" ? "🥈" : "📦";
   
   content.className = `bg-gradient-to-b ${bg} rounded-3xl max-w-md w-full p-6 border-4 ${border} shadow-2xl text-center transform transition-all duration-500 scale-95`;
   
@@ -1218,7 +1226,7 @@ function renderAvatarItems() {
     html += `</div></div>`;
   });
 
-  const memoryPool = typeof COMPANION_PETS !== "undefined" ? MEMORY_ANIMALS_POOL : [];
+  const memoryPool = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
   const myAnimals = memoryPool.filter(a => (p.memoryAnimals || []).includes(a.id));
   
   html += `<div class="mb-4 pt-2">
@@ -1733,7 +1741,6 @@ function renderEndRoundScreen() {
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 5 z 6 ======================== -->
-
 <!-- ======================= POCZĄTEK CZĘŚCI 6 z 6 ======================= -->
 <script>
 /* ============================================================================
@@ -1758,20 +1765,6 @@ function startMemoryGame() {
   });
   
   // Losujemy dokładnie wymaganą liczbę unikalnych obrazków do gry
-  pool = shuffleArray(pool).slice(0, numPairs);
-  let cards = [];
-  
-  pool.forEach(item => {
-    cards.push({ id: item.en + "_1", matchId: item.en, type: 'pic', content: item.icon, en: item.en, pl: item.pl });
-    cards.push({ id: item.en + "_2", matchId: item.en, type: isHubert ? 'text' : 'pic', content: isHubert ? item.en : item.icon, en: item.en, pl: item.pl });
-  });
-  
-  state.memoryGameCards = shuffleArray(cards);
-  state.memoryFlippedIndexes = [];
-  state.memoryMatchedPairs = 0;
-  renderMemoryGame();
-}
-  
   pool = shuffleArray(pool).slice(0, numPairs);
   let cards = [];
   
@@ -1927,7 +1920,7 @@ function startSpeechCheck() {
     const rec = new SpeechRec();
     rec.lang = "en-US"; 
     rec.interimResults = true; 
-    rec.continuous = true; // ZWRÓCONY PARAMETR - MIKROFON JUŻ SIĘ NIE WYŁĄCZY ZBYT SZYBKO!
+    rec.continuous = true;
     
     rec.onresult = (e) => {
       if (handled) return;
@@ -1938,7 +1931,7 @@ function startSpeechCheck() {
       const target = q.en.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
       let isCorrect = false;
       if (finalHeard.includes(target)) isCorrect = true;
-      else if (target.length > 3 && finalHeard.includes(target.slice(0, 4))) isCorrect = true; // lekka tolerancja
+      else if (target.length > 3 && finalHeard.includes(target.slice(0, 4))) isCorrect = true;
       
       if (isCorrect) {
         handled = true; try { rec.stop(); } catch(err){}
@@ -1957,7 +1950,7 @@ function startSpeechCheck() {
     
     rec.onerror = (e) => { 
       if (handled) return; handled = true; 
-      if (box) box.innerHTML = `❌ Błąd mikrofonu. Kliknij Mów jeszcze raz lub Zalicz(Tata).`;
+      if (box) box.innerHTML = `❌ Błąd mikrofonu. Kliknij Mów jeszcze raz lub Zalicz (Tata).`;
       fallbackMicTimer(box); 
     };
     
@@ -2024,9 +2017,9 @@ function startPrepositionExplain(lesson) {
   `;
   const hl = (id, on) => { const el = document.getElementById(id); if(el) el.classList.toggle("word-glow", on); };
   speakSequence([
-    { lang: "pl", text: "In znaczy w środku. Na przykład kot w pudełku.", onStart: ()=>hl("exp_in",true), onEnd: ()=>hl("exp_in",false) },
-    { lang: "pl", text: "On znaczy na górze. Na przykład kot na pudełku.", onStart: ()=>hl("exp_on",true), onEnd: ()=>hl("exp_on",false) },
-    { lang: "pl", text: "Under znaczy pod spodem. Na przykład kot pod pudełkiem.", onStart: ()=>hl("exp_un",true), onEnd: ()=>hl("exp_un",false) }
+    { lang: "pl", text: "in znaczy w środku. na przykład kot w pudełku.", onStart: ()=>hl("exp_in",true), onEnd: ()=>hl("exp_in",false) },
+    { lang: "pl", text: "on znaczy na górze. na przykład kot na pudełku.", onStart: ()=>hl("exp_on",true), onEnd: ()=>hl("exp_on",false) },
+    { lang: "pl", text: "under znaczy pod spodem. na przykład kot pod pudełkiem.", onStart: ()=>hl("exp_un",true), onEnd: ()=>hl("exp_un",false) }
   ]);
 }
 
@@ -2059,7 +2052,7 @@ function renderPrepChooseWord(lesson) {
       </div>
     </div>
   `;
-  speakSequence([{ lang: "pl", text: `Gdzie jest ${q.plDesc.split(' ')[0]}? In, On czy Under?` }]);
+  speakSequence([{ lang: "pl", text: `gdzie jest ${q.plDesc.split(' ')[0].toLowerCase()}? in, on czy under?` }]);
 }
 
 function checkPrepWord(chosen) {
@@ -2069,15 +2062,15 @@ function checkPrepWord(chosen) {
     state.answeredCurrent = true; playEffect("success"); btn.classList.add("pop-correct");
     fb.innerHTML = `<span class="text-emerald-600">✅ Dobrze! ${q.fullEn}</span>`;
     awardCorrectAnswer();
-    speakSequence([{ lang: "en", text: q.fullEn }, { lang: "pl", text: `Super! To znaczy: ${q.plDesc}` }], () => advanceNextQuestion());
+    speakSequence([{ lang: "en", text: q.fullEn }, { lang: "pl", text: `super! to znaczy: ${q.plDesc.toLowerCase()}` }], () => advanceNextQuestion());
   } else {
     state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); btn.classList.add("shake-wrong");
     if (state.profile === "duel") {
       state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! To było ${q.prep}!</span>`;
-      speakSequence([{ lang: "pl", text: "Pudło! Kolej brata!" }], () => advanceNextQuestion());
+      speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion());
     } else {
       fb.innerHTML = `<span class="text-rose-600">❌ Nie, spróbuj jeszcze raz!</span>`;
-      speakSequence([{ lang: "pl", text: "Nie to, pomyśl jeszcze raz!" }]);
+      speakSequence([{ lang: "pl", text: "nie to, pomyśl jeszcze raz!" }]);
     }
   }
 }
@@ -2114,7 +2107,7 @@ function renderPrepChoosePic(lesson) {
       </div>
     </div>
   `;
-  speakSequence([{ lang: "pl", text: "Wskaż obrazek dla:" }, { lang: "en", text: q.fullEn }]);
+  speakSequence([{ lang: "pl", text: "wskaż obrazek dla:" }, { lang: "en", text: q.fullEn }]);
 }
 
 function checkPrepPic(idx) {
@@ -2126,15 +2119,15 @@ function checkPrepPic(idx) {
     state.answeredCurrent = true; playEffect("success"); card.classList.add("pop-correct");
     fb.innerHTML = `<span class="text-emerald-600">✅ Dobrze! ${q.plDesc}</span>`;
     awardCorrectAnswer();
-    speakSequence([{ lang: "en", text: q.fullEn }, { lang: "pl", text: `Tak! ${q.plDesc}` }], () => advanceNextQuestion());
+    speakSequence([{ lang: "en", text: q.fullEn }, { lang: "pl", text: `tak! ${q.plDesc.toLowerCase()}` }], () => advanceNextQuestion());
   } else {
     state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); card.classList.add("shake-wrong");
     if (state.profile === "duel") {
       state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! Powinno być ${q.prep}!</span>`;
-      speakSequence([{ lang: "pl", text: "Pudło! Kolej brata!" }], () => advanceNextQuestion());
+      speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion());
     } else {
       fb.innerHTML = `<span class="text-rose-600">❌ Nie ten obrazek!</span>`;
-      speakSequence([{ lang: "pl", text: "Nie! Pomyśl jeszcze raz!" }]);
+      speakSequence([{ lang: "pl", text: "nie! pomyśl jeszcze raz!" }]);
     }
   }
 }
@@ -2357,16 +2350,16 @@ function unlockAllOutfitsForTesting() {
     state.stats[p] = ensurePlayerStructure(state.stats[p]);
     const all = getAll131OutfitsFlat().map(o => o.src);
     state.stats[p].unlockedItems = all;
-    state.stats[p].memoryAnimals = (window.MEMORY_ANIMALS_POOL || []).map(a => a.id);
+    state.stats[p].memoryAnimals = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(a => a.id);
   });
   saveCloudData(); showParentMsg("Odblokowano 131 przebrań i wszystkie zwierzaki u obu graczy!");
 }
 function lockAllOutfitsAfterTesting() {
   ["igor", "hubert"].forEach(p => {
     state.stats[p] = ensurePlayerStructure(state.stats[p]);
-    state.stats[p].unlockedItems = ["grafiki/cap_red.png", "grafiki/Shirt_blue.png", "grafiki/jeans_blue.png"];
-    state.stats[p].memoryAnimals = ["mem_dog", "mem_cat", "mem_rabbit", "mem_fox"];
-    state.stats[p].avatar = { head: "grafiki/cap_red.png", torso: "grafiki/Shirt_blue.png", legs: "grafiki/jeans_blue.png", pet: "" };
+    state.stats[p].unlockedItems = ["grafiki/cap_red.png", "grafiki/shirt_blue.png", "grafiki/jeans_blue.png"];
+    state.stats[p].memoryAnimals = ["p_dog", "p_cat", "p_rabbit", "p_fox"];
+    state.stats[p].avatar = { head: "grafiki/cap_red.png", torso: "grafiki/shirt_blue.png", legs: "grafiki/jeans_blue.png", pet: "" };
   });
   saveCloudData(); showParentMsg("Zablokowano (Reset do startowych).");
 }

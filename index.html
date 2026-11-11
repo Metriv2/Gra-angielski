@@ -1988,22 +1988,24 @@ function toggleAvatarViewMode(mode) {
 // ============================================================================
 
 const DEFAULT_AVATAR_CALIBRATION = {
-  cap:         { label: "🧢 Czapki zwykłe",          top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
-  helmet:      { label: "🪖 Hełmy i Maski (Złote)",  top: 1,  width: 38, height: 29, scaleX: 1.02, scaleY: 1.02 },
-  shirt:       { label: "👕 Koszulki T-Shirt",       top: 29, width: 46, height: 34, scaleX: 0.94, scaleY: 1.00 },
-  armor:       { label: "🛡️ Kurtki i Zbroje (Złote)",top: 27, width: 52, height: 36, scaleX: 1.00, scaleY: 1.02 },
-  jeans:       { label: "👖 Jeansy (Brązowa - 1:1)", top: 0,  width: 100, height: 100, scaleX: 1.00, scaleY: 1.00 },
-  silverPants: { label: "👖 Długie spodnie (Srebrna)",top: 53, width: 36, height: 35, scaleX: 0.84, scaleY: 1.00 },
-  shorts:      { label: "🩳 Krótkie spodenki",       top: 52, width: 36, height: 23, scaleX: 0.84, scaleY: 0.95 },
-  goldPants:   { label: "🥾 Spodnie z butami (Złote)",top: 52, width: 44, height: 42, scaleX: 0.90, scaleY: 1.02 }
+  cap:         { label: "🧢 Czapki (Brązowa i Srebrna)", top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
+  goldCap:     { label: "👑 Czapki (Złota Skrzynia)",    top: -3, width: 48, height: 31, scaleX: 1.06, scaleY: 1.06 },
+  helmet:      { label: "🪖 Hełmy i Maski (Złote)",      top: -2, width: 52, height: 36, scaleX: 1.08, scaleY: 1.08 },
+  shirt:       { label: "👕 Wszystkie Koszulki T-Shirt", top: 31, width: 37, height: 27, scaleX: 0.88, scaleY: 0.92 },
+  armor:       { label: "🛡️ Kurtki i Zbroje (Złote)",    top: 28, width: 45, height: 33, scaleX: 0.96, scaleY: 0.98 },
+  jeans:       { label: "👖 Jeansy (Brązowa - 1:1)",     top: 0,  width: 100, height: 100, scaleX: 1.00, scaleY: 1.00 },
+  silverPants: { label: "👖 Długie spodnie (Srebrna)",   top: 49, width: 54, height: 42, scaleX: 1.00, scaleY: 1.00 },
+  shorts:      { label: "🩳 Krótkie spodenki (Brąz/Sreb)",top: 51, width: 42, height: 27, scaleX: 0.95, scaleY: 1.00 },
+  goldShorts:  { label: "🩳 Spodenki piłkarskie (Złote)",top: 49, width: 50, height: 31, scaleX: 1.00, scaleY: 1.00 },
+  goldPants:   { label: "🥾 Spodnie z butami (Złote)",   top: 48, width: 56, height: 50, scaleX: 1.00, scaleY: 1.00 }
 };
 
 window._calibOpen = false;
-window._calibActiveType = "jeans";
+window._calibActiveType = "shirt";
 
 function getAvatarCalibration() {
   try {
-    const saved = localStorage.getItem("akademia_avatar_calib_v3");
+    const saved = localStorage.getItem("akademia_avatar_calib_v4");
     if (saved) {
       const parsed = JSON.parse(saved);
       const merged = {};
@@ -2018,7 +2020,7 @@ function getAvatarCalibration() {
 
 function saveAvatarCalibration(cal) {
   try {
-    localStorage.setItem("akademia_avatar_calib_v3", JSON.stringify(cal));
+    localStorage.setItem("akademia_avatar_calib_v4", JSON.stringify(cal));
   } catch (e) {}
 }
 
@@ -2027,6 +2029,9 @@ function classifyHeadItem(src) {
   const fn = src.split("/").pop().toLowerCase();
   if (fn.startsWith("helmet_") || fn.startsWith("mask_") || fn.includes("hot-dog")) {
     return "helmet";
+  }
+  if (src.includes("/zlota/")) {
+    return "goldCap";
   }
   return "cap";
 }
@@ -2049,20 +2054,10 @@ function classifyTorsoItem(src) {
 function classifyLegsItem(src) {
   if (!src) return "none";
   const fn = src.split("/").pop().toLowerCase();
-  // 1. Tylko 8 plików jeans_* z brązowej skrzynki ma już wbudowane skalowanie 1:1
   if (fn.startsWith("jeans_")) return "jeans";
-  // 2. Wszystkie krótkie spodenki (Brązowa, Srebrna oraz piłkarskie ze Złotej)
-  if (
-    fn.startsWith("short_") ||
-    fn.startsWith("shorts_") ||
-    fn === "pants_barcelona.png" ||
-    fn === "pants_poland.png"
-  ) {
-    return "shorts";
-  }
-  // 3. Długie spodnie z własnymi butami ze Złotej Skrzyni
+  if (fn === "pants_barcelona.png" || fn === "pants_poland.png") return "goldShorts";
+  if (fn.startsWith("short_") || fn.startsWith("shorts_")) return "shorts";
   if (src.includes("/zlota/")) return "goldPants";
-  // 4. Długie spodnie ze Srebrnej Skrzyni (bez butów)
   return "silverPants";
 }
 
@@ -2088,71 +2083,32 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   const tCfg = cal[torsoType] || cal.shirt;
   const lCfg = cal[legsType] || cal.jeans;
 
-  // Ręce, głowa i tułów chłopca są ZAWSZE widoczne.
-  // Jedynie gdy założymy długie spodnie z butami ze Złotej Skrzyni (goldPants),
-  // przycinamy sam dół nóg bazowego chłopca (od 56% w dół), żeby jego białe trampki nie wystawały spod butów rycerza/nurka.
-  const baseClip = legsType === "goldPants" ? "inset(0% 0% 44% 0%)" : "none";
+  // Górna część ciała chłopca (głowa, tułów, ręce - do pasa 55%)
+  // Jeśli założono pełny hełm/maskę (oprócz hot-doga), przycinamy czubek włosów/uszy od góry, by nie wystawały zza maski
+  const isFullMask = headType === "helmet" && !(headImg && headImg.toLowerCase().includes("hot-dog"));
+  const upperBodyClip = isFullMask ? "inset(32% 0% 45% 0%)" : "inset(0% 0% 45% 0%)";
 
-  return `
-    <div class="relative mx-auto select-none pointer-events-none overflow-hidden" style="width: ${size}px; height: ${size}px;">
-      <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${baseClip};" onerror="this.style.display='none';" />
-
-      ${legsImg ? `<img src="${legsImg}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
-      ${torsoImg ? `<img src="${torsoImg}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
-      ${headImg ? `<img src="${headImg}" class="absolute left-1/2 object-fill z-40" style="top: ${hCfg.top}%; width: ${hCfg.width}%; height: ${hCfg.height}%; transform: translateX(-50%) scale(${hCfg.scaleX}, ${hCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${headFb}'!=='${headImg}'){this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
-    </div>
-  `;
-}
-
-function renderBoyAvatarSvg(playerKey, size = 80) {
-  const p = ensurePlayerStructure(state.stats[playerKey]);
-  state.stats[playerKey] = p;
-  const avatar = p.avatar || {};
-  const cal = getAvatarCalibration();
-
-  const headImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.head) : avatar.head;
-  const torsoImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.torso || avatar.top) : (avatar.torso || avatar.top);
-  const legsImg = typeof resolveOutfitPath === "function" ? resolveOutfitPath(avatar.legs || avatar.bottom) : (avatar.legs || avatar.bottom);
-
-  const headFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(headImg) : headImg;
-  const torsoFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(torsoImg) : torsoImg;
-  const legsFb = typeof getFallbackOutfitPath === "function" ? getFallbackOutfitPath(legsImg) : legsImg;
-
-  const headType = classifyHeadItem(headImg);
-  const torsoType = classifyTorsoItem(torsoImg);
-  const legsType = classifyLegsItem(legsImg);
-
-  const hCfg = cal[headType] || cal.cap;
-  const tCfg = cal[torsoType] || cal.shirt;
-  const lCfg = cal[legsType] || cal.jeans;
-
-  // 1. Przycinanie GŁOWY bazowej postaci (znika pod pełnymi hełmami, przycina czubek włosów pod czapką)
-  let showBaseHead = !(headType !== "none" && hCfg.hideHead);
-  let headClip = "inset(0% 0% 66% 0%)";
-  if (headType === "cap") {
-    headClip = `inset(${hCfg.clipTop || 13}% 26% 66% 26%)`;
-  } else if (headType === "hotdogCap") {
-    headClip = `inset(${hCfg.clipTop || 15}% 33% 68% 33%)`;
-  }
-
-  // 2. Przycinanie TUŁOWIA I RĄK bazowej postaci (znika pod kurtkami i zbrojami)
-  let showBaseTorso = !(torsoType !== "none" && tCfg.hideTorso);
-  let torsoClip = torsoType === "shirt" ? "inset(33% 18% 45% 18%)" : "inset(33% 0% 44% 0%)";
-
-  // 3. Przycinanie NÓG I STOPY bazowej postaci (pod dżinsami zostają same buty, pod złotymi spodniami znika całość)
-  let showBaseLegs = !(legsType !== "none" && lCfg.hideLegs);
-  let legsClip = "inset(56% 0% 0% 0%)";
-  if (legsType === "jeans") {
-    legsClip = `inset(${lCfg.clipLegs || 84}% 25% 0% 25%)`;
-  } else if (legsType === "shorts") {
-    legsClip = `inset(${lCfg.clipLegs || 70}% 22% 0% 22%)`;
+  // Dolna część ciała chłopca (poniżej pasa):
+  // - przy jeans (1:1) lub braku spodni: rysujemy pełny dół (od 55% w dół)
+  // - przy shorts / goldShorts: ukrywamy szare spodenki bazowe (55%-71%), zostawiamy łydki i buty (od 71% w dół)
+  // - przy silverPants: ukrywamy nogi aż do kostek (55%-84%), zostawiamy tylko białe buty na dole (od 84% w dół)
+  // - przy goldPants (mają własne buty): całkowicie ukrywamy dolną część bazowego chłopca
+  let lowerBodyClip = "inset(55% 0% 0% 0%)";
+  let showLowerBody = true;
+  if (legsType === "goldPants") {
+    showLowerBody = false;
+  } else if (legsType === "silverPants") {
+    lowerBodyClip = "inset(84% 0% 0% 0%)";
+  } else if (legsType === "shorts" || legsType === "goldShorts") {
+    lowerBodyClip = "inset(71% 0% 0% 0%)";
   }
 
   return `
     <div class="relative mx-auto select-none pointer-events-none overflow-hidden" style="width: ${size}px; height: ${size}px;">
-      ${showBaseHead ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${headClip};" onerror="this.style.display='none';" />` : ""}
-      ${showBaseTorso ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${torsoClip};" onerror="this.style.display='none';" />` : ""}
-      ${showBaseLegs ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${legsClip};" onerror="this.style.display='none';" />` : ""}
+      <!-- Górna połowa bazowego chłopca (głowa + ręce + tułów) -->
+      <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${upperBodyClip};" onerror="this.style.display='none';" />
+      <!-- Dolna połowa bazowego chłopca (łydki / buty zależnie od spodni) -->
+      ${showLowerBody ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${lowerBodyClip};" onerror="this.style.display='none';" />` : ""}
 
       ${legsImg ? `<img src="${legsImg}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
       ${torsoImg ? `<img src="${torsoImg}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
@@ -2214,7 +2170,7 @@ function changeCalibVal(typeKey, prop, val) {
 }
 
 function resetCalibDefaults() {
-  localStorage.removeItem("akademia_avatar_calib_v3");
+  localStorage.removeItem("akademia_avatar_calib_v4");
   updateAvatarPreviewWithCalibrator();
   updateHeaderUI();
 }
@@ -2339,19 +2295,14 @@ function renderAvatarItems() {
 }
 
 function equipAvatarItem(category, itemSrc) {
-  if (!state.profile || state.profile === "duel") return;
   const p = ensurePlayerStructure(state.stats[state.profile]);
-  const normalizedTarget = resolveOutfitPath(itemSrc);
-  const current = resolveOutfitPath(p.avatar[category]);
-
-  p.avatar[category] = (current.toLowerCase() === normalizedTarget.toLowerCase()) ? "" : normalizedTarget;
-  state.stats[state.profile] = p;
-
+  p.avatar[category] = p.avatar[category] === itemSrc ? "" : itemSrc;
+  if (category === "head") window._calibActiveType = classifyHeadItem(itemSrc);
+  if (category === "torso") window._calibActiveType = classifyTorsoItem(itemSrc);
+  if (category === "legs") window._calibActiveType = classifyLegsItem(itemSrc);
   playEffect("beep");
-  saveCloudData();
   updateAvatarPreviewWithCalibrator();
   renderAvatarItems();
-  updateHeaderUI();
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 3 z 5 ======================== -->

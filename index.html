@@ -260,27 +260,38 @@
    ============================================================================ */
 
 const STICKER_CATEGORIES = [
-  { id: "all", name: "Wszystkie (60)", icon: "🌟" },
-  { id: "space", name: "Kosmos (10)", icon: "🚀" },
-  { id: "animals", name: "Zwierzęta (10)", icon: "🦁" },
-  { id: "fruits", name: "Owoce (10)", icon: "🍓" },
-  { id: "veggies", name: "Warzywa (10)", icon: "🥦" },
-  { id: "dinos", name: "Dinozaury (10)", icon: "🦖" },
-  { id: "vehicles", name: "Pojazdy (10)", icon: "🏎️" }
+  { id: "all", name: "Wszystkie (100)", icon: "🌟" },
+  { id: "space", name: "Kosmos", icon: "🚀" }, { id: "animals", name: "Zwierzęta", icon: "🦁" },
+  { id: "fruits", name: "Owoce", icon: "🍓" }, { id: "veggies", name: "Warzywa", icon: "🥦" },
+  { id: "dinos", name: "Dinozaury", icon: "🦖" }, { id: "vehicles", name: "Pojazdy", icon: "🏎️" },
+  { id: "sweets", name: "Słodycze", icon: "🍩" }, { id: "sports", name: "Sport", icon: "⚽" },
+  { id: "nature", name: "Natura", icon: "🌈" }, { id: "magic", name: "Magia", icon: "✨" }
 ];
 
 const STICKER_POOL = [
-  { id: "st_sp1", cat: "space", icon: "🚀", name: "Rakieta Kosmiczna" }, { id: "st_sp2", cat: "space", icon: "👨‍🚀", name: "Astronauta" }, { id: "st_sp3", cat: "space", icon: "🪐", name: "Planeta Saturn" }, { id: "st_sp4", cat: "space", icon: "🛸", name: "Statek UFO" }, { id: "st_sp5", cat: "space", icon: "🌕", name: "Złoty Księżyc" }, { id: "st_sp6", cat: "space", icon: "☄️", name: "Szybka Kometa" }, { id: "st_sp7", cat: "space", icon: "🔭", name: "Teleskop" }, { id: "st_sp8", cat: "space", icon: "🛰️", name: "Satelita" }, { id: "st_sp9", cat: "space", icon: "☀️", name: "Gorące Słońce" }, { id: "st_sp10", cat: "space", icon: "🌌", name: "Galaktyka" },
-  { id: "st_an1", cat: "animals", icon: "🦁", name: "Król Lew" }, { id: "st_an2", cat: "animals", icon: "🐯", name: "Tygrys" }, { id: "st_an3", cat: "animals", icon: "🐘", name: "Wielki Słoń" }, { id: "st_an4", cat: "animals", icon: "🦒", name: "Wysoka Żyrafa" }, { id: "st_an5", cat: "animals", icon: "🐒", name: "Wesoła Małpka" }, { id: "st_an6", cat: "animals", icon: "🦓", name: "Zebra w Paski" }, { id: "st_an7", cat: "animals", icon: "🐊", name: "Zielony Krokodyl" }, { id: "st_an8", cat: "animals", icon: "🦈", name: "Rekin Oceanu" }, { id: "st_an9", cat: "animals", icon: "🐬", name: "Skaczący Delfin" }, { id: "st_an10", cat: "animals", icon: "🐼", name: "Miś Panda" },
-  { id: "st_fr1", cat: "fruits", icon: "🍓", name: "Słodka Truskawka" }, { id: "st_fr2", cat: "fruits", icon: "🍎", name: "Czerwone Jabłko" }, { id: "st_fr3", cat: "fruits", icon: "🍌", name: "Żółty Banan" }, { id: "st_fr4", cat: "fruits", icon: "🍉", name: "Soczysty Arbuz" }, { id: "st_fr5", cat: "fruits", icon: "🍊", name: "Pomarańcza" }, { id: "st_fr6", cat: "fruits", icon: "🍍", name: "Król Ananas" }, { id: "st_fr7", cat: "fruits", icon: "🍇", name: "Winogrona" }, { id: "st_fr8", cat: "fruits", icon: "🍋", name: "Kwaśna Cytryna" }, { id: "st_fr9", cat: "fruits", icon: "🍐", name: "Zielona Gruszka" }, { id: "st_fr10", cat: "fruits", icon: "🍒", name: "Bliźniacze Wiśnie" },
-  { id: "st_vg1", cat: "veggies", icon: "🥦", name: "Super Brokuł" }, { id: "st_vg2", cat: "veggies", icon: "🥕", name: "Chrupiąca Marchewka" }, { id: "st_vg3", cat: "veggies", icon: "🍅", name: "Pan Pomidor" }, { id: "st_vg4", cat: "veggies", icon: "🌽", name: "Złota Kukurydza" }, { id: "st_vg5", cat: "veggies", icon: "🥒", name: "Zielony Ogórek" }, { id: "st_vg6", cat: "veggies", icon: "🫑", name: "Papryka" }, { id: "st_vg7", cat: "veggies", icon: "🥔", name: "Wesoły Ziemniak" }, { id: "st_vg8", cat: "veggies", icon: "🧅", name: "Cebula" }, { id: "st_vg9", cat: "veggies", icon: "🧄", name: "Czosnek Mocy" }, { id: "st_vg10", cat: "veggies", icon: "🥑", name: "Awokado" },
-  { id: "st_dn1", cat: "dinos", icon: "🦖", name: "Groźny T-Rex" }, { id: "st_dn2", cat: "dinos", icon: "🦕", name: "Olbrzymi Diplodok" }, { id: "st_dn3", cat: "dinos", icon: "🐉", name: "Złoty Smok" }, { id: "st_dn4", cat: "dinos", icon: "🐲", name: "Głowa Smoka" }, { id: "st_dn5", cat: "dinos", icon: "🌋", name: "Wulkan Dinozaurów" }, { id: "st_dn6", cat: "dinos", icon: "🥚", name: "Jajo Dinozaura" }, { id: "st_dn7", cat: "dinos", icon: "🦎", name: "Jaszczur" }, { id: "st_dn8", cat: "dinos", icon: "🐢", name: "Pradawny Żółw" }, { id: "st_dn9", cat: "dinos", icon: "🦴", name: "Skamieniała Kość" }, { id: "st_dn10", cat: "dinos", icon: "☄️", name: "Meteoryt Dino" },
-  { id: "st_vh1", cat: "vehicles", icon: "🏎️", name: "Bolid Wyścigowy" }, { id: "st_vh2", cat: "vehicles", icon: "🚒", name: "Wóz Strażacki" }, { id: "st_vh3", cat: "vehicles", icon: "🚓", name: "Radiowóz Policji" }, { id: "st_vh4", cat: "vehicles", icon: "🚁", name: "Helikopter Ratunkowy" }, { id: "st_vh5", cat: "vehicles", icon: "🚜", name: "Wielki Traktor" }, { id: "st_vh6", cat: "vehicles", icon: "🚂", name: "Lokomotywa" }, { id: "st_vh7", cat: "vehicles", icon: "✈️", name: "Odrzutowiec" }, { id: "st_vh8", cat: "vehicles", icon: "🏴‍☠️", name: "Statek Piracki" }, { id: "st_vh9", cat: "vehicles", icon: "🤖", name: "Super Robot" }, { id: "st_vh10", cat: "vehicles", icon: "👑", name: "Korona Mistrza" }
+  { id: "st_sp1", cat: "space", icon: "🚀", name: "Rakieta" }, { id: "st_sp2", cat: "space", icon: "👨‍🚀", name: "Astronauta" }, { id: "st_sp3", cat: "space", icon: "🪐", name: "Saturn" }, { id: "st_sp4", cat: "space", icon: "🛸", name: "UFO" }, { id: "st_sp5", cat: "space", icon: "🌕", name: "Księżyc" }, { id: "st_sp6", cat: "space", icon: "☄️", name: "Kometa" }, { id: "st_sp7", cat: "space", icon: "🔭", name: "Teleskop" }, { id: "st_sp8", cat: "space", icon: "🛰️", name: "Satelita" }, { id: "st_sp9", cat: "space", icon: "☀️", name: "Słońce" }, { id: "st_sp10", cat: "space", icon: "🌌", name: "Galaktyka" },
+  { id: "st_an1", cat: "animals", icon: "🦁", name: "Król Lew" }, { id: "st_an2", cat: "animals", icon: "🐯", name: "Tygrys" }, { id: "st_an3", cat: "animals", icon: "🐘", name: "Wielki Słoń" }, { id: "st_an4", cat: "animals", icon: "🦒", name: "Wysoka Żyrafa" }, { id: "st_an5", cat: "animals", icon: "🐒", name: "Małpka" }, { id: "st_an6", cat: "animals", icon: "🦓", name: "Zebra" }, { id: "st_an7", cat: "animals", icon: "🐊", name: "Krokodyl" }, { id: "st_an8", cat: "animals", icon: "🦈", name: "Rekin" }, { id: "st_an9", cat: "animals", icon: "🐬", name: "Delfin" }, { id: "st_an10", cat: "animals", icon: "🐼", name: "Panda" },
+  { id: "st_fr1", cat: "fruits", icon: "🍓", name: "Truskawka" }, { id: "st_fr2", cat: "fruits", icon: "🍎", name: "Jabłko" }, { id: "st_fr3", cat: "fruits", icon: "🍌", name: "Banan" }, { id: "st_fr4", cat: "fruits", icon: "🍉", name: "Arbuz" }, { id: "st_fr5", cat: "fruits", icon: "🍊", name: "Pomarańcza" }, { id: "st_fr6", cat: "fruits", icon: "🍍", name: "Ananas" }, { id: "st_fr7", cat: "fruits", icon: "🍇", name: "Winogrona" }, { id: "st_fr8", cat: "fruits", icon: "🍋", name: "Cytryna" }, { id: "st_fr9", cat: "fruits", icon: "🍐", name: "Gruszka" }, { id: "st_fr10", cat: "fruits", icon: "🍒", name: "Wiśnie" },
+  { id: "st_vg1", cat: "veggies", icon: "🥦", name: "Brokuł" }, { id: "st_vg2", cat: "veggies", icon: "🥕", name: "Marchewka" }, { id: "st_vg3", cat: "veggies", icon: "🍅", name: "Pomidor" }, { id: "st_vg4", cat: "veggies", icon: "🌽", name: "Kukurydza" }, { id: "st_vg5", cat: "veggies", icon: "🥒", name: "Ogórek" }, { id: "st_vg6", cat: "veggies", icon: "🫑", name: "Papryka" }, { id: "st_vg7", cat: "veggies", icon: "🥔", name: "Ziemniak" }, { id: "st_vg8", cat: "veggies", icon: "🧅", name: "Cebula" }, { id: "st_vg9", cat: "veggies", icon: "🧄", name: "Czosnek" }, { id: "st_vg10", cat: "veggies", icon: "🥑", name: "Awokado" },
+  { id: "st_dn1", cat: "dinos", icon: "🦖", name: "T-Rex" }, { id: "st_dn2", cat: "dinos", icon: "🦕", name: "Diplodok" }, { id: "st_dn3", cat: "dinos", icon: "🐉", name: "Smok" }, { id: "st_dn4", cat: "dinos", icon: "🐲", name: "Głowa Smoka" }, { id: "st_dn5", cat: "dinos", icon: "🌋", name: "Wulkan" }, { id: "st_dn6", cat: "dinos", icon: "🥚", name: "Jajo" }, { id: "st_dn7", cat: "dinos", icon: "🦎", name: "Jaszczur" }, { id: "st_dn8", cat: "dinos", icon: "🐢", name: "Żółw" }, { id: "st_dn9", cat: "dinos", icon: "🦴", name: "Kość" }, { id: "st_dn10", cat: "dinos", icon: "☄️", name: "Meteoryt" },
+  { id: "st_vh1", cat: "vehicles", icon: "🏎️", name: "Bolid" }, { id: "st_vh2", cat: "vehicles", icon: "🚒", name: "Wóz Strażacki" }, { id: "st_vh3", cat: "vehicles", icon: "🚓", name: "Radiowóz" }, { id: "st_vh4", cat: "vehicles", icon: "🚁", name: "Helikopter" }, { id: "st_vh5", cat: "vehicles", icon: "🚜", name: "Traktor" }, { id: "st_vh6", cat: "vehicles", icon: "🚂", name: "Lokomotywa" }, { id: "st_vh7", cat: "vehicles", icon: "✈️", name: "Odrzutowiec" }, { id: "st_vh8", cat: "vehicles", icon: "🏴‍☠️", name: "Statek Piracki" }, { id: "st_vh9", cat: "vehicles", icon: "⛵", name: "Żaglówka" }, { id: "st_vh10", cat: "vehicles", icon: "🚑", name: "Karetka" },
+  { id: "st_sw1", cat: "sweets", icon: "🍩", name: "Pączek" }, { id: "st_sw2", cat: "sweets", icon: "🍪", name: "Ciastko" }, { id: "st_sw3", cat: "sweets", icon: "🍫", name: "Czekolada" }, { id: "st_sw4", cat: "sweets", icon: "🍬", name: "Cukierek" }, { id: "st_sw5", cat: "sweets", icon: "🍭", name: "Lizak" }, { id: "st_sw6", cat: "sweets", icon: "🍦", name: "Lód" }, { id: "st_sw7", cat: "sweets", icon: "🧁", name: "Babeczka" }, { id: "st_sw8", cat: "sweets", icon: "🍰", name: "Tort" }, { id: "st_sw9", cat: "sweets", icon: "🍧", name: "Deser" }, { id: "st_sw10", cat: "sweets", icon: "🍯", name: "Miód" },
+  { id: "st_sp1_s", cat: "sports", icon: "⚽", name: "Piłka" }, { id: "st_sp2_s", cat: "sports", icon: "🏀", name: "Koszykówka" }, { id: "st_sp3_s", cat: "sports", icon: "🏈", name: "Rugby" }, { id: "st_sp4_s", cat: "sports", icon: "🎾", name: "Tenis" }, { id: "st_sp5_s", cat: "sports", icon: "🏐", name: "Siatkówka" }, { id: "st_sp6_s", cat: "sports", icon: "🏓", name: "Ping Pong" }, { id: "st_sp7_s", cat: "sports", icon: "🏸", name: "Badminton" }, { id: "st_sp8_s", cat: "sports", icon: "🥊", name: "Boks" }, { id: "st_sp9_s", cat: "sports", icon: "🥋", name: "Karate" }, { id: "st_sp10_s", cat: "sports", icon: "🥇", name: "Złoty Medal" },
+  { id: "st_nt1", cat: "nature", icon: "🌈", name: "Tęcza" }, { id: "st_nt2", cat: "nature", icon: "⭐", name: "Gwiazda" }, { id: "st_nt3", cat: "nature", icon: "🔥", name: "Ogień" }, { id: "st_nt4", cat: "nature", icon: "💧", name: "Kropla" }, { id: "st_nt5", cat: "nature", icon: "⚡", name: "Błyskawica" }, { id: "st_nt6", cat: "nature", icon: "❄️", name: "Śnieżka" }, { id: "st_nt7", cat: "nature", icon: "🌪️", name: "Tornado" }, { id: "st_nt8", cat: "nature", icon: "🌲", name: "Choinka" }, { id: "st_nt9", cat: "nature", icon: "🌵", name: "Kaktus" }, { id: "st_nt10", cat: "nature", icon: "🍀", name: "Koniczyna" },
+  { id: "st_mg1", cat: "magic", icon: "✨", name: "Magia" }, { id: "st_mg2", cat: "magic", icon: "🪄", name: "Różdżka" }, { id: "st_mg3", cat: "magic", icon: "🔮", name: "Kula" }, { id: "st_mg4", cat: "magic", icon: "🧿", name: "Oko Proroka" }, { id: "st_mg5", cat: "magic", icon: "👑", name: "Korona" }, { id: "st_mg6", cat: "magic", icon: "💎", name: "Diament" }, { id: "st_mg7", cat: "magic", icon: "🛡️", name: "Tarcza" }, { id: "st_mg8", cat: "magic", icon: "⚔️", name: "Miecze" }, { id: "st_mg9", cat: "magic", icon: "🗝️", name: "Klucz" }, { id: "st_mg10", cat: "magic", icon: "🧸", name: "Miś" }
 ];
 
-const MEMORY_ANIMALS_POOL = [
-  { id: "mem_dog", icon: "🐶", en: "Dog", pl: "Piesek" }, { id: "mem_cat", icon: "🐱", en: "Cat", pl: "Kotek" }, { id: "mem_rabbit", icon: "🐰", en: "Rabbit", pl: "Króliczek" }, { id: "mem_fox", icon: "🦊", en: "Fox", pl: "Lisek" }, { id: "mem_bear", icon: "🐻", en: "Bear", pl: "Niedźwiadek" }, { id: "mem_panda", icon: "🐼", en: "Panda", pl: "Panda" }, { id: "mem_koala", icon: "🐨", en: "Koala", pl: "Koala" }, { id: "mem_tiger", icon: "🐯", en: "Tiger", pl: "Tygrys" }, { id: "mem_lion", icon: "🦁", en: "Lion", pl: "Lew" }, { id: "mem_cow", icon: "🐮", en: "Cow", pl: "Krówka" }, { id: "mem_pig", icon: "🐷", en: "Pig", pl: "Świnka" }, { id: "mem_frog", icon: "🐸", en: "Frog", pl: "Żabka" }, { id: "mem_monkey", icon: "🐵", en: "Monkey", pl: "Małpka" }, { id: "mem_owl", icon: "🦉", en: "Owl", pl: "Sówka" }, { id: "mem_turtle", icon: "🐢", en: "Turtle", pl: "Żółwik" }, { id: "mem_octopus", icon: "🐙", en: "Octopus", pl: "Ośmiornica" },
-  { id: "mem_elephant", icon: "🐘", en: "Elephant", pl: "Słoń" }, { id: "mem_giraffe", icon: "🦒", en: "Giraffe", pl: "Żyrafa" }, { id: "mem_zebra", icon: "🦓", en: "Zebra", pl: "Zebra" }, { id: "mem_hippo", icon: "🦛", en: "Hippo", pl: "Hipopotam" }, { id: "mem_rhino", icon: "🦏", en: "Rhino", pl: "Nosorożec" }, { id: "mem_mouse", icon: "🐭", en: "Mouse", pl: "Myszka" }, { id: "mem_hamster", icon: "🐹", en: "Hamster", pl: "Chomik" }, { id: "mem_bat", icon: "🦇", en: "Bat", pl: "Nietoperz" }, { id: "mem_wolf", icon: "🐺", en: "Wolf", pl: "Wilk" }, { id: "mem_boar", icon: "🐗", en: "Boar", pl: "Dzik" }, { id: "mem_horse", icon: "🐴", en: "Horse", pl: "Konik" }, { id: "mem_unicorn", icon: "🦄", en: "Unicorn", pl: "Jednorożec" }, { id: "mem_bee", icon: "🐝", en: "Bee", pl: "Pszczółka" }, { id: "mem_bug", icon: "🐛", en: "Bug", pl: "Gąsienica" }, { id: "mem_butterfly", icon: "🦋", en: "Butterfly", pl: "Motyl" }, { id: "mem_snail", icon: "🐌", en: "Snail", pl: "Ślimak" }, { id: "mem_penguin", icon: "🐧", en: "Penguin", pl: "Pingwin" }, { id: "mem_bird", icon: "🐦", en: "Bird", pl: "Ptaszek" }, { id: "mem_chick", icon: "🐥", en: "Chick", pl: "Kurczaczek" }, { id: "mem_duck", icon: "🦆", en: "Duck", pl: "Kaczuszka" }, { id: "mem_eagle", icon: "🦅", en: "Eagle", pl: "Orzeł" }, { id: "mem_shark", icon: "🦈", en: "Shark", pl: "Rekin" }, { id: "mem_dolphin", icon: "🐬", en: "Dolphin", pl: "Delfin" }, { id: "mem_whale", icon: "🐳", en: "Whale", pl: "Wieloryb" }, { id: "mem_fish", icon: "🐟", en: "Fish", pl: "Rybka" }, { id: "mem_crab", icon: "🦀", en: "Crab", pl: "Krab" }
+const COMPANION_PETS = [
+  // 10 Domowych
+  { id: "p_dog", icon: "🐶", en: "Dog", pl: "Piesek" }, { id: "p_cat", icon: "🐱", en: "Cat", pl: "Kotek" }, { id: "p_rabbit", icon: "🐰", en: "Rabbit", pl: "Królik" }, { id: "p_hamster", icon: "🐹", en: "Hamster", pl: "Chomik" }, { id: "p_parrot", icon: "🦜", en: "Parrot", pl: "Papuga" }, { id: "p_fish", icon: "🐠", en: "Fish", pl: "Rybka" }, { id: "p_turtle", icon: "🐢", en: "Turtle", pl: "Żółw" }, { id: "p_mouse", icon: "🐭", en: "Mouse", pl: "Myszka" }, { id: "p_canary", icon: "🐦", en: "Canary", pl: "Kanarek" }, { id: "p_guinea", icon: "🐹", en: "Guinea Pig", pl: "Świnka Morska" },
+  // 10 Hodowlanych
+  { id: "p_cow", icon: "🐮", en: "Cow", pl: "Krowa" }, { id: "p_pig", icon: "🐷", en: "Pig", pl: "Świnia" }, { id: "p_horse", icon: "🐴", en: "Horse", pl: "Koń" }, { id: "p_sheep", icon: "🐑", en: "Sheep", pl: "Owca" }, { id: "p_goat", icon: "🐐", en: "Goat", pl: "Koza" }, { id: "p_chicken", icon: "🐔", en: "Chicken", pl: "Kura" }, { id: "p_duck", icon: "🦆", en: "Duck", pl: "Kaczka" }, { id: "p_goose", icon: "🦢", en: "Goose", pl: "Gęś" }, { id: "p_turkey", icon: "🦃", en: "Turkey", pl: "Indyk" }, { id: "p_donkey", icon: "🐴", en: "Donkey", pl: "Osioł" },
+  // 10 Dzikich
+  { id: "p_bear", icon: "🐻", en: "Bear", pl: "Niedźwiedź" }, { id: "p_wolf", icon: "🐺", en: "Wolf", pl: "Wilk" }, { id: "p_fox", icon: "🦊", en: "Fox", pl: "Lis" }, { id: "p_boar", icon: "🐗", en: "Boar", pl: "Dzik" }, { id: "p_deer", icon: "🦌", en: "Deer", pl: "Jeleń" }, { id: "p_owl", icon: "🦉", en: "Owl", pl: "Sowa" }, { id: "p_squirrel", icon: "🐿️", en: "Squirrel", pl: "Wiewiórka" }, { id: "p_hedgehog", icon: "🦔", en: "Hedgehog", pl: "Jeż" }, { id: "p_badger", icon: "🦡", en: "Badger", pl: "Borsuk" }, { id: "p_frog", icon: "🐸", en: "Frog", pl: "Żaba" },
+  // 10 Egzotycznych
+  { id: "p_lion", icon: "🦁", en: "Lion", pl: "Lew" }, { id: "p_tiger", icon: "🐯", en: "Tiger", pl: "Tygrys" }, { id: "p_elephant", icon: "🐘", en: "Elephant", pl: "Słoń" }, { id: "p_monkey", icon: "🐵", en: "Monkey", pl: "Małpa" }, { id: "p_giraffe", icon: "🦒", en: "Giraffe", pl: "Żyrafa" }, { id: "p_zebra", icon: "🦓", en: "Zebra", pl: "Zebra" }, { id: "p_hippo", icon: "🦛", en: "Hippo", pl: "Hipopotam" }, { id: "p_rhino", icon: "🦏", en: "Rhino", pl: "Nosorożec" }, { id: "p_croc", icon: "🐊", en: "Crocodile", pl: "Krokodyl" }, { id: "p_snake", icon: "🐍", en: "Snake", pl: "Wąż" },
+  // 10 Wymyślonych
+  { id: "p_dragon", icon: "🐉", en: "Dragon", pl: "Smok" }, { id: "p_unicorn", icon: "🦄", en: "Unicorn", pl: "Jednorożec" }, { id: "p_alien", icon: "👽", en: "Alien", pl: "Kosmita" }, { id: "p_ghost", icon: "👻", en: "Ghost", pl: "Duch" }, { id: "p_robot", icon: "🤖", en: "Robot", pl: "Robot" }, { id: "p_monster", icon: "👾", en: "Monster", pl: "Potwór" }, { id: "p_fairy", icon: "🧚", en: "Fairy", pl: "Wróżka" }, { id: "p_troll", icon: "👹", en: "Troll", pl: "Troll" }, { id: "p_phoenix", icon: "🦅", en: "Phoenix", pl: "Feniks" }, { id: "p_genie", icon: "🧞", en: "Genie", pl: "Dżin" }
 ];
 
 const PATHS = { base: "grafiki/", bronze: "grafiki/", silver: "grafiki/srebrna/", gold: "grafiki/zlota/" };
@@ -358,7 +369,8 @@ const FULL_LESSONS_DATABASE = [
     ]
   },
   {
-    id: "jungle_animals", title: "5. Dżungla i Zwierzęta", subtitle: "Zwierzęta z dżungli", icon: "🦁🐒", color: "from-lime-500 to-emerald-700", borderColor: "border-lime-500", type: "vocab",
+    {
+    id: "jungle_animals", title: "5. Dżungla i Zwierzęta", subtitle: "Wielka baza zwierząt", icon: "🦁🐒", color: "from-lime-500 to-emerald-700", borderColor: "border-lime-500", type: "vocab",
     items: [
       { en: "Zebra", pl: "Zebra", phonetic: "zibra", icon: "🦓", age: [4,6] },
       { en: "Giraffe", pl: "Żyrafa", phonetic: "dżiraf", icon: "🦒", age: [4,6] },
@@ -366,7 +378,27 @@ const FULL_LESSONS_DATABASE = [
       { en: "Elephant", pl: "Słoń", phonetic: "elefant", icon: "🐘", age: [4,6] },
       { en: "Monkey", pl: "Małpka", phonetic: "manki", icon: "🐒", age: [4,6] },
       { en: "Crocodile", pl: "Krokodyl", phonetic: "krokodajl", icon: "🐊", age: [4,6] },
-      { en: "Lion", pl: "Lew", phonetic: "lajon", icon: "🦁", age: [4,6] }
+      { en: "Lion", pl: "Lew", phonetic: "lajon", icon: "🦁", age: [4,6] },
+      { en: "Tiger", pl: "Tygrys", phonetic: "tajger", icon: "🐯", age: [4,6] },
+      { en: "Hippo", pl: "Hipopotam", phonetic: "hipo", icon: "🦛", age: [4,6] },
+      { en: "Rhino", pl: "Nosorożec", phonetic: "rajno", icon: "🦏", age: [4,6] },
+      { en: "Bear", pl: "Niedźwiedź", phonetic: "ber", icon: "🐻", age: [4,6] },
+      { en: "Wolf", pl: "Wilk", phonetic: "łulf", icon: "🐺", age: [4,6] },
+      { en: "Fox", pl: "Lis", phonetic: "foks", icon: "🦊", age: [4,6] },
+      { en: "Deer", pl: "Jeleń", phonetic: "dir", icon: "🦌", age: [4,6] },
+      { en: "Owl", pl: "Sowa", phonetic: "ałl", icon: "🦉", age: [4,6] },
+      { en: "Frog", pl: "Żaba", phonetic: "frog", icon: "🐸", age: [4,6] },
+      { en: "Mouse", pl: "Myszka", phonetic: "małs", icon: "🐭", age: [4,6] },
+      { en: "Bat", pl: "Nietoperz", phonetic: "bat", icon: "🦇", age: [4,6] },
+      { en: "Eagle", pl: "Orzeł", phonetic: "igyl", icon: "🦅", age: [4,6] },
+      { en: "Shark", pl: "Rekin", phonetic: "szark", icon: "🦈", age: [4,6] },
+      { en: "Whale", pl: "Wieloryb", phonetic: "łejl", icon: "🐳", age: [4,6] },
+      { en: "Dolphin", pl: "Delfin", phonetic: "dolfin", icon: "🐬", age: [4,6] },
+      { en: "Penguin", pl: "Pingwin", phonetic: "pengłin", icon: "🐧", age: [4,6] },
+      { en: "Kangaroo", pl: "Kangur", phonetic: "kangaru", icon: "🦘", age: [4,6] },
+      { en: "Camel", pl: "Wielbłąd", phonetic: "kamel", icon: "🐫", age: [4,6] },
+      { en: "Panda", pl: "Panda", phonetic: "panda", icon: "🐼", age: [4,6] },
+      { en: "Gorilla", pl: "Goryl", phonetic: "gorila", icon: "🦍", age: [4,6] }
     ]
   },
   {
@@ -755,7 +787,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 
   let petHtml = "";
   if (avatar.pet) {
-    const memoryPool = typeof MEMORY_ANIMALS_POOL !== "undefined" ? MEMORY_ANIMALS_POOL : [];
+    const memoryPool = typeof COMPANION_PETS !== "undefined" ? MEMORY_ANIMALS_POOL : [];
     const petObj = memoryPool.find(a => a.id === avatar.pet);
     if (petObj) {
       const petSize = Math.max(16, Math.floor(size * 0.40));
@@ -897,28 +929,60 @@ function openChestReal(profKey, tier) {
   const content = document.getElementById("rewardPopupContent");
   const p = ensurePlayerStructure(state.stats[profKey]);
   
-  const allOutfits = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat().filter(o => o.tier === tier) : [];
-  const unownedOutfits = allOutfits.filter(o => !p.unlockedItems.includes(o.src));
-  const memoryPool = typeof MEMORY_ANIMALS_POOL !== "undefined" ? MEMORY_ANIMALS_POOL : [];
-  const unownedAnimals = memoryPool.filter(a => !(p.memoryAnimals || []).includes(a.id));
+  // Brakujące itemy z poszczególnych kategorii
+  const missingStickers = STICKER_POOL.filter(s => !(state.stats.stickers || []).includes(s.id));
+  const missingPets = COMPANION_PETS.filter(a => !(p.memoryAnimals || []).includes(a.id));
   
-  let rewardHtml = "";
-  let rewardName = "";
-  
-  const canDropAnimal = unownedAnimals.length > 0;
-  const canDropOutfit = unownedOutfits.length > 0;
-  let dropType = "none";
-  
-  if (canDropAnimal && canDropOutfit) dropType = Math.random() < 0.35 ? "animal" : "outfit";
-  else if (canDropAnimal) dropType = "animal";
-  else if (canDropOutfit) dropType = "outfit";
+  // Złożona matematyka skrzyń wg wytycznych:
+  let outfitTier = "bronze";
+  const rnd = Math.random() * 100;
+  if (tier === "bronze") {
+    if (rnd < 5) outfitTier = "gold";
+    else if (rnd < 20) outfitTier = "silver"; // 15%
+    else outfitTier = "bronze"; // 80% reszta
+  } else if (tier === "silver") {
+    if (rnd < 10) outfitTier = "gold";
+    else if (rnd < 45) outfitTier = "silver"; // 35%
+    else outfitTier = "bronze"; // 55% reszta
+  } else if (tier === "gold") {
+    if (rnd < 15) outfitTier = "gold";
+    else if (rnd < 60) outfitTier = "silver"; // 45%
+    else outfitTier = "bronze"; // 40% reszta
+  }
 
-  if (dropType === "animal") {
-    const animal = unownedAnimals[Math.floor(Math.random() * unownedAnimals.length)];
+  const allOutfits = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat() : [];
+  let unownedOutfits = allOutfits.filter(o => o.tier === outfitTier && !p.unlockedItems.includes(o.src));
+  
+  // Jeżeli gracz zebrał już wszystko z wylosowanego poziomu ubrania, ratujemy się czymkolwiek co mu zostało
+  if (unownedOutfits.length === 0) {
+    unownedOutfits = allOutfits.filter(o => !p.unlockedItems.includes(o.src));
+  }
+
+  const canDropOutfit = unownedOutfits.length > 0;
+  const canDropPet = missingPets.length > 0;
+  const canDropSticker = missingStickers.length > 0;
+
+  // W każdej skrzynce jest szansa na wszystko!
+  // Podział główny: 40% szans na Ubranie, 30% szans na Zwierzaka, 30% szans na Naklejkę
+  let poolChoices = [];
+  if (canDropOutfit) poolChoices.push(...Array(40).fill("outfit"));
+  if (canDropPet) poolChoices.push(...Array(30).fill("pet"));
+  if (canDropSticker) poolChoices.push(...Array(30).fill("sticker"));
+
+  let dropType = poolChoices.length > 0 ? poolChoices[Math.floor(Math.random() * poolChoices.length)] : "none";
+  let rewardHtml = ""; let rewardName = "";
+
+  if (dropType === "pet") {
+    const animal = missingPets[Math.floor(Math.random() * missingPets.length)];
     p.memoryAnimals.push(animal.id);
     rewardName = `Towarzysz: ${animal.pl}`;
-    // Usunięto problematyczne wymiary CSS dla emoji, zastąpiono font-size
     rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">${animal.icon}</div>`;
+  } else if (dropType === "sticker") {
+    const sticker = missingStickers[Math.floor(Math.random() * missingStickers.length)];
+    if (!state.stats.stickers) state.stats.stickers = [];
+    state.stats.stickers.push(sticker.id);
+    rewardName = `Naklejka: ${sticker.name}`;
+    rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">${sticker.icon}</div>`;
   } else if (dropType === "outfit") {
     const outfit = unownedOutfits[Math.floor(Math.random() * unownedOutfits.length)];
     p.unlockedItems.push(outfit.src);
@@ -926,7 +990,7 @@ function openChestReal(profKey, tier) {
     rewardHtml = `<img src="${outfit.src}" class="w-32 h-32 object-contain mx-auto my-4 drop-shadow-xl pop-correct bg-white/60 rounded-full p-2" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${outfit.fallbackSrc}';}else{this.style.display='none';}" />`;
   } else {
     rewardName = "Garść monet!";
-    rewardHtml = `<div class="text-7xl my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center">🪙</div>`;
+    rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">🪙</div>`;
   }
 
   state.stats[profKey] = p;
@@ -1160,7 +1224,7 @@ function renderAvatarItems() {
     html += `</div></div>`;
   });
 
-  const memoryPool = typeof MEMORY_ANIMALS_POOL !== "undefined" ? MEMORY_ANIMALS_POOL : [];
+  const memoryPool = typeof COMPANION_PETS !== "undefined" ? MEMORY_ANIMALS_POOL : [];
   const myAnimals = memoryPool.filter(a => (p.memoryAnimals || []).includes(a.id));
   
   html += `<div class="mb-4 pt-2">
@@ -1498,8 +1562,9 @@ function renderTopGameBar(lesson) {
 
   const duelBar = state.profile === "duel" ? `<div class="mb-2 p-2.5 rounded-2xl bg-gradient-to-r from-amber-100 via-purple-100 to-sky-100 border-2 border-purple-400 flex justify-between items-center font-extrabold text-[10px] md:text-xs"><div>👦 IGOR: ${state.duelScores.igor} pkt ⚡ VS ⚡ 🧑 HUBERT: ${state.duelScores.hubert} pkt</div><div class="px-3 py-1 rounded-xl ${state.duelTurn === 'igor' ? 'bg-amber-500' : 'bg-sky-600'} text-white">Teraz: ${state.duelTurn === 'igor' ? 'IGOR' : 'HUBERT'}</div></div>` : "";
   const examBar = state.isExamMode ? `<div class="mb-2 p-2 rounded-2xl bg-orange-100 border-2 border-orange-400 text-orange-950 font-extrabold text-center text-xs shadow-sm uppercase">🎓 Wielki Sprawdzian (Pytanie ${state.roundIndex+1}/15)</div>` : "";
-
+const titleBar = lesson && lesson.id !== "grand_exam" && lesson.id !== "memory_game" ? `<div class="w-full text-center text-slate-500 font-extrabold text-[11px] uppercase tracking-wider mb-2">Lekcja: ${lesson.title}</div>` : '';
   return `
+  ${titleBar}
     ${duelBar} ${examBar}
     <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-sky-200 flex flex-col gap-2 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-2">
@@ -1691,16 +1756,27 @@ function startMemoryGame() {
   
   const isHubert = state.profile === "hubert";
   const numPairs = isHubert ? 8 : 6;
-  const pKey = state.profile === "hubert" ? "hubert" : "igor";
   
-  const myAnimals = (window.MEMORY_ANIMALS_POOL || []).filter(a => state.stats[pKey].memoryAnimals.includes(a.id));
-  let pool = [...myAnimals];
+  // Pobieramy absolutnie wszystkie słówka ze wszystkich lekcji (oprócz samego Memory)
+  let pool = [];
+  state.lessons.forEach(l => {
+    if (l.type === "vocab" && l.id !== "memory_game") l.items.forEach(it => pool.push(it));
+  });
   
-  if (pool.length < numPairs) {
-    state.lessons.forEach(l => {
-      if (l.type === "vocab" && l.id !== "memory_game") l.items.forEach(it => pool.push(it));
-    });
-  }
+  // Losujemy dokładnie wymaganą liczbę unikalnych obrazków do gry
+  pool = shuffleArray(pool).slice(0, numPairs);
+  let cards = [];
+  
+  pool.forEach(item => {
+    cards.push({ id: item.en + "_1", matchId: item.en, type: 'pic', content: item.icon, en: item.en, pl: item.pl });
+    cards.push({ id: item.en + "_2", matchId: item.en, type: isHubert ? 'text' : 'pic', content: isHubert ? item.en : item.icon, en: item.en, pl: item.pl });
+  });
+  
+  state.memoryGameCards = shuffleArray(cards);
+  state.memoryFlippedIndexes = [];
+  state.memoryMatchedPairs = 0;
+  renderMemoryGame();
+}
   
   pool = shuffleArray(pool).slice(0, numPairs);
   let cards = [];

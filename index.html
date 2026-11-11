@@ -282,15 +282,10 @@ const STICKER_POOL = [
 ];
 
 const COMPANION_PETS = [
-  // 10 Domowych
   { id: "p_dog", icon: "🐶", en: "Dog", pl: "Piesek" }, { id: "p_cat", icon: "🐱", en: "Cat", pl: "Kotek" }, { id: "p_rabbit", icon: "🐰", en: "Rabbit", pl: "Królik" }, { id: "p_hamster", icon: "🐹", en: "Hamster", pl: "Chomik" }, { id: "p_parrot", icon: "🦜", en: "Parrot", pl: "Papuga" }, { id: "p_fish", icon: "🐠", en: "Fish", pl: "Rybka" }, { id: "p_turtle", icon: "🐢", en: "Turtle", pl: "Żółw" }, { id: "p_mouse", icon: "🐭", en: "Mouse", pl: "Myszka" }, { id: "p_canary", icon: "🐦", en: "Canary", pl: "Kanarek" }, { id: "p_guinea", icon: "🐹", en: "Guinea Pig", pl: "Świnka Morska" },
-  // 10 Hodowlanych
   { id: "p_cow", icon: "🐮", en: "Cow", pl: "Krowa" }, { id: "p_pig", icon: "🐷", en: "Pig", pl: "Świnia" }, { id: "p_horse", icon: "🐴", en: "Horse", pl: "Koń" }, { id: "p_sheep", icon: "🐑", en: "Sheep", pl: "Owca" }, { id: "p_goat", icon: "🐐", en: "Goat", pl: "Koza" }, { id: "p_chicken", icon: "🐔", en: "Chicken", pl: "Kura" }, { id: "p_duck", icon: "🦆", en: "Duck", pl: "Kaczka" }, { id: "p_goose", icon: "🦢", en: "Goose", pl: "Gęś" }, { id: "p_turkey", icon: "🦃", en: "Turkey", pl: "Indyk" }, { id: "p_donkey", icon: "🐴", en: "Donkey", pl: "Osioł" },
-  // 10 Dzikich
   { id: "p_bear", icon: "🐻", en: "Bear", pl: "Niedźwiedź" }, { id: "p_wolf", icon: "🐺", en: "Wolf", pl: "Wilk" }, { id: "p_fox", icon: "🦊", en: "Fox", pl: "Lis" }, { id: "p_boar", icon: "🐗", en: "Boar", pl: "Dzik" }, { id: "p_deer", icon: "🦌", en: "Deer", pl: "Jeleń" }, { id: "p_owl", icon: "🦉", en: "Owl", pl: "Sowa" }, { id: "p_squirrel", icon: "🐿️", en: "Squirrel", pl: "Wiewiórka" }, { id: "p_hedgehog", icon: "🦔", en: "Hedgehog", pl: "Jeż" }, { id: "p_badger", icon: "🦡", en: "Badger", pl: "Borsuk" }, { id: "p_frog", icon: "🐸", en: "Frog", pl: "Żaba" },
-  // 10 Egzotycznych
   { id: "p_lion", icon: "🦁", en: "Lion", pl: "Lew" }, { id: "p_tiger", icon: "🐯", en: "Tiger", pl: "Tygrys" }, { id: "p_elephant", icon: "🐘", en: "Elephant", pl: "Słoń" }, { id: "p_monkey", icon: "🐵", en: "Monkey", pl: "Małpa" }, { id: "p_giraffe", icon: "🦒", en: "Giraffe", pl: "Żyrafa" }, { id: "p_zebra", icon: "🦓", en: "Zebra", pl: "Zebra" }, { id: "p_hippo", icon: "🦛", en: "Hippo", pl: "Hipopotam" }, { id: "p_rhino", icon: "🦏", en: "Rhino", pl: "Nosorożec" }, { id: "p_croc", icon: "🐊", en: "Crocodile", pl: "Krokodyl" }, { id: "p_snake", icon: "🐍", en: "Snake", pl: "Wąż" },
-  // 10 Wymyślonych
   { id: "p_dragon", icon: "🐉", en: "Dragon", pl: "Smok" }, { id: "p_unicorn", icon: "🦄", en: "Unicorn", pl: "Jednorożec" }, { id: "p_alien", icon: "👽", en: "Alien", pl: "Kosmita" }, { id: "p_ghost", icon: "👻", en: "Ghost", pl: "Duch" }, { id: "p_robot", icon: "🤖", en: "Robot", pl: "Robot" }, { id: "p_monster", icon: "👾", en: "Monster", pl: "Potwór" }, { id: "p_fairy", icon: "🧚", en: "Fairy", pl: "Wróżka" }, { id: "p_troll", icon: "👹", en: "Troll", pl: "Troll" }, { id: "p_phoenix", icon: "🦅", en: "Phoenix", pl: "Feniks" }, { id: "p_genie", icon: "🧞", en: "Genie", pl: "Dżin" }
 ];
 
@@ -369,7 +364,6 @@ const FULL_LESSONS_DATABASE = [
     ]
   },
   {
-    {
     id: "jungle_animals", title: "5. Dżungla i Zwierzęta", subtitle: "Wielka baza zwierząt", icon: "🦁🐒", color: "from-lime-500 to-emerald-700", borderColor: "border-lime-500", type: "vocab",
     items: [
       { en: "Zebra", pl: "Zebra", phonetic: "zibra", icon: "🦓", age: [4,6] },
@@ -438,7 +432,7 @@ const FULL_LESSONS_DATABASE = [
   },
   {
     id: "memory_game", title: "8. Gra Memory", subtitle: "Znajdź pary i mów na głos", icon: "🃏🧠", color: "from-fuchsia-400 to-purple-600", borderColor: "border-fuchsia-400", type: "memory_game",
-    items: [] // Puste, ponieważ gra Memory generuje sobie pary dynamicznie na podstawie odblokowanych zwierząt i słówek
+    items: [] 
   },
   {
     id: "pronunciation_studio", title: "9. Studio Wymowy", subtitle: "Ćwicz mówienie do mikrofonu!", icon: "🎤🗣️", color: "from-rose-500 to-red-600", borderColor: "border-rose-400", type: "mic_only",

@@ -279,7 +279,8 @@ const STICKER_POOL = [
 ];
 
 const MEMORY_ANIMALS_POOL = [
-  { id: "mem_dog", icon: "🐶", en: "Dog", pl: "Piesek" }, { id: "mem_cat", icon: "🐱", en: "Cat", pl: "Kotek" }, { id: "mem_rabbit", icon: "🐰", en: "Rabbit", pl: "Króliczek" }, { id: "mem_fox", icon: "🦊", en: "Fox", pl: "Lisek" }, { id: "mem_bear", icon: "🐻", en: "Bear", pl: "Niedźwiadek" }, { id: "mem_panda", icon: "🐼", en: "Panda", pl: "Panda" }, { id: "mem_koala", icon: "🐨", en: "Koala", pl: "Koala" }, { id: "mem_tiger", icon: "🐯", en: "Tiger", pl: "Tygrys" }, { id: "mem_lion", icon: "🦁", en: "Lion", pl: "Lew" }, { id: "mem_cow", icon: "🐮", en: "Cow", pl: "Krówka" }, { id: "mem_pig", icon: "🐷", en: "Pig", pl: "Świnka" }, { id: "mem_frog", icon: "🐸", en: "Frog", pl: "Żabka" }, { id: "mem_monkey", icon: "🐵", en: "Monkey", pl: "Małpka" }, { id: "mem_owl", icon: "🦉", en: "Owl", pl: "Sówka" }, { id: "mem_turtle", icon: "🐢", en: "Turtle", pl: "Żółwik" }, { id: "mem_octopus", icon: "🐙", en: "Octopus", pl: "Ośmiornica" }
+  { id: "mem_dog", icon: "🐶", en: "Dog", pl: "Piesek" }, { id: "mem_cat", icon: "🐱", en: "Cat", pl: "Kotek" }, { id: "mem_rabbit", icon: "🐰", en: "Rabbit", pl: "Króliczek" }, { id: "mem_fox", icon: "🦊", en: "Fox", pl: "Lisek" }, { id: "mem_bear", icon: "🐻", en: "Bear", pl: "Niedźwiadek" }, { id: "mem_panda", icon: "🐼", en: "Panda", pl: "Panda" }, { id: "mem_koala", icon: "🐨", en: "Koala", pl: "Koala" }, { id: "mem_tiger", icon: "🐯", en: "Tiger", pl: "Tygrys" }, { id: "mem_lion", icon: "🦁", en: "Lion", pl: "Lew" }, { id: "mem_cow", icon: "🐮", en: "Cow", pl: "Krówka" }, { id: "mem_pig", icon: "🐷", en: "Pig", pl: "Świnka" }, { id: "mem_frog", icon: "🐸", en: "Frog", pl: "Żabka" }, { id: "mem_monkey", icon: "🐵", en: "Monkey", pl: "Małpka" }, { id: "mem_owl", icon: "🦉", en: "Owl", pl: "Sówka" }, { id: "mem_turtle", icon: "🐢", en: "Turtle", pl: "Żółwik" }, { id: "mem_octopus", icon: "🐙", en: "Octopus", pl: "Ośmiornica" },
+  { id: "mem_elephant", icon: "🐘", en: "Elephant", pl: "Słoń" }, { id: "mem_giraffe", icon: "🦒", en: "Giraffe", pl: "Żyrafa" }, { id: "mem_zebra", icon: "🦓", en: "Zebra", pl: "Zebra" }, { id: "mem_hippo", icon: "🦛", en: "Hippo", pl: "Hipopotam" }, { id: "mem_rhino", icon: "🦏", en: "Rhino", pl: "Nosorożec" }, { id: "mem_mouse", icon: "🐭", en: "Mouse", pl: "Myszka" }, { id: "mem_hamster", icon: "🐹", en: "Hamster", pl: "Chomik" }, { id: "mem_bat", icon: "🦇", en: "Bat", pl: "Nietoperz" }, { id: "mem_wolf", icon: "🐺", en: "Wolf", pl: "Wilk" }, { id: "mem_boar", icon: "🐗", en: "Boar", pl: "Dzik" }, { id: "mem_horse", icon: "🐴", en: "Horse", pl: "Konik" }, { id: "mem_unicorn", icon: "🦄", en: "Unicorn", pl: "Jednorożec" }, { id: "mem_bee", icon: "🐝", en: "Bee", pl: "Pszczółka" }, { id: "mem_bug", icon: "🐛", en: "Bug", pl: "Gąsienica" }, { id: "mem_butterfly", icon: "🦋", en: "Butterfly", pl: "Motyl" }, { id: "mem_snail", icon: "🐌", en: "Snail", pl: "Ślimak" }, { id: "mem_penguin", icon: "🐧", en: "Penguin", pl: "Pingwin" }, { id: "mem_bird", icon: "🐦", en: "Bird", pl: "Ptaszek" }, { id: "mem_chick", icon: "🐥", en: "Chick", pl: "Kurczaczek" }, { id: "mem_duck", icon: "🦆", en: "Duck", pl: "Kaczuszka" }, { id: "mem_eagle", icon: "🦅", en: "Eagle", pl: "Orzeł" }, { id: "mem_shark", icon: "🦈", en: "Shark", pl: "Rekin" }, { id: "mem_dolphin", icon: "🐬", en: "Dolphin", pl: "Delfin" }, { id: "mem_whale", icon: "🐳", en: "Whale", pl: "Wieloryb" }, { id: "mem_fish", icon: "🐟", en: "Fish", pl: "Rybka" }, { id: "mem_crab", icon: "🦀", en: "Crab", pl: "Krab" }
 ];
 
 const PATHS = { base: "grafiki/", bronze: "grafiki/", silver: "grafiki/srebrna/", gold: "grafiki/zlota/" };
@@ -434,15 +435,16 @@ const FULL_LESSONS_DATABASE = [
 
 const DEFAULT_AVATAR_CALIBRATION = {
   cap:         { label: "🧢 Czapki (Brązowa i Srebrna)", top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
-  goldCap:     { label: "👑 Czapki (Złota Skrzynia)",    top: -3, width: 48, height: 31, scaleX: 1.06, scaleY: 1.06 },
-  helmet:      { label: "🪖 Hełmy i Maski (Złote)",      top: -2, width: 52, height: 36, scaleX: 1.08, scaleY: 1.08 },
-  shirt:       { label: "👕 Wszystkie Koszulki T-Shirt", top: 31, width: 37, height: 27, scaleX: 0.88, scaleY: 0.92 },
+  goldCap:     { label: "👑 Czapki (Złota)",             top: -3, width: 48, height: 31, scaleX: 1.06, scaleY: 1.06 },
+  helmet:      { label: "🪖 Pełne Maski (Złote)",        top: -2, width: 52, height: 36, scaleX: 1.08, scaleY: 1.08 },
+  openHelmet:  { label: "👷 Hełmy otwarte (Strażak)",    top: -5, width: 50, height: 35, scaleX: 1.04, scaleY: 1.04 },
+  shirt:       { label: "👕 Wszystkie Koszulki",         top: 31, width: 37, height: 27, scaleX: 0.88, scaleY: 0.92 },
   armor:       { label: "🛡️ Kurtki i Zbroje (Złote)",    top: 28, width: 45, height: 33, scaleX: 0.96, scaleY: 0.98 },
   jeans:       { label: "👖 Jeansy (Brązowa - 1:1)",     top: 0,  width: 100, height: 100, scaleX: 1.00, scaleY: 1.00 },
   silverPants: { label: "👖 Długie spodnie (Srebrna)",   top: 49, width: 54, height: 42, scaleX: 1.00, scaleY: 1.00 },
-  shorts:      { label: "🩳 Krótkie spodenki (Brąz/Sreb)",top: 51, width: 42, height: 27, scaleX: 0.95, scaleY: 1.00 },
-  goldShorts:  { label: "🩳 Spodenki piłkarskie (Złote)",top: 49, width: 50, height: 31, scaleX: 1.00, scaleY: 1.00 },
-  goldPants:   { label: "🥾 Spodnie z butami (Złote)",   top: 48, width: 56, height: 50, scaleX: 1.00, scaleY: 1.00 }
+  shorts:      { label: "🩳 Krótkie spodenki",           top: 51, width: 42, height: 27, scaleX: 0.95, scaleY: 1.00 },
+  goldShorts:  { label: "🩳 Spodenki piłkarskie",        top: 49, width: 50, height: 31, scaleX: 1.00, scaleY: 1.00 },
+  goldPants:   { label: "🥾 Spodnie z butami",           top: 48, width: 56, height: 50, scaleX: 1.00, scaleY: 1.00 }
 };
 
 window._calibOpen = false;
@@ -701,6 +703,7 @@ function startKidVoiceTour() {
 function classifyHeadItem(src) {
   if (!src) return "none";
   const fn = src.split("/").pop().toLowerCase();
+  if (fn === "helmet_firefighter.png" || fn === "helmet_electrician.png") return "openHelmet";
   if (fn.startsWith("helmet_") || fn.startsWith("mask_") || fn.includes("hot-dog")) return "helmet";
   if (src.includes("/zlota/")) return "goldCap";
   return "cap";
@@ -717,7 +720,10 @@ function classifyLegsItem(src) {
   if (fn.startsWith("jeans_")) return "jeans";
   if (fn === "pants_barcelona.png" || fn === "pants_poland.png") return "goldShorts";
   if (fn.startsWith("short_") || fn.startsWith("shorts_")) return "shorts";
-  if (fn === "pants_paramedic.png" || fn === "pants_police.png") return "silverPants";
+  
+  // Przenosimy Spodnie Strażaka, Ratownika i Policjanta do grupy "Srebrnej" (bez butów awatara!)
+  if (fn === "pants_paramedic.png" || fn === "pants_police.png" || fn === "pants_firefighter.png") return "silverPants";
+  
   if (src.includes("/zlota/")) return "goldPants";
   return "silverPants";
 }
@@ -738,13 +744,13 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   let showBaseBoy = true;
 
   if (headType === "helmet") {
-    if (headImg && (headImg.includes("firefighter") || headImg.includes("electrician") || headImg.includes("soldier"))) {
-      baseClip = "inset(15% 0% 0% 0%)";
-    } else if (headImg && !(headImg.includes("hot-dog"))) {
-      baseClip = "inset(28% 0% 0% 0%)";
+    if (headImg && !(headImg.includes("hot-dog"))) {
+      baseClip = "inset(28% 0% 0% 0%)"; // Pełna maska chowa całą głowę
     }
+  } else if (headType === "openHelmet") {
+    baseClip = "inset(15% 0% 0% 0%)"; // Otwarty hełm zostawia twarz Huberta/Igora
   } else if (headType === "cap" || headType === "goldCap") {
-    baseClip = "inset(12% 0% 0% 0%)";
+    baseClip = "inset(12% 0% 0% 0%)"; // Zwykła czapka tylko lekko przycina czubek włosów
   }
 
   let petHtml = "";
@@ -1009,8 +1015,9 @@ function renderBadges() {
   const filtered = state.selectedBadgeCat === "all" ? allAch : allAch.filter(a => a.cat === state.selectedBadgeCat);
   grid.innerHTML = filtered.map(a => {
     const owns = p.badges.includes(a.id);
-    if (owns) return `<div class="bg-gradient-to-br from-amber-100 to-yellow-50 rounded-2xl p-3 border-2 border-amber-400 shadow-sm flex items-center gap-3"><div class="text-4xl drop-shadow-md float-anim">${a.icon}</div><div><div class="font-extrabold text-amber-900 text-sm leading-tight">${a.name}</div><div class="text-[10px] text-amber-700 mt-0.5 leading-tight">${a.desc}</div></div></div>`;
-    return `<div class="bg-slate-100 rounded-2xl p-3 border-2 border-dashed border-slate-300 opacity-70 flex items-center gap-3"><div class="text-3xl grayscale opacity-50">🔒</div><div><div class="font-bold text-slate-600 text-sm leading-tight">${a.name}</div><div class="text-[10px] text-slate-500 mt-0.5 leading-tight">Postęp: ${a.progress(p)}</div></div></div>`;
+    if (owns) return `<div onclick="speakSequence([{lang:'pl', text:'Odznaka zdobyta! ${a.name}. ${a.desc}'}])" class="cursor-pointer hover:scale-105 transition-transform bg-gradient-to-br from-amber-100 to-yellow-50 rounded-2xl p-3 border-2 border-amber-400 shadow-sm flex items-center gap-3"><div class="text-4xl drop-shadow-md float-anim">${a.icon}</div><div><div class="font-extrabold text-amber-900 text-sm leading-tight">${a.name}</div><div class="text-[10px] text-amber-700 mt-0.5 leading-tight">${a.desc}</div></div></div>`;
+    
+    return `<div onclick="speakSequence([{lang:'pl', text:'Zablokowana odznaka. Co musisz zrobić? ${a.desc}'}])" class="cursor-pointer hover:scale-105 transition-transform bg-slate-100 rounded-2xl p-3 border-2 border-dashed border-slate-300 opacity-70 flex items-center gap-3"><div class="text-3xl grayscale opacity-50">🔒</div><div><div class="font-bold text-slate-600 text-sm leading-tight">${a.name}</div><div class="text-[10px] text-slate-500 mt-0.5 leading-tight">Postęp: ${a.progress(p)}</div></div></div>`;
   }).join("");
 }
 

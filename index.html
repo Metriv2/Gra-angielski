@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Akademia Angielskiego: Igor i Hubert - Wersja 10.1</title>
+  <title>Akademia Angielskiego: Igor i Hubert - Wersja 10.2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -477,6 +477,7 @@ window._calibOpen = false;
 window._calibActiveType = "shirt";
 
 function getAvatarCalibration() {
+  if (state && state.calibration) return state.calibration;
   try {
     const saved = localStorage.getItem("akademia_avatar_calib_v4");
     if (saved) {
@@ -492,7 +493,9 @@ function getAvatarCalibration() {
 }
 
 function saveAvatarCalibration(cal) {
+  state.calibration = cal;
   try { localStorage.setItem("akademia_avatar_calib_v4", JSON.stringify(cal)); } catch (e) {}
+  saveCloudData();
 }
 
 const PARENT_PIN = "0608";
@@ -562,6 +565,7 @@ let state = {
   duelScores: { igor: 0, hubert: 0 }, duelTurn: "igor", duelReadyWaiting: false,
   selectedStickerCat: "all", selectedBadgeCat: "all", selectedWardrobeTier: "all", rewardQueue: [],
   lessons: JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE)),
+  calibration: JSON.parse(JSON.stringify(DEFAULT_AVATAR_CALIBRATION)),
   stats: { igor: createDefaultPlayerStats(), hubert: createDefaultPlayerStats(), stickers: [] },
   memoryGameCards: [], memoryFlippedIndexes: [], memoryMatchedPairs: 0
 };
@@ -579,6 +583,9 @@ function loadCloudData() {
         state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
         if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
       }
+      if (parsed.calibration) {
+        state.calibration = { ...DEFAULT_AVATAR_CALIBRATION, ...parsed.calibration };
+      }
     }
   } catch (e) {}
 
@@ -590,6 +597,13 @@ function loadCloudData() {
         state.stats.igor = ensurePlayerStructure({ ...state.stats.igor, ...pStats.igor });
         state.stats.hubert = ensurePlayerStructure({ ...state.stats.hubert, ...pStats.hubert });
         if (pStats.stickers) state.stats.stickers = pStats.stickers;
+      }
+      if (data.calibration) {
+        try {
+          const cal = typeof data.calibration === "string" ? JSON.parse(data.calibration) : data.calibration;
+          state.calibration = { ...DEFAULT_AVATAR_CALIBRATION, ...cal };
+          localStorage.setItem("akademia_avatar_calib_v4", JSON.stringify(state.calibration));
+        } catch (err) {}
       }
       if (data.lessons) {
         const custom = JSON.parse(data.lessons);
@@ -612,7 +626,9 @@ function loadCloudData() {
 function saveCloudData() {
   try {
     localStorage.setItem("akademia_save_v10", JSON.stringify({
-      stats: state.stats, questionsPerRound: state.questionsPerRound
+      stats: state.stats,
+      questionsPerRound: state.questionsPerRound,
+      calibration: state.calibration
     }));
   } catch (e) {}
 
@@ -621,6 +637,7 @@ function saveCloudData() {
     action: "save",
     data: {
       stats: state.stats,
+      calibration: state.calibration,
       lessons: state.lessons.filter(l => !baseIds.includes(l.id)),
       questionsPerRound: state.questionsPerRound
     }
@@ -690,7 +707,7 @@ function speakSequence(segments, onComplete = null) {
     }
     const seg = segments[idx++];
     if (seg.onStart) seg.onStart();
-    const utter = new SpeechSynthesisUtterance(seg.text.toLowerCase()); // Wymuszenie małych liter do TTS
+    const utter = new SpeechSynthesisUtterance(seg.text.toLowerCase());
     window._activeUtterance = utter;
     if (seg.lang === "en") {
       utter.lang = "en-GB";
@@ -755,10 +772,7 @@ function classifyLegsItem(src) {
   if (fn.startsWith("jeans_")) return "jeans";
   if (fn === "pants_barcelona.png" || fn === "pants_poland.png") return "goldShorts";
   if (fn.startsWith("short_") || fn.startsWith("shorts_")) return "shorts";
-  
-  // Przenosimy Spodnie Strażaka, Ratownika i Policjanta do grupy "Srebrnej" (bez butów awatara!)
   if (fn === "pants_paramedic.png" || fn === "pants_police.png" || fn === "pants_firefighter.png") return "silverPants";
-  
   if (src.includes("/zlota/")) return "goldPants";
   return "silverPants";
 }
@@ -780,12 +794,12 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 
   if (headType === "helmet") {
     if (headImg && !(headImg.includes("hot-dog"))) {
-      baseClip = "inset(28% 0% 0% 0%)"; // Pełna maska chowa całą głowę
+      baseClip = "inset(28% 0% 0% 0%)";
     }
   } else if (headType === "openHelmet") {
-    baseClip = "inset(15% 0% 0% 0%)"; // Otwarty hełm zostawia twarz Huberta/Igora
+    baseClip = "inset(15% 0% 0% 0%)";
   } else if (headType === "cap" || headType === "goldCap") {
-    baseClip = "inset(12% 0% 0% 0%)"; // Zwykła czapka tylko lekko przycina czubek włosów
+    baseClip = "inset(12% 0% 0% 0%)";
   }
 
   let petHtml = "";
@@ -1741,6 +1755,7 @@ function renderEndRoundScreen() {
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 5 z 6 ======================== -->
+  
 <!-- ======================= POCZĄTEK CZĘŚCI 6 z 6 ======================= -->
 <script>
 /* ============================================================================
@@ -1758,13 +1773,11 @@ function startMemoryGame() {
   const isHubert = state.profile === "hubert";
   const numPairs = isHubert ? 8 : 6;
   
-  // Pobieramy absolutnie wszystkie słówka ze wszystkich lekcji (oprócz samego Memory)
   let pool = [];
   state.lessons.forEach(l => {
     if (l.type === "vocab" && l.id !== "memory_game") l.items.forEach(it => pool.push(it));
   });
   
-  // Losujemy dokładnie wymaganą liczbę unikalnych obrazków do gry
   pool = shuffleArray(pool).slice(0, numPairs);
   let cards = [];
   
@@ -1850,8 +1863,6 @@ function flipMemoryCard(idx) {
 function renderMicGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const isHubert = state.profile === "hubert" || (state.profile === "duel" && state.duelTurn === "hubert");
-  
-  // Utrudnienie dla Huberta: co drugie pytanie (nieparzyste) to wyzwanie z tłumaczeniem!
   const isTranslation = isHubert && (state.roundIndex % 2 === 1);
   window._micTranslationMode = isTranslation;
 
@@ -2252,7 +2263,7 @@ function openParentDashboard() {
   const lenBox = document.getElementById("roundLengthButtons");
   if (lenBox) {
     lenBox.innerHTML = [5, 8, 10, 15, 20].map(v => `
-      <button onclick="state.questionsPerRound=${v}; saveCloudData(); openParentDashboard();" class="px-3 py-1.5 rounded-xl text-xs font-bold border-2 ${state.questionsPerRound === v ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white text-slate-700 border-slate-300'}">${v}</button>
+      <button onclick="parentSetQuestionsPerRound(${v})" class="px-3 py-1.5 rounded-xl text-xs font-bold border-2 ${state.questionsPerRound === v ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white text-slate-700 border-slate-300'}">${v}</button>
     `).join("");
   }
 }
@@ -2268,6 +2279,14 @@ function showParentMsg(txt, isErr = false) {
   setTimeout(() => m.classList.add("hidden"), 3500);
 }
 
+function parentSetQuestionsPerRound(v) {
+  if (!confirm(`Czy na pewno zmienić liczbę pytań w rundzie na ${v}?`)) return;
+  state.questionsPerRound = v;
+  saveCloudData();
+  openParentDashboard();
+  showParentMsg(`✓ Ustawiono liczbę pytań w rundzie na: ${v}`);
+}
+
 function parentAddSingleWord() {
   const lid = document.getElementById("parentSelectLesson").value;
   const en = document.getElementById("parentWordEn").value.trim();
@@ -2280,9 +2299,11 @@ function parentAddSingleWord() {
   const lesson = state.lessons.find(l => l.id === lid);
   if (!lesson) return;
 
+  if (!confirm(`Czy na pewno dodać nowe słówko "${en}" (${pl}) do lekcji "${lesson.title}"?`)) return;
+
   lesson.items.push({ en, pl, phonetic: ph, icon: ic || "📝", age: age.includes(",") ? [4, 6] : [parseInt(age)] });
   saveCloudData();
-  showParentMsg(`Dodano: "${en}" do lekcji ${lesson.title}`);
+  showParentMsg(`✓ Pomyślnie dodano: "${en}" do lekcji "${lesson.title}"!`);
   document.getElementById("parentWordEn").value = ""; document.getElementById("parentWordPl").value = "";
   document.getElementById("parentWordPhonetic").value = ""; document.getElementById("parentWordIcon").value = "";
 }
@@ -2302,10 +2323,12 @@ function parentCreateNewLesson() {
 
   if (items.length === 0) return showParentMsg("Nie rozpoznałem słówek. Użyj formatu: En - Pl - Ikona", true);
 
+  if (!confirm(`Czy na pewno utworzyć nową lekcję "${t}" z ${items.length} słówkami?`)) return;
+
   const nid = "custom_" + Date.now();
   state.lessons.push({ id: nid, title: t, subtitle: "Nowa lekcja (Rodzic)", icon: ic || "📚", color: "from-sky-400 to-indigo-500", borderColor: "border-sky-400", type: "vocab", items });
   saveCloudData();
-  showParentMsg(`Utworzono lekcję "${t}" z ${items.length} słówkami!`);
+  showParentMsg(`✓ Utworzono lekcję "${t}" z ${items.length} słówkami!`);
   document.getElementById("newLessonTitle").value = ""; document.getElementById("newLessonIcon").value = ""; document.getElementById("newLessonLines").value = "";
 }
 
@@ -2315,6 +2338,8 @@ function parentScanWorksheetAI(input) {
   if (!key) return showParentMsg("Wpisz klucz API Gemini, aby użyć skanera!", true);
 
   const age = document.getElementById("parentAiTargetAge").value;
+  if (!confirm("Czy na pewno przesłać zdjęcie do analizy przez Gemini AI?")) { input.value = ""; return; }
+
   showParentMsg("Wysyłam do Gemini AI... To zajmie ok. 5-10 sekund.", false);
 
   const file = input.files[0];
@@ -2333,7 +2358,7 @@ function parentScanWorksheetAI(input) {
       document.getElementById("newLessonLines").value = raw.trim();
       const title = document.getElementById("newLessonTitle");
       if (!title.value) title.value = "Lekcja z karty (" + new Date().toLocaleDateString() + ")";
-      showParentMsg("Udało się! Sprawdź słówka poniżej i kliknij Utwórz Lekcję.");
+      showParentMsg("✓ Sukces! Słówka zostały rozpoznane i wstawione do pola.");
     } catch (err) {
       showParentMsg("Błąd połączenia z AI. Sprawdź klucz i internet.", true);
     }
@@ -2342,31 +2367,46 @@ function parentScanWorksheetAI(input) {
 }
 
 function parentGiveTestChest(profKey, tier) {
+  const kidName = profKey === "hubert" ? "Huberta" : "Igora";
+  const tierName = tier === "gold" ? "Złotą" : tier === "silver" ? "Srebrną" : "Brązową";
+  if (!confirm(`Czy na pewno przyznać ${tierName} skrzynię dla gracza: ${kidName}?`)) return;
   closeParentDashboard();
   renderChestOpeningInsidePopup(profKey, tier, `🛠️ Testowa Skrzynia (${tier})`);
+  showParentMsg(`✓ Przyznano skrzynię (${tierName}) dla: ${kidName}!`);
 }
+
 function unlockAllOutfitsForTesting() {
+  if (!confirm("Czy na pewno odblokować wszystkie 131 przebrań i 50 zwierzaków u obu chłopców?")) return;
   ["igor", "hubert"].forEach(p => {
     state.stats[p] = ensurePlayerStructure(state.stats[p]);
     const all = getAll131OutfitsFlat().map(o => o.src);
     state.stats[p].unlockedItems = all;
     state.stats[p].memoryAnimals = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(a => a.id);
   });
-  saveCloudData(); showParentMsg("Odblokowano 131 przebrań i wszystkie zwierzaki u obu graczy!");
+  saveCloudData();
+  showParentMsg("✓ Odblokowano 131 przebrań i 50 zwierzaków u obu graczy!");
 }
+
 function lockAllOutfitsAfterTesting() {
+  if (!confirm("Czy na pewno zablokować ubrania i przywrócić tylko początkowe stroje?")) return;
   ["igor", "hubert"].forEach(p => {
     state.stats[p] = ensurePlayerStructure(state.stats[p]);
     state.stats[p].unlockedItems = ["grafiki/cap_red.png", "grafiki/shirt_blue.png", "grafiki/jeans_blue.png"];
     state.stats[p].memoryAnimals = ["p_dog", "p_cat", "p_rabbit", "p_fox"];
     state.stats[p].avatar = { head: "grafiki/cap_red.png", torso: "grafiki/shirt_blue.png", legs: "grafiki/jeans_blue.png", pet: "" };
   });
-  saveCloudData(); showParentMsg("Zablokowano (Reset do startowych).");
+  saveCloudData();
+  showParentMsg("✓ Zablokowano ubrania i przywrócono stan początkowy.");
 }
+
 function resetEverythingAll() {
-  if (confirm("Czy na pewno usunąć WSZYSTKIE postępy obu chłopców? Nie ma powrotu!")) {
-    state.stats = { igor: createDefaultPlayerStats(), hubert: createDefaultPlayerStats(), stickers: [] };
-    saveCloudData(); location.reload();
+  if (confirm("⚠️ OSTRZEŻENIE: Czy na pewno usunąć WSZYSTKIE postępy, gwiazdki, puchary i naklejki obu chłopców?")) {
+    if (confirm("Czy jesteś w 100% pewien? Tej operacji nie można cofnąć!")) {
+      state.stats = { igor: createDefaultPlayerStats(), hubert: createDefaultPlayerStats(), stickers: [] };
+      saveCloudData();
+      alert("✓ Gra została zresetowana.");
+      location.reload();
+    }
   }
 }
 

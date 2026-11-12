@@ -1,11 +1,10 @@
 <!-- ======================= POCZĄTEK CZĘŚCI 1 z 6 ======================= -->
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Akademia Angielskiego: Igor i Hubert - Wersja 10.2</title>
+  <title>Akademia Angielskiego: Igor i Hubert - Wersja 11.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -70,8 +69,8 @@
         <button onclick="showStartScreen()" class="kid-card flex items-center gap-1.5 px-3.5 py-2 rounded-2xl font-bold text-xs md:text-sm bg-slate-100 hover:bg-slate-200 text-slate-800 border-2 border-slate-300 shadow-sm">
           <span>👤</span> Zmień profil
         </button>
-        <div id="activeProfileBadge" class="px-3.5 py-1.5 rounded-2xl font-bold text-xs md:text-sm bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-center gap-2 shadow-sm"></div>
-        <span class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 10.2</span>
+        <div id="activeProfileBadge" onclick="speakAvatarGreeting()" class="cursor-pointer kid-card px-3.5 py-1.5 rounded-2xl font-bold text-xs md:text-sm bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-center gap-2 shadow-sm" title="Kliknij awatara!"></div>
+        <span class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 11.0</span>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
@@ -108,7 +107,7 @@
   <div id="stickersModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
     <div class="bg-white rounded-3xl max-w-4xl w-full p-5 md:p-6 border-4 border-pink-400 shadow-2xl text-center max-h-[92vh] flex flex-col">
       <div class="flex justify-between items-center pb-3 border-b border-pink-100 mb-3">
-        <h2 class="text-2xl md:text-3xl font-extrabold text-pink-600 flex items-center gap-2"><span>🎁</span> Klaser Naklejek (<span id="stickerModalTotal">0</span>/60)</h2>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-pink-600 flex items-center gap-2"><span>🎁</span> Klaser Naklejek (<span id="stickerModalTotal">0</span>/100)</h2>
         <button onclick="closeStickersModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-600">✖</button>
       </div>
       <div id="stickerCategoryTabs" class="flex flex-wrap justify-center gap-1.5 mb-3"></div>
@@ -137,7 +136,7 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 p-1 overflow-hidden">
         <div class="bg-gradient-to-b from-sky-100 via-indigo-50 to-amber-50 rounded-3xl border-3 border-indigo-200 p-4 flex flex-col items-center h-full shadow-inner overflow-y-auto">
-          <div class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-white text-indigo-800 border border-indigo-200 mb-2">Wygląd awatara</div>
+          <div class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-white text-indigo-800 border border-indigo-200 mb-2">Wygląd awatara (kliknij mnie!)</div>
           <div id="avatarPreviewBox" class="flex flex-col items-center justify-center my-1 w-full"></div>
         </div>
         <div id="avatarItemsContainer" class="md:col-span-2 space-y-3 text-left overflow-y-auto pr-1"></div>
@@ -154,10 +153,10 @@
   <div id="guideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-3xl max-w-4xl w-full p-6 border-4 border-sky-400 shadow-2xl text-left max-h-[92vh] overflow-y-auto">
       <div class="flex justify-between items-center pb-3 border-b mb-4">
-        <h2 class="text-2xl font-extrabold text-sky-900">📘 Instrukcja Gry</h2>
+        <h2 class="text-2xl font-extrabold text-sky-900">📘 Instrukcja Gry (Wersja 11.0)</h2>
         <button onclick="closeGuideModal()" class="text-2xl bg-slate-100 w-10 h-10 rounded-full font-bold">✖</button>
       </div>
-      <div class="text-sm space-y-3 text-slate-700">Wszystkie moduły posiadają własną instrukcję głosową. Używaj przycisku "Posłuchaj Sówki".</div>
+      <div class="text-sm space-y-3 text-slate-700">Wszystkie moduły posiadają własną instrukcję głosową. Używaj przycisku "Posłuchaj Sówki". Kliknij swojego awatara, aby usłyszeć opis stroju i zwierzaka po angielsku!</div>
     </div>
   </div>
 
@@ -221,7 +220,17 @@
         <button onclick="document.getElementById('parentWorksheetFileInput').click()" class="kid-card px-5 py-2.5 bg-amber-500 text-white font-bold rounded-xl text-sm">Wybierz / Zrób zdjęcie</button>
       </div>
 
-      <!-- Sekcja 4 i 5: Opcje systemowe i testy skrzyń -->
+      <!-- Sekcja 4: Kopia Zapasowa JSON -->
+      <div class="mb-5 p-4 rounded-3xl bg-indigo-50/90 border-2 border-indigo-300 shadow-sm">
+        <h3 class="font-extrabold text-indigo-950 text-base mb-2">💾 Kopia Zapasowa Postępów (JSON)</h3>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="parentExportBackupJson()" class="kid-card px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs">⬇️ Pobierz kopię zapasową (.json)</button>
+          <input id="parentBackupFileInput" type="file" accept=".json,application/json" onchange="parentImportBackupJson(this)" class="hidden" />
+          <button onclick="document.getElementById('parentBackupFileInput').click()" class="kid-card px-4 py-2.5 bg-white text-indigo-900 border-2 border-indigo-400 font-bold rounded-xl text-xs">⬆️ Wczytaj kopię z pliku (.json)</button>
+        </div>
+      </div>
+
+      <!-- Sekcja 5: Opcje systemowe i testy skrzyń -->
       <div class="p-4 rounded-3xl bg-rose-50/90 border-2 border-rose-300 shadow-sm">
         <h3 class="font-extrabold text-rose-950 text-base mb-2">⚙️ Ustawienia i Testy</h3>
         <div class="mb-3">
@@ -254,10 +263,10 @@
   </div>
 <!-- ======================== KONIEC CZĘŚCI 1 z 6 ======================== -->
 
-<!-- ======================= POCZĄTEK CZĘŚCI 2 z 6 ======================= -->
+  <!-- ======================= POCZĄTEK CZĘŚCI 2 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 2 z 6: BAZA NAKLEJEK, UBRAŃ, ZWIERZĄT MEMORY I ZAKTUALIZOWANA BAZA LEKCJI
+   CZĘŚĆ 2 z 6: BAZA NAKLEJEK, UBRAŃ, ZWIERZĄT I LEKCJI (WERSJA 11)
    ============================================================================ */
 
 const STICKER_CATEGORIES = [
@@ -300,7 +309,7 @@ const OUTFITS_DB = {
   },
   silver: {
     head: ["cap_bastetball.png", "cap_batman.png", "cap_captain.png", "cap_cat.png", "cap_handball.png", "cap_pigeon.png", "cap_pikachu.png", "cap_pokeball.png", "cap_poop.png", "cap_pterodactyl.png", "cap_soccer.png", "cap_superman.png", "cap_T-Rex.png", "cap_volleyball.png"],
-    torso: ["shirt_basktetball.png", "shirt_batman.png", "shirt_captain.png", "shirt_cat.png", "shirt_handball.png", "Shirt_pigeon.png", "shirt_pikachu.png", "shirt_pobeball.png", "shirt_poop.png", "shirt_pterodactyl.png", "shirt_soccer.png", "shirt_superman.png", "Shirt_T-Rex.png", "shirt_volleyball.png"],
+    torso: ["shirt_basktetball.png", "shirt_batman.png", "shirt_captain.png", "shirt_cat.png", "shirt_handball.png", "shirt_pigeon.png", "shirt_pikachu.png", "shirt_pobeball.png", "shirt_poop.png", "shirt_pterodactyl.png", "shirt_soccer.png", "shirt_superman.png", "shirt_T-Rex.png", "shirt_volleyball.png"],
     legs: ["pants_basketball.png", "pants_batman.png", "pants_captain.png", "pants_cat.png", "pants_handball.png", "pants_pigeon.png", "pants_pikachu.png", "pants_pokeball.png", "pants_poop.png", "pants_pterodactyl.png", "pants_soccer.png", "pants_superman.png", "pants_volleyball.png", "pants-T-Rex.png", "shorts_basketball.png", "shorts_batman.png", "shorts_captain.png", "shorts_cat.png", "shorts_handball.png", "shorts_pigeon.png", "shorts_pikachu.png", "shorts_pokeball.png", "shorts_poop.png", "shorts_pterodactyl.png", "shorts_soccer.png", "shorts_superman.png", "shorts_T-Rex.png", "shorts_volleyball.png"]
   },
   gold: {
@@ -401,7 +410,7 @@ const FULL_LESSONS_DATABASE = [
     items: [
       { en: "Red", pl: "Czerwony", phonetic: "red", icon: "🔴", age: [4,6] },
       { en: "Blue", pl: "Niebieski", phonetic: "blu", icon: "🔵", age: [4,6] },
-      { en: "Green", pl: "Zielony", phonetic: "grin", icon: "🟢", age: [4,6] },
+      { en: "Green", pl: "Zielony", phonetic: "grin", icon: "🟢", iconText: "", age: [4,6] },
       { en: "Yellow", pl: "Żółty", phonetic: "jeloł", icon: "🟡", age: [4,6] },
       { en: "Orange", pl: "Pomarańczowy", phonetic: "orindż", icon: "🟠", age: [4,6] },
       { en: "Purple", pl: "Fioletowy", phonetic: "perpl", icon: "🟣", age: [4,6] },
@@ -457,7 +466,7 @@ const FULL_LESSONS_DATABASE = [
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CHMURA, AUDIO, LEKTOR I MECHANIKA AWATARA
+   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CHMURA, AUDIO, LEKTOR I AWATAR (WERSJA 11)
    ============================================================================ */
 
 const PROFILE_META = {
@@ -473,9 +482,7 @@ function getPlayerAge(profKey) {
   const [y, m, d] = meta.birthDate.split("-").map(Number);
   let age = today.getFullYear() - y;
   const mDiff = (today.getMonth() + 1) - m;
-  if (mDiff < 0 || (mDiff === 0 && today.getDate() < d)) {
-    age--;
-  }
+  if (mDiff < 0 || (mDiff === 0 && today.getDate() < d)) age--;
   return age;
 }
 
@@ -507,6 +514,42 @@ function checkAndAwardBirthdayChest(profKey) {
     }, 550);
   }
 }
+
+// Automatyczne rozszerzenie lekcji 7 (Cyfry): 1-20 dla Igora (4 l.) i Huberta (6 l.), 30-100 dla Huberta
+function upgradeNumbersLessonForIgor(lessonsArr) {
+  const numLesson = (lessonsArr || []).find(l => l.id === "numbers");
+  if (!numLesson) return;
+  const baseNumbers1to20 = [
+    { en: "One", pl: "Jeden", phonetic: "łan", icon: "1️⃣", age: [4,6] },
+    { en: "Two", pl: "Dwa", phonetic: "tu", icon: "2️⃣", age: [4,6] },
+    { en: "Three", pl: "Trzy", phonetic: "fri", icon: "3️⃣", age: [4,6] },
+    { en: "Four", pl: "Cztery", phonetic: "for", icon: "4️⃣", age: [4,6] },
+    { en: "Five", pl: "Pięć", phonetic: "fajw", icon: "5️⃣", age: [4,6] },
+    { en: "Six", pl: "Sześć", phonetic: "siks", icon: "6️⃣", age: [4,6] },
+    { en: "Seven", pl: "Siedem", phonetic: "sewen", icon: "7️⃣", age: [4,6] },
+    { en: "Eight", pl: "Osiem", phonetic: "ejt", icon: "8️⃣", age: [4,6] },
+    { en: "Nine", pl: "Dziewięć", phonetic: "najn", icon: "9️⃣", age: [4,6] },
+    { en: "Ten", pl: "Dziesięć", phonetic: "ten", icon: "🔟", age: [4,6] },
+    { en: "Eleven", pl: "Jedenaście", phonetic: "ilewen", icon: "1️⃣1️⃣", age: [4,6] },
+    { en: "Twelve", pl: "Dwanaście", phonetic: "tłelw", icon: "1️⃣2️⃣", age: [4,6] },
+    { en: "Thirteen", pl: "Trzynaście", phonetic: "fertin", icon: "1️⃣3️⃣", age: [4,6] },
+    { en: "Fourteen", pl: "Czternaście", phonetic: "fortin", icon: "1️⃣4️⃣", age: [4,6] },
+    { en: "Fifteen", pl: "Piętnaście", phonetic: "fiftin", icon: "1️⃣5️⃣", age: [4,6] },
+    { en: "Sixteen", pl: "Szesnaście", phonetic: "sikstin", icon: "1️⃣6️⃣", age: [4,6] },
+    { en: "Seventeen", pl: "Siedemnaście", phonetic: "sewentin", icon: "1️⃣7️⃣", age: [4,6] },
+    { en: "Eighteen", pl: "Osiemnaście", phonetic: "ejtin", icon: "1️⃣8️⃣", age: [4,6] },
+    { en: "Nineteen", pl: "Dziewiętnaście", phonetic: "najntin", icon: "1️⃣9️⃣", age: [4,6] },
+    { en: "Twenty", pl: "Dwadzieścia", phonetic: "tłenti", icon: "2️⃣0️⃣", age: [4,6] },
+    { en: "Thirty", pl: "Trzydzieści", phonetic: "ferti", icon: "3️⃣0️⃣", age: [6] },
+    { en: "Forty", pl: "Czterdzieści", phonetic: "forti", icon: "4️⃣0️⃣", age: [6] },
+    { en: "Fifty", pl: "Pięćdziesiąt", phonetic: "fifti", icon: "5️⃣0️⃣", age: [6] },
+    { en: "One hundred", pl: "Sto", phonetic: "łan handred", icon: "💯", age: [6] }
+  ];
+  const knownEn = new Set(baseNumbers1to20.map(x => x.en.toLowerCase()));
+  const customAdded = (numLesson.items || []).filter(it => !knownEn.has(it.en.toLowerCase()));
+  numLesson.items = [...baseNumbers1to20, ...customAdded];
+}
+upgradeNumbersLessonForIgor(FULL_LESSONS_DATABASE);
 
 const DEFAULT_AVATAR_CALIBRATION = {
   cap:         { label: "🧢 Czapki (Brązowa i Srebrna)", top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
@@ -559,8 +602,7 @@ function createDefaultPlayerStats() {
     stars: 0, cups: 0, perfectRounds: 0, examsDone: 0, duelsWon: 0, streakDays: 0, lastPlayDate: "", micCount: 0,
     lastBirthdayRewardYear: 0, nakedStartMigrated: true,
     badges: [], avatar: { head: "", torso: "", legs: "", pet: "" },
-    unlockedItems: [],
-    memoryAnimals: [],
+    unlockedItems: [], memoryAnimals: [], hardWords: [],
     lessonCounts: {}, equipped: {}
   };
 }
@@ -571,6 +613,8 @@ function resolveOutfitPath(pathOrId) {
     red_cap: "grafiki/cap_red.png",
     hero_shirt: "grafiki/shirt_blue.png",
     "grafiki/Shirt_blue.png": "grafiki/shirt_blue.png",
+    "grafiki/srebrna/Shirt_pigeon.png": "grafiki/srebrna/shirt_pigeon.png",
+    "grafiki/srebrna/Shirt_T-Rex.png": "grafiki/srebrna/shirt_T-Rex.png",
     jeans: "grafiki/jeans_blue.png",
     space_helmet: "grafiki/zlota/helmet_astronaut.png"
   };
@@ -610,6 +654,7 @@ function ensurePlayerStructure(p) {
     badges: Array.isArray(p.badges) ? p.badges : [],
     unlockedItems: Array.from(new Set(rawUnlocked)),
     memoryAnimals: Array.from(new Set(rawAnimals)),
+    hardWords: Array.isArray(p.hardWords) ? p.hardWords : [],
     avatar: {
       head: rawAvatar.head ? resolveOutfitPath(rawAvatar.head) : "",
       torso: rawAvatar.torso ? resolveOutfitPath(rawAvatar.torso) : "",
@@ -622,10 +667,11 @@ function ensurePlayerStructure(p) {
 
 let state = {
   profile: null, turtleMode: false, questionsPerRound: 8, currentLessonId: null, currentSubMode: "listen_pick",
-  isExamMode: false, roundIndex: 0, roundQuestions: [], roundResults: [], currentQuestionMistakes: 0,
+  isExamMode: false, isHardWordsMode: false, roundIndex: 0, roundQuestions: [], roundResults: [], currentQuestionMistakes: 0,
   roundScore: 0, roundMistakes: 0, answeredCurrent: false, flashcardIndex: 0, shopCart: [], riddleHintShown: false,
   duelScores: { igor: 0, hubert: 0 }, duelTurn: "igor", duelReadyWaiting: false,
   selectedStickerCat: "all", selectedBadgeCat: "all", selectedWardrobeTier: "all", rewardQueue: [],
+  featuresPublishedForKids: false,
   lessons: JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE)),
   calibration: JSON.parse(JSON.stringify(DEFAULT_AVATAR_CALIBRATION)),
   stats: {
@@ -636,6 +682,10 @@ let state = {
   },
   memoryGameCards: [], memoryFlippedIndexes: [], memoryMatchedPairs: 0
 };
+
+function areNewFeaturesActive() {
+  return state.profile === "tata" || Boolean(state.featuresPublishedForKids);
+}
 
 // ------------------------------------------------------------------------
 // KOMUNIKACJA Z CHMURĄ (ZAPIS / ODCZYT)
@@ -650,6 +700,9 @@ function loadCloudData() {
         state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
         state.stats.tata = ensurePlayerStructure(parsed.stats.tata);
         if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
+        if (parsed.stats.featuresPublishedForKids !== undefined) {
+          state.featuresPublishedForKids = Boolean(parsed.stats.featuresPublishedForKids);
+        }
       }
       if (parsed.calibration) {
         state.calibration = { ...DEFAULT_AVATAR_CALIBRATION, ...parsed.calibration };
@@ -666,6 +719,9 @@ function loadCloudData() {
         state.stats.hubert = ensurePlayerStructure({ ...state.stats.hubert, ...pStats.hubert });
         state.stats.tata = ensurePlayerStructure({ ...state.stats.tata, ...(pStats.tata || {}) });
         if (pStats.stickers) state.stats.stickers = pStats.stickers;
+        if (pStats.featuresPublishedForKids !== undefined) {
+          state.featuresPublishedForKids = Boolean(pStats.featuresPublishedForKids);
+        }
       }
       if (data.calibration) {
         try {
@@ -687,6 +743,7 @@ function loadCloudData() {
           }
         });
       }
+      upgradeNumbersLessonForIgor(state.lessons);
       if (data.questionsPerRound) state.questionsPerRound = parseInt(data.questionsPerRound) || 8;
       if (typeof updateHeaderUI === "function") updateHeaderUI();
       if (state.profile && typeof showLessonMenu === "function") showLessonMenu(); 
@@ -694,12 +751,14 @@ function loadCloudData() {
     })
     .catch(err => {
       console.error("Błąd pobierania danych:", err);
+      upgradeNumbersLessonForIgor(state.lessons);
       if (state.profile && typeof showLessonMenu === "function") showLessonMenu(); 
       else if (typeof showStartScreen === "function") showStartScreen();
     });
 }
 
 function saveCloudData() {
+  state.stats.featuresPublishedForKids = Boolean(state.featuresPublishedForKids);
   try {
     localStorage.setItem("akademia_save_v10", JSON.stringify({
       stats: state.stats,
@@ -738,7 +797,7 @@ function updateDailyStreakForPlayer(profKey) {
 }
 
 // ------------------------------------------------------------------------
-// EFEKTY AUDIO I LEKTOR
+// EFEKTY AUDIO, INTERAKTYWNY AWATAR I LEKTOR
 // ------------------------------------------------------------------------
 function playEffect(type) {
   try {
@@ -805,6 +864,39 @@ function speakSequence(segments, onComplete = null) {
   next();
 }
 
+function speakAvatarGreeting() {
+  if (!state.profile || state.profile === "duel") return;
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  const kidName = PROFILE_META[profKey] ? PROFILE_META[profKey].name : "Bohaterze";
+  playEffect("success");
+
+  const badgeEl = document.getElementById("activeProfileBadge");
+  if (badgeEl) {
+    badgeEl.classList.add("pop-correct");
+    setTimeout(() => badgeEl.classList.remove("pop-correct"), 600);
+  }
+
+  const av = p.avatar || {};
+  const equippedCount = [av.head, av.torso, av.legs].filter(Boolean).length;
+  const segments = [];
+
+  if (equippedCount === 0) {
+    segments.push({ lang: "pl", text: `Cześć ${kidName}! Twój bohater nie ma jeszcze ubrania! Zdobywaj gwiazdki i otwieraj skrzynie!` });
+  } else {
+    segments.push({ lang: "pl", text: `Ale super strój ${kidName}!` });
+  }
+
+  if (av.pet) {
+    const petObj = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).find(a => a.id === av.pet);
+    if (petObj) {
+      segments.push({ lang: "pl", text: `Twój towarzysz to ${petObj.pl}! Po angielsku:` });
+      segments.push({ lang: "en", text: `My friend is a ${petObj.en}!` });
+    }
+  }
+  speakSequence(segments);
+}
+
 function toggleTurtle() {
   state.turtleMode = !state.turtleMode;
   const lbl = document.getElementById("turtleLabel");
@@ -852,13 +944,13 @@ function startKidVoiceTour() {
     },
     {
       lang: "pl",
-      text: "Obok świeci przycisk Naklejki! Tam zobaczysz swój klaser z naklejkami.",
+      text: "Obok świeci przycisk Naklejki! Tam zobaczysz swój klaser ze stoma naklejkami.",
       onStart: () => hl("navStickersBtn", true),
       onEnd: () => hl("navStickersBtn", false)
     },
     {
       lang: "pl",
-      text: "A teraz wchodzimy w Awatar! Tutaj możesz edytować wygląd swojego bohatera. Ze skrzyń możesz wylosować lepsze ubrania i zbroje, a na samym dole wybrać swojego zwierzaka towarzysza!",
+      text: "A teraz wchodzimy w Awatar! Tutaj możesz edytować wygląd swojego bohatera i kupować skrzynie za gwiazdki. Ze skrzyń możesz wylosować lepsze ubrania i zbroje, a na samym dole wybrać swojego zwierzaka towarzysza!",
       onStart: () => {
         hl("navAvatarBtn", true);
         if (state.profile !== "duel" && typeof openAvatarModal === "function") {
@@ -924,9 +1016,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   let showBaseBoy = true;
 
   if (headType === "helmet") {
-    if (headImg && !(headImg.includes("hot-dog"))) {
-      baseClip = "inset(28% 0% 0% 0%)";
-    }
+    if (headImg && !(headImg.includes("hot-dog"))) baseClip = "inset(28% 0% 0% 0%)";
   } else if (headType === "openHelmet") {
     baseClip = "inset(15% 0% 0% 0%)";
   } else if (headType === "cap" || headType === "goldCap") {
@@ -955,11 +1045,11 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 3 z 6 ======================== -->
-  
+
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE Z NAGRODAMI, KLASERY, GARDEROBA
+   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE, SKLEPIK GWIAZDEK I GARDEROBA (WERSJA 11)
    ============================================================================ */
 
 function getActiveProfileKey() {
@@ -1043,9 +1133,7 @@ function rollChestForAchievement(ach) {
   const tier = ach.tier || 1;
   if (tier >= 5 || ach.cat === "masters") return "gold";
   const rnd = Math.random() * 100;
-  if (tier === 4) {
-    return rnd < 65 ? "gold" : "silver";
-  }
+  if (tier === 4) return rnd < 65 ? "gold" : "silver";
   if (tier === 3) {
     if (rnd < 30) return "gold";
     if (rnd < 80) return "silver";
@@ -1082,8 +1170,37 @@ function checkAndUnlockAchievements(profKey) {
 }
 
 // ------------------------------------------------------------------------
-// SYSTEM SKRZYŃ I NAGRÓD (UBRANIA + ZWIERZAKI TOWARZYSZE)
+// SYSTEM SKRZYŃ, SKLEPIK ZA GWIAZDKI I NAGRODY GŁOSOWE
 // ------------------------------------------------------------------------
+function buyChestWithStars(tier, cost) {
+  const profKey = getActiveProfileKey();
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  state.stats[profKey] = p;
+
+  if ((p.stars || 0) < cost) {
+    playEffect("wrong");
+    const missing = cost - (p.stars || 0);
+    speakSequence([
+      { lang: "pl", text: `Masz za mało gwiazdek! Brakuje Ci jeszcze ${missing} gwiazdek. Rozwiąż więcej zadań!` }
+    ]);
+    return;
+  }
+
+  p.stars -= cost;
+  saveCloudData();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  renderAvatarItems();
+
+  const tierLabel = tier === "gold" ? "👑 Złota Skrzynia" : tier === "silver" ? "🥈 Srebrna Skrzynia" : "📦 Brązowa Skrzynia";
+  const tierSpeak = tier === "gold" ? "złotą skrzynię" : tier === "silver" ? "srebrną skrzynię" : "brązową skrzynię";
+  renderChestOpeningInsidePopup(profKey, tier, `🛒 Kupiono za ${cost} ⭐: ${tierLabel}`);
+  setTimeout(() => {
+    speakSequence([
+      { lang: "pl", text: `Super! Wymieniono ${cost} gwiazdek na ${tierSpeak}! Kliknij skrzynię, aby ją otworzyć!` }
+    ]);
+  }, 120);
+}
+
 function processNextRewardInQueue() {
   if (state.rewardQueue.length === 0) return;
   const reward = state.rewardQueue[0];
@@ -1224,6 +1341,12 @@ function closeRewardPopup() {
   if (typeof cancelAllSpeechAndTimers === "function") cancelAllSpeechAndTimers();
   const modal = document.getElementById("rewardPopupModal");
   if (modal) { modal.classList.remove("flex"); modal.classList.add("hidden"); }
+  const avModal = document.getElementById("avatarModal");
+  if (avModal && !avModal.classList.contains("hidden")) {
+    updateAvatarPreviewWithCalibrator();
+    renderAvatarItems();
+  }
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
   if (state.rewardQueue.length > 0) {
     state.rewardQueue.shift();
     if (state.rewardQueue.length > 0) setTimeout(processNextRewardInQueue, 500);
@@ -1302,7 +1425,7 @@ function renderBadges() {
 }
 
 // ------------------------------------------------------------------------
-// GARDEROBA I KALIBRACJA AWATARA
+// GARDEROBA, SKLEPIK SKRZYŃ I KALIBRACJA AWATARA
 // ------------------------------------------------------------------------
 function openAvatarModal() {
   if (!state.profile || state.profile === "duel") return;
@@ -1328,7 +1451,9 @@ function updateAvatarPreviewWithCalibrator() {
 
   box.innerHTML = `
     <div class="flex flex-col items-center w-full">
-      ${renderBoyAvatarSvg(getActiveProfileKey(), 165)}
+      <div onclick="speakAvatarGreeting()" class="cursor-pointer hover:scale-105 transition-transform" title="Kliknij bohatera!">
+        ${renderBoyAvatarSvg(getActiveProfileKey(), 165)}
+      </div>
       <button onclick="window._calibOpen=!window._calibOpen;updateAvatarPreviewWithCalibrator();" class="mt-4 px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-xs border border-indigo-300">
         🔧 ${window._calibOpen ? "Ukryj suwaki dopasowania" : "Dopasuj wymiary (Suwaki)"}
       </button>
@@ -1384,15 +1509,54 @@ function renderAvatarItems() {
   if (!container) return;
 
   const all131 = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat() : [];
-  
+  const countOwned = list => list.filter(it => p.unlockedItems.includes(it.src)).length;
+
+  const ownedAll = countOwned(all131);
+  const ownedBronze = countOwned(all131.filter(i => i.tier === "bronze"));
+  const ownedSilver = countOwned(all131.filter(i => i.tier === "silver"));
+  const ownedGold = countOwned(all131.filter(i => i.tier === "gold"));
+
   const tierTabs = [
-    { id: "all", label: "Wszystkie (131)" },
-    { id: "bronze", label: "📦 Brązowa (30)" },
-    { id: "silver", label: "🥈 Srebrna (56)" },
-    { id: "gold", label: "👑 Złota (45)" }
+    { id: "all", label: `Wszystkie (${ownedAll}/131)` },
+    { id: "bronze", label: `📦 Brązowa (${ownedBronze}/30)` },
+    { id: "silver", label: `🥈 Srebrna (${ownedSilver}/56)` },
+    { id: "gold", label: `👑 Złota (${ownedGold}/45)` }
   ];
 
+  let shopHtml = "";
+  if (typeof areNewFeaturesActive === "function" && areNewFeaturesActive()) {
+    const testBadge = (state.profile === "tata" && !state.featuresPublishedForKids)
+      ? `<span class="px-2 py-0.5 rounded-full bg-amber-300 text-amber-950 font-extrabold text-[9px] border border-amber-500">🧪 NOWOŚĆ V11 (TYLKO TATA)</span>`
+      : "";
+    shopHtml = `
+      <div class="p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-300 shadow-sm mb-3">
+        <div class="flex flex-wrap items-center justify-between gap-1 mb-2">
+          <div class="text-xs font-extrabold text-amber-950 flex items-center gap-1.5">
+            <span>🛒 Sklepik ze Skrzyniami</span>
+            ${testBadge}
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full bg-white border border-amber-400 text-amber-900 font-extrabold text-xs">Twoje Gwiazdki: ⭐ ${p.stars || 0}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="buyChestWithStars('bronze', 50)" class="kid-card py-2 px-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-extrabold text-[11px] shadow flex flex-col items-center">
+            <span class="text-lg">📦 Brązowa</span>
+            <span class="text-amber-200">Koszt: 50 ⭐</span>
+          </button>
+          <button onclick="buyChestWithStars('silver', 120)" class="kid-card py-2 px-2 rounded-xl bg-slate-500 hover:bg-slate-600 text-white font-extrabold text-[11px] shadow flex flex-col items-center">
+            <span class="text-lg">🥈 Srebrna</span>
+            <span class="text-slate-100">Koszt: 120 ⭐</span>
+          </button>
+          <button onclick="buyChestWithStars('gold', 250)" class="kid-card py-2 px-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold text-[11px] shadow flex flex-col items-center border border-amber-600">
+            <span class="text-lg">👑 Złota</span>
+            <span>Koszt: 250 ⭐</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   let html = `
+    ${shopHtml}
     <div class="flex flex-wrap gap-1.5 mb-3 pb-2 border-b border-indigo-100">
       ${tierTabs.map(t => `
         <button onclick="setWardrobeTierFilter('${t.id}')" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedWardrobeTier === t.id ? 'bg-indigo-600 text-white border-indigo-800' : 'bg-white text-slate-700 border-slate-200'}">
@@ -1412,8 +1576,9 @@ function renderAvatarItems() {
 
   categories.forEach(cat => {
     const catItems = filteredOutfits.filter(it => it.slot === cat.key);
+    const catOwned = countOwned(catItems);
     html += `<div class="mb-4">
-      <h3 class="text-sm font-extrabold text-slate-700 mb-2 border-b pb-1">${cat.title} (${catItems.length})</h3>
+      <h3 class="text-sm font-extrabold text-slate-700 mb-2 border-b pb-1">${cat.title} (${catOwned}/${catItems.length})</h3>
       <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
 
     catItems.forEach(item => {
@@ -1518,17 +1683,55 @@ function setWardrobeTierFilter(tier) {
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 4 z 6 ======================== -->
-  
+
 <!-- ======================= POCZĄTEK CZĘŚCI 5 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5 z 6: EKRAN STARTOWY, MENU LEKCJI, GŁÓWNY SILNIK RUND I QUIZY
+   CZĘŚĆ 5 z 6: EKRAN STARTOWY, MENU LEKCJI, SILNIK RUND, SKLEP I TRUDNE SŁÓWKA (WERSJA 11)
    ============================================================================ */
 
-function getVisibleLessonItems(items) {
+function getVisibleLessonItems(items, applyAgeFilter = true) {
   if (!Array.isArray(items)) return [];
-  if (state.profile === "tata") return items;
-  return items.filter(it => !it.testOnly);
+  let list = state.profile === "tata" ? [...items] : items.filter(it => !it.testOnly);
+
+  if (applyAgeFilter && typeof areNewFeaturesActive === "function" && areNewFeaturesActive()) {
+    const isIgorTurn = state.profile === "igor" || (state.profile === "duel" && state.duelTurn === "igor");
+    if (isIgorTurn) {
+      const ageFiltered = list.filter(it => !Array.isArray(it.age) || it.age.includes(4));
+      if (ageFiltered.length > 0) list = ageFiltered;
+    }
+  }
+  return list;
+}
+
+function recordHardWordForActivePlayer(q) {
+  if (!q || !q.en || state.profile === "duel") return;
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  if (!Array.isArray(p.hardWords)) p.hardWords = [];
+  if (!p.hardWords.some(w => w.en === q.en)) {
+    p.hardWords.push({
+      en: q.en,
+      pl: q.pl || "",
+      phonetic: q.phonetic || "",
+      icon: q.icon || q.animal || "⭐"
+    });
+    state.stats[profKey] = p;
+    saveCloudData();
+  }
+}
+
+function removeHardWordIfMastered(q) {
+  if (!q || !q.en || state.profile === "duel") return;
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  if (!Array.isArray(p.hardWords)) return;
+  const before = p.hardWords.length;
+  p.hardWords = p.hardWords.filter(w => w.en !== q.en);
+  if (p.hardWords.length !== before) {
+    state.stats[profKey] = p;
+    saveCloudData();
+  }
 }
 
 function updateHeaderUI() {
@@ -1578,7 +1781,7 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 10.2
+        🌟 Akademia Angielskiego • Wersja 11
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
@@ -1663,26 +1866,37 @@ function showLessonMenu() {
   if (!state.profile) { showStartScreen(); return; }
   state.currentLessonId = null;
   state.isExamMode = false;
+  state.isHardWordsMode = false;
 
   const baseVisible = state.lessons.filter(l => !l.testOnly || state.profile === "tata");
   const visibleLessons = state.profile === "duel"
     ? baseVisible.filter(l => l.type !== "mic_only" && l.type !== "memory_game")
     : baseVisible;
 
+  const pKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  const hardList = (state.stats[pKey] && Array.isArray(state.stats[pKey].hardWords)) ? state.stats[pKey].hardWords : [];
+
+  let hardWordsBtnHtml = "";
+  if (state.profile !== "duel" && typeof areNewFeaturesActive === "function" && areNewFeaturesActive() && hardList.length > 0) {
+    hardWordsBtnHtml = `
+      <button onclick="startHardWordsTraining()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-extrabold text-xs md:text-sm shadow-lg flex items-center gap-2 border-2 border-rose-300">
+        <span>🎯🔥</span> Powtórz Trudne Słówka (${hardList.length}) • Podwójne ⭐!
+      </button>
+    `;
+  }
+
   let topActionHtml = "";
   if (state.profile === "duel") {
     topActionHtml = `<button onclick="startDuelAllWords()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-extrabold text-sm shadow-lg">⚔️🎲 Pojedynek: Wszystkie Słówka</button>`;
   } else if (state.profile === "hubert" || state.profile === "tata") {
     const examLabel = state.profile === "tata" ? "🎓👑 Sprawdzian (Tryb Testowy)" : "🎓👑 Sprawdzian Huberta";
-    topActionHtml = `<button onclick="startGrandExam()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex flex-col"><span class="text-base text-center">${examLabel}</span><span class="text-[10px] font-bold text-center text-amber-100">10 pytań + 5 x Wymowa na głos!</span></button>`;
+    topActionHtml = `<div class="flex flex-wrap gap-2 items-center">${hardWordsBtnHtml}<button onclick="startGrandExam()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex flex-col"><span class="text-base text-center">${examLabel}</span><span class="text-[10px] font-bold text-center text-amber-100">10 pytań + 5 x Wymowa na głos!</span></button></div>`;
   } else {
-    topActionHtml = `<button onclick="startGrandExam()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex items-center gap-2">🎓👑 Wielki Sprawdzian (Wygraj Skrzynię!)</button>`;
+    topActionHtml = `<div class="flex flex-wrap gap-2 items-center">${hardWordsBtnHtml}<button onclick="startGrandExam()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex items-center gap-2">🎓👑 Wielki Sprawdzian (Wygraj Skrzynię!)</button></div>`;
   }
 
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
-
-  const pKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
 
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-xl border-4 border-sky-200 p-4 md:p-6">
@@ -1730,10 +1944,30 @@ function shuffleArray(arr) {
   return c;
 }
 
+function startHardWordsTraining() {
+  cancelAllSpeechAndTimers();
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  const hardList = (state.stats[profKey] && Array.isArray(state.stats[profKey].hardWords)) ? state.stats[profKey].hardWords : [];
+  if (hardList.length === 0) return showLessonMenu();
+
+  state.currentLessonId = "hard_words_training";
+  state.currentSubMode = "listen_pick";
+  state.isExamMode = false;
+  state.isHardWordsMode = true;
+  state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
+
+  const shuffled = shuffleArray(hardList);
+  const totalQ = Math.min(state.questionsPerRound, Math.max(shuffled.length, 5));
+  state.roundQuestions = [];
+  for (let i = 0; i < totalQ; i++) state.roundQuestions.push(shuffled[i % shuffled.length]);
+  renderCurrentQuestion();
+}
+
 function startLesson(lessonId, subMode = null) {
   cancelAllSpeechAndTimers();
   state.currentLessonId = lessonId;
   state.isExamMode = false;
+  state.isHardWordsMode = false;
   const lesson = state.lessons.find(l => l.id === lessonId);
   if (!lesson) return;
 
@@ -1750,11 +1984,12 @@ function startLesson(lessonId, subMode = null) {
   if (state.profile === "duel" && subMode === "mic_game") subMode = "listen_pick";
 
   state.currentSubMode = subMode;
+  state.shopCart = [];
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   state.duelScores = { igor: 0, hubert: 0 }; state.duelTurn = "igor"; state.duelReadyWaiting = state.profile === "duel";
 
   const totalQ = state.profile === "duel" ? 16 : state.questionsPerRound;
-  const visibleItems = getVisibleLessonItems(lesson.items);
+  const visibleItems = getVisibleLessonItems(lesson.items, true);
   let pool = visibleItems;
   if (subMode === "shop_cart_game") pool = visibleItems.filter(i => i.isProduct);
   else if (subMode === "shop_phrases_game") pool = visibleItems.filter(i => i.isPhrase);
@@ -1769,14 +2004,14 @@ function startLesson(lessonId, subMode = null) {
 function startDuelAllWords() {
   cancelAllSpeechAndTimers();
   state.profile = "duel"; state.currentLessonId = "duel_all"; state.currentSubMode = "listen_pick";
-  state.isExamMode = false; state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0;
+  state.isExamMode = false; state.isHardWordsMode = false; state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0;
   state.roundResults = []; state.currentQuestionMistakes = 0; state.duelScores = { igor: 0, hubert: 0 };
   state.duelTurn = "igor"; state.duelReadyWaiting = true;
 
   let all = [];
   state.lessons.filter(l => !l.testOnly).forEach(l => {
     if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
-      getVisibleLessonItems(l.items).forEach(it => all.push(it));
+      getVisibleLessonItems(l.items, false).forEach(it => all.push(it));
     }
   });
   const shuffled = shuffleArray(all);
@@ -1787,18 +2022,18 @@ function startDuelAllWords() {
 
 function startGrandExam() {
   cancelAllSpeechAndTimers();
-  state.currentLessonId = "grand_exam"; state.currentSubMode = "listen_pick"; state.isExamMode = true;
+  state.currentLessonId = "grand_exam"; state.currentSubMode = "listen_pick"; state.isExamMode = true; state.isHardWordsMode = false;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
 
   let allListen = [];
   state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
     if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
-      getVisibleLessonItems(l.items).forEach(it => allListen.push(it));
+      getVisibleLessonItems(l.items, true).forEach(it => allListen.push(it));
     }
   });
   let allMic = [];
   const pStudio = state.lessons.find(l => l.id === "pronunciation_studio");
-  if (pStudio) getVisibleLessonItems(pStudio.items).forEach(it => allMic.push(it));
+  if (pStudio) getVisibleLessonItems(pStudio.items, true).forEach(it => allMic.push(it));
 
   const totalQs = 15;
   state.roundQuestions = [];
@@ -1831,7 +2066,7 @@ function renderTopGameBar(lesson) {
   const totalQ = state.roundQuestions.length;
   let subModesHtml = "";
 
-  if (!state.isExamMode && lesson && state.profile !== "duel") {
+  if (!state.isExamMode && !state.isHardWordsMode && lesson && state.profile !== "duel") {
     const micBtn = `<button onclick="startLesson('${lesson.id}','mic_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'mic_game' ? 'bg-rose-600 text-white' : 'bg-white text-slate-700'}">🎤 Wymowa</button>`;
     const flashBtn = `<button onclick="startFlashcards('${lesson.id}')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-indigo-50 text-indigo-800 border-indigo-300">🃏 Fiszki</button>`;
 
@@ -1839,6 +2074,11 @@ function renderTopGameBar(lesson) {
       subModesHtml = `<button onclick="startPrepositionExplain(state.lessons.find(l=>l.id==='prepositions'))" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-amber-100 border-amber-400 text-amber-900">🦉 Wyjaśnienie</button>` +
                      `<button onclick="startLesson('prepositions','prep_choose_word')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'prep_choose_word' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">🤔 Słówka</button>` +
                      `<button onclick="startLesson('prepositions','prep_choose_pic')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'prep_choose_pic' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">🖼️ Obrazki</button>` + flashBtn + micBtn;
+    } else if (lesson.type === "vocab_and_shop" && typeof areNewFeaturesActive === "function" && areNewFeaturesActive()) {
+      subModesHtml = flashBtn +
+                     `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
+                     `<button onclick="startLesson('${lesson.id}','shop_cart_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'shop_cart_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">🛒 Koszyk</button>` +
+                     `<button onclick="startLesson('${lesson.id}','shop_phrases_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'shop_phrases_game' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-emerald-50 text-emerald-900 border-emerald-300'}">👋 Zwroty</button>` + micBtn;
     } else {
       subModesHtml = flashBtn + `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` + micBtn;
     }
@@ -1858,10 +2098,11 @@ function renderTopGameBar(lesson) {
 
   const duelBar = state.profile === "duel" ? `<div class="mb-2 p-2.5 rounded-2xl bg-gradient-to-r from-amber-100 via-purple-100 to-sky-100 border-2 border-purple-400 flex justify-between items-center font-extrabold text-[10px] md:text-xs"><div>👦 IGOR: ${state.duelScores.igor} pkt ⚡ VS ⚡ 🧑 HUBERT: ${state.duelScores.hubert} pkt</div><div class="px-3 py-1 rounded-xl ${state.duelTurn === 'igor' ? 'bg-amber-500' : 'bg-sky-600'} text-white">Teraz: ${state.duelTurn === 'igor' ? 'IGOR' : 'HUBERT'}</div></div>` : "";
   const examBar = state.isExamMode ? `<div class="mb-2 p-2 rounded-2xl bg-orange-100 border-2 border-orange-400 text-orange-950 font-extrabold text-center text-xs shadow-sm uppercase">🎓 Wielki Sprawdzian (Pytanie ${state.roundIndex+1}/15)</div>` : "";
-  const titleBar = lesson && lesson.id !== "grand_exam" && lesson.id !== "memory_game" ? `<div class="w-full text-center text-slate-500 font-extrabold text-[11px] uppercase tracking-wider mb-2">Lekcja: ${lesson.title}</div>` : '';
+  const hardBar = state.isHardWordsMode ? `<div class="mb-2 p-2 rounded-2xl bg-rose-100 border-2 border-rose-400 text-rose-950 font-extrabold text-center text-xs shadow-sm uppercase">🎯 Trening Trudnych Słówek • Za odpowiedź bez błędu: +2 ⭐!</div>` : "";
+  const titleBar = lesson && !state.isExamMode && !state.isHardWordsMode && lesson.id !== "memory_game" ? `<div class="w-full text-center text-slate-500 font-extrabold text-[11px] uppercase tracking-wider mb-2">Lekcja: ${lesson.title}</div>` : '';
   return `
     ${titleBar}
-    ${duelBar} ${examBar}
+    ${duelBar} ${examBar} ${hardBar}
     <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-sky-200 flex flex-col gap-2 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-wrap gap-1.5">${subModesHtml}</div>
@@ -1904,8 +2145,48 @@ function renderCurrentQuestion() {
   if (activeMode === "prep_choose_word" && typeof renderPrepChooseWord === "function") return renderPrepChooseWord(lesson);
   if (activeMode === "prep_choose_pic" && typeof renderPrepChoosePic === "function") return renderPrepChoosePic(lesson);
   if (activeMode === "mic_game" && typeof renderMicGame === "function") return renderMicGame(lesson);
+  if (activeMode === "shop_cart_game") return renderShopCartGame(lesson);
   
   renderUniversalVisualQuiz(lesson);
+}
+
+function renderShopCartGame(lesson) {
+  const q = state.roundQuestions[state.roundIndex];
+  const products = getVisibleLessonItems(lesson.items, true).filter(i => i.isProduct);
+  const choices = shuffleArray([q, ...shuffleArray(products.filter(it => it.en !== q.en)).slice(0, 2)]);
+  window._currentChoices = choices;
+
+  const cartIcons = (state.shopCart && state.shopCart.length > 0)
+    ? state.shopCart.map(ic => `<span class="text-2xl pop-correct">${ic}</span>`).join(" ")
+    : `<span class="text-xs text-amber-700">Koszyk jest jeszcze pusty...</span>`;
+
+  const mc = document.getElementById("mainContainer");
+  if (!mc) return;
+  mc.innerHTML = `
+    ${renderTopGameBar(lesson)}
+    <div class="bg-white rounded-3xl shadow-xl border-4 border-amber-400 p-4 md:p-6 text-center">
+      <div class="flex flex-wrap items-center justify-between bg-amber-50 p-3 rounded-2xl border-2 border-amber-200 mb-3 gap-2">
+        <div class="flex items-center gap-2 font-extrabold text-amber-950 text-sm">
+          <span class="text-2xl">🛒</span> Twój koszyk (${(state.shopCart || []).length}):
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 bg-white px-3 py-1 rounded-xl border border-amber-300 min-h-[36px]">${cartIcons}</div>
+      </div>
+      <div class="flex items-center justify-between bg-sky-50 p-3 rounded-2xl border border-sky-200 mb-3">
+        <button onclick="speakSequence([{lang:'en',text:'Please give me ${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-12 h-12 rounded-2xl bg-amber-500 text-white text-2xl shadow flex items-center justify-center">🔊</button>
+        <div class="text-lg md:text-2xl font-extrabold text-slate-900 flex-1 px-2">Włóż do koszyka: <span class="text-amber-700">"${q.en}"</span></div>
+      </div>
+      <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        ${choices.map((it, idx) => `
+          <div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, true)" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-200 bg-amber-50/40 hover:border-amber-500 p-4 shadow flex flex-col items-center justify-between">
+            <div class="text-6xl md:text-7xl my-2 float-anim drop-shadow-sm">${it.icon || '🥐'}</div>
+            <div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border border-amber-300 font-bold text-amber-950 text-sm shadow-sm uppercase">🛒 Do koszyka</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+  speakSequence([{ lang: "pl", text: "Włóż do koszyka:" }, { lang: "en", text: q.en }]);
 }
 
 function renderUniversalVisualQuiz(lesson) {
@@ -1916,10 +2197,10 @@ function renderUniversalVisualQuiz(lesson) {
   let allPool = [];
   state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
     if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
-      getVisibleLessonItems(l.items).forEach(it => allPool.push(it));
+      getVisibleLessonItems(l.items, true).forEach(it => allPool.push(it));
     }
   });
-  const visLessonItems = getVisibleLessonItems(lesson.items);
+  const visLessonItems = getVisibleLessonItems(lesson.items, true);
   let src = visLessonItems.length >= numChoices ? visLessonItems : allPool;
 
   const choices = shuffleArray([q, ...shuffleArray(src.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);
@@ -1939,7 +2220,7 @@ function renderUniversalVisualQuiz(lesson) {
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
         ${choices.map((it, idx) => `
-          <div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx})" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 p-4 shadow flex flex-col items-center justify-between">
+          <div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 p-4 shadow flex flex-col items-center justify-between">
             <div class="text-6xl md:text-7xl my-2 float-anim drop-shadow-sm">${it.icon || '⭐'}</div>
             <div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border font-bold text-slate-700 text-sm shadow-sm uppercase tracking-wide">Wybierz</div>
           </div>
@@ -1950,19 +2231,24 @@ function renderUniversalVisualQuiz(lesson) {
   speakSequence([{ lang: "pl", text: "Wskaż:" }, { lang: "en", text: q.en }]);
 }
 
-function checkUniversalAnswer(idx) {
+function checkUniversalAnswer(idx, isShopCart = false) {
   if (state.answeredCurrent) return;
   const q = state.roundQuestions[state.roundIndex], chosen = window._currentChoices[idx];
   const card = document.getElementById(`vCard_${idx}`), lbl = document.getElementById(`vLabel_${idx}`), fb = document.getElementById("feedbackBanner");
 
   if (chosen.en === q.en) {
     state.answeredCurrent = true; playEffect("success"); card.classList.add("pop-correct");
+    if (isShopCart) {
+      if (!Array.isArray(state.shopCart)) state.shopCart = [];
+      state.shopCart.push(chosen.icon || "🥐");
+    }
     lbl.textContent = `✅ ${chosen.pl}`;
-    fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! O to chodziło!</span>`;
+    fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! ${state.isHardWordsMode && state.currentQuestionMistakes === 0 ? 'Opanowano trudne słówko (+2 ⭐)!' : 'O to chodziło!'}</span>`;
     awardCorrectAnswer();
     speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Brawo! To znaczy ${q.pl}!` }], () => advanceNextQuestion());
   } else {
     state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); card.classList.add("shake-wrong");
+    recordHardWordForActivePlayer(q);
     lbl.textContent = `❌ ${chosen.pl}`;
     if (state.profile === "duel") {
       state.answeredCurrent = true;
@@ -1977,16 +2263,24 @@ function checkUniversalAnswer(idx) {
 
 function awardCorrectAnswer() {
   state.roundScore++;
-  if (state.currentQuestionMistakes === 0) state.roundResults.push("correct");
-  else state.roundResults.push("wrong");
+  const q = state.roundQuestions[state.roundIndex];
+  const starBonus = (state.isHardWordsMode && state.currentQuestionMistakes === 0) ? 2 : 1;
 
-  if (state.profile === "igor") state.stats.igor.stars++;
-  else if (state.profile === "hubert") state.stats.hubert.stars++;
-  else if (state.profile === "tata") state.stats.tata.stars++;
+  if (state.currentQuestionMistakes === 0) {
+    state.roundResults.push("correct");
+    if (state.isHardWordsMode) removeHardWordIfMastered(q);
+  } else {
+    state.roundResults.push("wrong");
+  }
+
+  if (state.profile === "igor") state.stats.igor.stars += starBonus;
+  else if (state.profile === "hubert") state.stats.hubert.stars += starBonus;
+  else if (state.profile === "tata") state.stats.tata.stars += starBonus;
   else if (state.profile === "duel") {
     if (state.duelTurn === "igor") { state.duelScores.igor++; state.stats.igor.stars++; }
     else { state.duelScores.hubert++; state.stats.hubert.stars++; }
   }
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
   saveCloudData();
 }
 
@@ -2012,7 +2306,9 @@ function renderEndRoundScreen() {
     p.cups++;
     if (state.roundMistakes === 0) p.perfectRounds++;
     if (state.isExamMode) p.examsDone++;
-    if (state.currentLessonId && state.currentLessonId !== "grand_exam" && state.currentLessonId !== "memory_game") p.lessonCounts[state.currentLessonId] = (p.lessonCounts[state.currentLessonId] || 0) + 1;
+    if (state.currentLessonId && state.currentLessonId !== "grand_exam" && state.currentLessonId !== "hard_words_training" && state.currentLessonId !== "memory_game") {
+      p.lessonCounts[state.currentLessonId] = (p.lessonCounts[state.currentLessonId] || 0) + 1;
+    }
     checkAndUnlockAchievements(profKey);
   }
   saveCloudData();
@@ -2042,11 +2338,11 @@ function renderEndRoundScreen() {
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 5 z 6 ======================== -->
-  
+
 <!-- ======================= POCZĄTEK CZĘŚCI 6 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 6 z 6: GRA MEMORY, STUDIO WYMOWY, PRZYIMKI, FISZKI I PANEL RODZICA
+   CZĘŚĆ 6 z 6: MEMORY, WYMOWA, PRZYIMKI, KOPIA JSON I PANEL RODZICA (WERSJA 11)
    ============================================================================ */
 
 // ------------------------------------------------------------------------
@@ -2056,6 +2352,7 @@ function startMemoryGame() {
   cancelAllSpeechAndTimers();
   state.currentLessonId = "memory_game";
   state.isExamMode = false;
+  state.isHardWordsMode = false;
   
   const isAdvanced = state.profile === "hubert" || state.profile === "tata";
   const numPairs = isAdvanced ? 8 : 6;
@@ -2063,7 +2360,7 @@ function startMemoryGame() {
   let pool = [];
   state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
     if (l.type === "vocab" && l.id !== "memory_game") {
-      getVisibleLessonItems(l.items).forEach(it => pool.push(it));
+      getVisibleLessonItems(l.items, true).forEach(it => pool.push(it));
     }
   });
   
@@ -2276,6 +2573,7 @@ function approveMicAnswer(msg) {
   const q = state.roundQuestions[state.roundIndex];
   const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
   state.stats[profKey].micCount = (state.stats[profKey].micCount || 0) + 1;
+  removeHardWordIfMastered(q);
   playEffect("success");
   const box = document.getElementById("micStatusBox");
   if (box) { box.className = "p-4 rounded-3xl bg-emerald-500 text-white font-extrabold text-base mb-5 drop-shadow-md"; box.innerHTML = `✅🌟 Brawo! ${msg} (${q.en} = ${q.pl})`; }
@@ -2360,6 +2658,7 @@ function checkPrepWord(chosen) {
     speakSequence([{ lang: "en", text: q.fullEn }, { lang: "pl", text: `super! to znaczy: ${q.plDesc.toLowerCase()}` }], () => advanceNextQuestion());
   } else {
     state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); btn.classList.add("shake-wrong");
+    recordHardWordForActivePlayer(q);
     if (state.profile === "duel") {
       state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! To było ${q.prep}!</span>`;
       speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion());
@@ -2410,6 +2709,7 @@ function checkPrepPic(idx) {
     speakSequence([{ lang: "en", text: q.fullEn }, { lang: "pl", text: `tak! ${q.plDesc.toLowerCase()}` }], () => advanceNextQuestion());
   } else {
     state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); card.classList.add("shake-wrong");
+    recordHardWordForActivePlayer(q);
     if (state.profile === "duel") {
       state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! Powinno być ${q.prep}!</span>`;
       speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion());
@@ -2431,7 +2731,7 @@ function startFlashcards(lessonId) {
   renderFlashcard(lesson);
 }
 function renderFlashcard(lesson) {
-  const visItems = getVisibleLessonItems(lesson.items);
+  const visItems = getVisibleLessonItems(lesson.items, true);
   const list = visItems.length ? visItems : lesson.items;
   if (state.flashcardIndex >= list.length) state.flashcardIndex = 0;
   const item = list[state.flashcardIndex];
@@ -2439,11 +2739,11 @@ function renderFlashcard(lesson) {
   if (!mc) return;
   mc.innerHTML = `
     <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-indigo-200 flex justify-between items-center shadow-sm">
-      <div class="font-extrabold text-indigo-900 px-2 text-sm">🃏 Fiszki: ${lesson.title}</div>
+      <div class="font-extrabold text-indigo-900 px-2 text-sm">🃏 Fiszki: ${lesson.title} (${state.flashcardIndex + 1}/${list.length})</div>
       <button onclick="showLessonMenu()" class="px-3 py-1.5 rounded-xl bg-slate-100 font-bold text-xs hover:bg-slate-200">Koniec ⏹️</button>
     </div>
     <div class="bg-white rounded-3xl shadow-xl border-4 border-indigo-300 p-8 text-center max-w-xl mx-auto flex flex-col items-center justify-between min-h-[350px]">
-      <div class="text-8xl drop-shadow-md my-4 float-anim cursor-pointer" onclick="speakSequence([{lang:'en',text:'${item.en.replace(/'/g,"\\'")}'}])">${item.icon || '📘'}</div>
+      <div class="text-8xl drop-shadow-md my-4 float-anim cursor-pointer" onclick="speakSequence([{lang:'en',text:'${item.en.replace(/'/g,"\\'")}'}])">${item.icon || item.animal || '📘'}</div>
       <div>
         <h2 class="text-4xl font-extrabold text-slate-900 mb-1">"${item.en}"</h2>
         <p class="text-sm font-bold text-slate-400 mb-4">${item.phonetic ? '[' + item.phonetic + ']' : ''}</p>
@@ -2463,7 +2763,7 @@ function nextFlashcard() {
 }
 
 // ------------------------------------------------------------------------
-// PIN, KONTO TESTOWE TATY I PANEL RODZICA
+// PIN, KONTO TESTOWE TATY, KOPIA JSON I PANEL RODZICA
 // ------------------------------------------------------------------------
 function initPinKeyboard() {
   const grid = document.getElementById("pinKeyboardGrid");
@@ -2557,10 +2857,25 @@ function renderParentTestCenter() {
   });
 
   const totalPending = testLessons.length + testWords.length;
+  const v11ActiveForKids = Boolean(state.featuresPublishedForKids);
+
+  const v11StatusBox = `
+    <div class="p-3 rounded-2xl bg-white border-2 ${v11ActiveForKids ? 'border-emerald-400' : 'border-amber-400'} mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div class="text-xs">
+        <div class="font-extrabold text-slate-900">🚀 Nowe moduły Wersji 11 (Sklepik ⭐, Trudne Słówka 🎯, Koszyk 🛒, Filtr 1-20 Igora):</div>
+        <div class="font-bold ${v11ActiveForKids ? 'text-emerald-700' : 'text-amber-700'} mt-0.5">
+          Status: ${v11ActiveForKids ? '✅ Wdrożone i widoczne u Igora oraz Huberta' : '🧪 Tryb testowy (widoczne TYLKO na profilu TATA)'}
+        </div>
+      </div>
+      <button onclick="parentToggleV11FeaturesForKids()" class="kid-card px-3.5 py-2 rounded-xl font-extrabold text-xs text-white shadow ${v11ActiveForKids ? 'bg-slate-600 hover:bg-slate-700' : 'bg-emerald-600 hover:bg-emerald-700'}">
+        ${v11ActiveForKids ? '🔒 Cofnij tylko do testów Taty' : '✅ Wdróż funkcje V11 dla Chłopców'}
+      </button>
+    </div>
+  `;
 
   let pendingListHtml = "";
   if (totalPending === 0) {
-    pendingListHtml = `<div class="text-xs font-bold text-teal-800 bg-white/80 p-3 rounded-2xl border border-teal-200">✓ Wszystkie nowości zostały już wdrożone na profile Igora i Huberta. Nowe słówka i lekcje dodane poniżej trafią najpierw tylko na konto <strong>TATA</strong> do przetestowania!</div>`;
+    pendingListHtml = `<div class="text-xs font-bold text-teal-800 bg-white/80 p-3 rounded-2xl border border-teal-200">✓ Brak oczekujących lekcji lub słówek testowych. Każde nowe słówko lub lekcja dodana niżej trafi najpierw na profil <strong>TATA</strong>!</div>`;
   } else {
     pendingListHtml = `
       <div class="space-y-1.5 mb-3 max-h-40 overflow-y-auto pr-1">
@@ -2578,22 +2893,37 @@ function renderParentTestCenter() {
         `).join("")}
       </div>
       <button onclick="parentPublishAllTestItems()" class="kid-card w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-extrabold rounded-xl text-xs shadow">
-        ✅ Wdróż przetestowane nowości (${totalPending}) na profile Igora i Huberta
+        ✅ Wdróż przetestowane lekcje i słówka (${totalPending}) na profile Igora i Huberta
       </button>
     `;
   }
 
   box.innerHTML = `
     <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 10.2)</h3>
-      <span class="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-950 font-extrabold text-xs">Oczekujące nowości: ${totalPending}</span>
+      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 11)</h3>
+      <span class="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-950 font-extrabold text-xs">Słówka/Lekcje w teście: ${totalPending}</span>
     </div>
+    ${v11StatusBox}
     ${pendingListHtml}
     <div class="mt-3 pt-3 border-t border-teal-200 flex flex-wrap gap-2">
       <button onclick="unlockAllForTataOnly()" class="kid-card py-2 px-3 bg-emerald-700 text-white font-bold rounded-xl text-xs">🔓 Odblokuj 131 ubrań i 50 zwierzaków TYLKO u Taty</button>
       <button onclick="parentGiveTestChest('tata','gold')" class="kid-card py-2 px-3 bg-amber-400 text-amber-950 font-bold rounded-xl text-xs">👑 Złota Skrzynia (Tata)</button>
     </div>
   `;
+}
+
+function parentToggleV11FeaturesForKids() {
+  const nextState = !state.featuresPublishedForKids;
+  const msg = nextState
+    ? "Czy na pewno wdrożyć nowe funkcje Wersji 11 (Sklepik ze Skrzyniami, Trening Trudnych Słówek, Koszyk w Piekarni, filtr wieku 1-20) na profile Igora i Huberta?"
+    : "Czy na pewno ukryć nowe funkcje Wersji 11 u chłopców i pozostawić je tylko na koncie testowym TATA?";
+  if (!confirm(msg)) return;
+  state.featuresPublishedForKids = nextState;
+  saveCloudData();
+  renderParentTestCenter();
+  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+  showParentMsg(nextState ? "✓ Wdrożono nowe funkcje Wersji 11 dla Igora i Huberta!" : "✓ Ukryto funkcje Wersji 11 (dostępne tylko u Taty).");
+  alert(nextState ? "✓ Wykonano! Nowe funkcje Wersji 11 są już aktywne u chłopców." : "✓ Wykonano! Funkcje Wersji 11 są teraz widoczne tylko na profilu TATA.");
 }
 
 function parentPublishAllTestItems() {
@@ -2618,6 +2948,7 @@ function parentDeleteTestLesson(lessonId) {
   saveCloudData();
   renderParentTestCenter();
   showParentMsg("✓ Usunięto testową lekcję.");
+  alert("✓ Wykonano! Testowa lekcja została usunięta.");
 }
 
 function parentDeleteTestWord(lessonId, wordIdx) {
@@ -2627,6 +2958,7 @@ function parentDeleteTestWord(lessonId, wordIdx) {
   saveCloudData();
   renderParentTestCenter();
   showParentMsg("✓ Usunięto testowe słówko.");
+  alert("✓ Wykonano! Testowe słówko zostało usunięte.");
 }
 
 function unlockAllForTataOnly() {
@@ -2637,6 +2969,65 @@ function unlockAllForTataOnly() {
   saveCloudData();
   showParentMsg("✓ Odblokowano wszystko na profilu TATA!");
   alert("✓ Wykonano! Wszystkie 131 ubrań i 50 zwierzaków jest dostępnych na profilu TATA.");
+}
+
+function parentExportBackupJson() {
+  if (!confirm("Czy na pewno pobrać plik kopii zapasowej (.json) ze wszystkimi postępami i lekcjami?")) return;
+  const backupObj = {
+    version: "11",
+    exportedAt: new Date().toISOString(),
+    stats: state.stats,
+    calibration: state.calibration,
+    questionsPerRound: state.questionsPerRound,
+    featuresPublishedForKids: state.featuresPublishedForKids,
+    lessons: state.lessons
+  };
+  const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `akademia_kopia_${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showParentMsg("✓ Pobrano plik kopii zapasowej (.json)!");
+  alert("✓ Wykonano! Plik kopii zapasowej został zapisany.");
+}
+
+function parentImportBackupJson(input) {
+  if (!input.files || input.files.length === 0) return;
+  if (!confirm("Czy na pewno wczytać kopię zapasową z pliku (.json)? Obecne postępy zostaną zastąpione danymi z pliku!")) {
+    input.value = "";
+    return;
+  }
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || !parsed.stats) throw new Error("Nieprawidłowy plik");
+      state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
+      state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
+      state.stats.tata = ensurePlayerStructure(parsed.stats.tata);
+      state.stats.stickers = Array.isArray(parsed.stats.stickers) ? parsed.stats.stickers : [];
+      if (parsed.calibration) state.calibration = { ...DEFAULT_AVATAR_CALIBRATION, ...parsed.calibration };
+      if (parsed.questionsPerRound) state.questionsPerRound = parseInt(parsed.questionsPerRound) || 8;
+      if (parsed.featuresPublishedForKids !== undefined) state.featuresPublishedForKids = Boolean(parsed.featuresPublishedForKids);
+      if (Array.isArray(parsed.lessons) && parsed.lessons.length) state.lessons = parsed.lessons;
+      upgradeNumbersLessonForIgor(state.lessons);
+      saveCloudData();
+      if (typeof updateHeaderUI === "function") updateHeaderUI();
+      openParentDashboard();
+      showParentMsg("✓ Pomyślnie wczytano kopię zapasową z pliku!");
+      alert("✓ Wykonano! Kopia zapasowa została wczytana i zapisana w chmurze.");
+    } catch (err) {
+      showParentMsg("❌ Błąd wczytywania pliku JSON! Sprawdź poprawność pliku.", true);
+      alert("❌ Błąd: Wybrany plik nie jest prawidłową kopią zapasową.");
+    }
+    input.value = "";
+  };
+  reader.readAsText(file);
 }
 
 function openParentDashboard() {

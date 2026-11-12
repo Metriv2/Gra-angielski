@@ -466,7 +466,7 @@ const FULL_LESSONS_DATABASE = [
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CHMURA, AUDIO, LEKTOR I AWATAR (WERSJA 11.2)
+   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CHMURA, AUDIO, LEKTOR I AWATAR (WERSJA 11.3)
    ============================================================================ */
 
 const PROFILE_META = {
@@ -576,20 +576,12 @@ function mergeCalibrationWithDefaults(rawCal) {
   return merged;
 }
 
-function getAvatarCalibration() {
-  if (state && state.calibration) return state.calibration;
+function loadInitialCalibrationFromStorage() {
   try {
     const saved = localStorage.getItem("akademia_avatar_calib_v4");
     if (saved) return mergeCalibrationWithDefaults(JSON.parse(saved));
   } catch (e) {}
-  return JSON.parse(JSON.stringify(DEFAULT_AVATAR_CALIBRATION));
-}
-
-function saveAvatarCalibration(cal) {
-  state.calibration = mergeCalibrationWithDefaults(cal);
-  state.stats.calibration = state.calibration;
-  try { localStorage.setItem("akademia_avatar_calib_v4", JSON.stringify(state.calibration)); } catch (e) {}
-  saveCloudData();
+  return mergeCalibrationWithDefaults(null);
 }
 
 const PARENT_PIN = "0608";
@@ -667,7 +659,7 @@ function ensurePlayerStructure(p) {
   };
 }
 
-let state = {
+var state = {
   profile: null, turtleMode: false, questionsPerRound: 8, currentLessonId: null, currentSubMode: "listen_pick",
   isExamMode: false, isHardWordsMode: false, roundIndex: 0, roundQuestions: [], roundResults: [], currentQuestionMistakes: 0,
   roundScore: 0, roundMistakes: 0, answeredCurrent: false, flashcardIndex: 0, shopCart: [], riddleHintShown: false,
@@ -675,7 +667,7 @@ let state = {
   selectedStickerCat: "all", selectedBadgeCat: "all", selectedWardrobeTier: "all", rewardQueue: [],
   featuresPublishedForKids: false,
   lessons: JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE)),
-  calibration: getAvatarCalibration(),
+  calibration: loadInitialCalibrationFromStorage(),
   stats: {
     igor: createDefaultPlayerStats(),
     hubert: createDefaultPlayerStats(),
@@ -684,6 +676,18 @@ let state = {
   },
   memoryGameCards: [], memoryFlippedIndexes: [], memoryMatchedPairs: 0
 };
+
+function getAvatarCalibration() {
+  if (typeof state !== "undefined" && state && state.calibration) return state.calibration;
+  return loadInitialCalibrationFromStorage();
+}
+
+function saveAvatarCalibration(cal) {
+  state.calibration = mergeCalibrationWithDefaults(cal);
+  state.stats.calibration = state.calibration;
+  try { localStorage.setItem("akademia_avatar_calib_v4", JSON.stringify(state.calibration)); } catch (e) {}
+  saveCloudData();
+}
 
 function areNewFeaturesActive() {
   return state.profile === "tata" || Boolean(state.featuresPublishedForKids);

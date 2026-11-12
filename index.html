@@ -1044,22 +1044,21 @@ function rollChestForAchievement(ach) {
   if (tier >= 5 || ach.cat === "masters") return "gold";
   const rnd = Math.random() * 100;
   if (tier === 4) {
-    return rnd < 65 ? "gold" : "silver"; // 65% Złota, 35% Srebrna
+    return rnd < 65 ? "gold" : "silver";
   }
   if (tier === 3) {
-    if (rnd < 30) return "gold";        // 30% Złota
-    if (rnd < 80) return "silver";      // 50% Srebrna
-    return "bronze";                    // 20% Brązowa
+    if (rnd < 30) return "gold";
+    if (rnd < 80) return "silver";
+    return "bronze";
   }
   if (tier === 2) {
-    if (rnd < 15) return "gold";        // 15% Złota
-    if (rnd < 55) return "silver";      // 40% Srebrna
-    return "bronze";                    // 45% Brązowa
+    if (rnd < 15) return "gold";
+    if (rnd < 55) return "silver";
+    return "bronze";
   }
-  // Poziom 1 (Łatwe)
-  if (rnd < 5) return "gold";           // 5% Złota
-  if (rnd < 30) return "silver";        // 25% Srebrna
-  return "bronze";                      // 70% Brązowa
+  if (rnd < 5) return "gold";
+  if (rnd < 30) return "silver";
+  return "bronze";
 }
 
 function checkAndUnlockAchievements(profKey) {
@@ -1090,7 +1089,15 @@ function processNextRewardInQueue() {
   const reward = state.rewardQueue[0];
   const chestType = reward.chestType || rollChestForAchievement(reward.achievement);
   const chestLabel = chestType === "gold" ? "👑 Złota Skrzynia!" : chestType === "silver" ? "🥈 Srebrna Skrzynia!" : "📦 Brązowa Skrzynia!";
+  const chestSpeak = chestType === "gold" ? "złota skrzynia" : chestType === "silver" ? "srebrna skrzynia" : "brązowa skrzynia";
   renderChestOpeningInsidePopup(reward.profKey, chestType, `Zdobyto odznakę: ${reward.achievement.name} • ${chestLabel}`);
+  setTimeout(() => {
+    if (typeof speakSequence === "function") {
+      speakSequence([
+        { lang: "pl", text: `Gratulacje! Zdobyto osiągnięcie: ${reward.achievement.name}! Twoja nagroda to ${chestSpeak}! Kliknij skrzynię, aby ją otworzyć!` }
+      ]);
+    }
+  }, 150);
 }
 
 function renderChestOpeningInsidePopup(profKey, tier, title) {
@@ -1159,26 +1166,42 @@ function openChestReal(profKey, tier) {
 
   let dropType = poolChoices.length > 0 ? poolChoices[Math.floor(Math.random() * poolChoices.length)] : "none";
   let rewardHtml = ""; let rewardName = "";
+  let speechSegments = [];
 
   if (dropType === "pet") {
     const animal = missingPets[Math.floor(Math.random() * missingPets.length)];
     p.memoryAnimals.push(animal.id);
     rewardName = `Towarzysz: ${animal.pl}`;
     rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">${animal.icon}</div>`;
+    speechSegments = [
+      { lang: "pl", text: `Brawo! Ze skrzynki wylosowano nowego towarzysza! To jest ${animal.pl}, po angielsku` },
+      { lang: "en", text: animal.en }
+    ];
   } else if (dropType === "sticker") {
     const sticker = missingStickers[Math.floor(Math.random() * missingStickers.length)];
     if (!state.stats.stickers) state.stats.stickers = [];
     state.stats.stickers.push(sticker.id);
     rewardName = `Naklejka: ${sticker.name}`;
     rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">${sticker.icon}</div>`;
+    speechSegments = [
+      { lang: "pl", text: `Super! Wylosowano nową naklejkę do klasera: ${sticker.name}!` }
+    ];
   } else if (dropType === "outfit") {
     const outfit = unownedOutfits[Math.floor(Math.random() * unownedOutfits.length)];
     p.unlockedItems.push(outfit.src);
     rewardName = `Ubranie: ${outfit.name}`;
     rewardHtml = `<img src="${outfit.src}" class="w-32 h-32 object-contain mx-auto my-4 drop-shadow-xl pop-correct bg-white/60 rounded-full p-2" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${outfit.fallbackSrc}';}else{this.style.display='none';}" />`;
+    const cleanOutfitName = outfit.name.replace(/[_-]/g, " ");
+    speechSegments = [
+      { lang: "pl", text: "Ekstra! Wylosowano nowe przebranie do garderoby:" },
+      { lang: "en", text: cleanOutfitName }
+    ];
   } else {
     rewardName = "Garść monet!";
     rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">🪙</div>`;
+    speechSegments = [
+      { lang: "pl", text: "Brawo! Ze skrzynki wypada garść złotych monet!" }
+    ];
   }
 
   state.stats[profKey] = p;
@@ -1191,9 +1214,14 @@ function openChestReal(profKey, tier) {
     <p class="text-white font-extrabold text-xl drop-shadow mb-4">${rewardName}</p>
     <button onclick="closeRewardPopup()" class="w-full py-3 bg-white text-slate-800 font-extrabold text-lg rounded-2xl shadow-lg hover:bg-slate-100">Super! Odbierz</button>
   `;
+
+  if (typeof speakSequence === "function" && speechSegments.length > 0) {
+    speakSequence(speechSegments);
+  }
 }
 
 function closeRewardPopup() {
+  if (typeof cancelAllSpeechAndTimers === "function") cancelAllSpeechAndTimers();
   const modal = document.getElementById("rewardPopupModal");
   if (modal) { modal.classList.remove("flex"); modal.classList.add("hidden"); }
   if (state.rewardQueue.length > 0) {

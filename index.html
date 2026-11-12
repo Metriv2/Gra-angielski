@@ -466,7 +466,7 @@ const FULL_LESSONS_DATABASE = [
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CHMURA, AUDIO, LEKTOR I AWATAR (WERSJA 11.1)
+   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CHMURA, AUDIO, LEKTOR I AWATAR (WERSJA 11.2)
    ============================================================================ */
 
 const PROFILE_META = {
@@ -997,7 +997,7 @@ function classifyHeadItem(src) {
 function classifyTorsoItem(src) {
   if (!src) return "none";
   const fn = src.split("/").pop().toLowerCase();
-  if (fn.startsWith("armor_") || fn.startsWith("jacket_") || fn.startsWith("suit_") || fn === "shirt_commando.png" || fn === "shirt_soldier.png") return "armor";
+  if (fn.startsWith("armor_") || fn.startsWith("jacket_") || fn.startsWith("suit_") || fn === "shirt_commando.png" || fn === "shirt_soldier.png" || fn === "shirt_police.png") return "armor";
   return "shirt";
 }
 function classifyLegsItem(src) {

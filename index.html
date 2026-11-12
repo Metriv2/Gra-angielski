@@ -589,7 +589,6 @@ function ensurePlayerStructure(p) {
   const def = createDefaultPlayerStats();
   if (!p) return def;
 
-  // Jednorazowa migracja do gołego awatara na starcie (usuwa dawny zestaw startowy)
   if (!p.nakedStartMigrated) {
     const oldStarter = ["grafiki/cap_red.png", "grafiki/shirt_blue.png", "grafiki/Shirt_blue.png", "grafiki/jeans_blue.png"];
     p.unlockedItems = (p.unlockedItems || []).filter(it => !oldStarter.includes(it));
@@ -837,7 +836,7 @@ function startKidVoiceTour() {
     },
     {
       lang: "pl",
-      text: "Teraz wchodzimy w Odznaki! Zobacz, gdy ukończysz jakieś osiągnięcie, otrzymasz w nagrodę skrzynię! Możesz też kliknąć w dowolne osiągnięcie na liście, a powiem Ci dokładnie, co trzeba zrobić, aby je zdobyć!",
+      text: "Teraz wchodzimy w Odznaki! Pamiętaj: im więcej dni z rzędu grasz i im dokładniej, bez błędów odpowiadasz, tym większą masz szansę na srebrną lub złotą skrzynię oraz lepsze przebrania! Możesz też kliknąć w dowolne osiągnięcie na liście, a powiem Ci, co trzeba zrobić, aby je zdobyć!",
       onStart: () => {
         hl("navBadgesBtn", true);
         if (state.profile !== "duel" && typeof openBadgesModal === "function") {
@@ -956,7 +955,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 3 z 6 ======================== -->
-
+  
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 6 ======================= -->
 <script>
 /* ============================================================================

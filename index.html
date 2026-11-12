@@ -994,43 +994,73 @@ function getAll131OutfitsFlat() {
 }
 
 // ------------------------------------------------------------------------
-// GENERATOR OSIĄGNIĘĆ
+// GENERATOR OSIĄGNIĘĆ (Z POZIOMAMI TRUDNOŚCI 1–5 DO LOSOWANIA SKRZYŃ)
 // ------------------------------------------------------------------------
 function getAllAchievements() {
   const list = [];
   [10, 25, 50, 100, 200, 350, 500, 750, 1000].forEach(t => {
-    list.push({ id: `stars_${t}`, cat: "stars", icon: t >= 350 ? "🌟" : "⭐", name: `${t} Gwiazdek`, desc: `Zbierz łącznie ${t} złotych gwiazdek`, check: p => p.stars >= t, progress: p => `${Math.min(p.stars, t)}/${t}` });
+    const tier = t <= 25 ? 1 : t <= 100 ? 2 : t <= 500 ? 3 : 4;
+    list.push({ id: `stars_${t}`, cat: "stars", tier, icon: t >= 350 ? "🌟" : "⭐", name: `${t} Gwiazdek`, desc: `Zbierz łącznie ${t} złotych gwiazdek`, check: p => p.stars >= t, progress: p => `${Math.min(p.stars, t)}/${t}` });
   });
-  [{ d: 2, n: "2 Dni z rzędu" }, { d: 3, n: "3 Dni z rzędu" }, { d: 5, n: "5 Dni z rzędu" }, { d: 7, n: "Tydzień (7 dni)" }, { d: 14, n: "2 Tygodnie (14 dni)" }, { d: 21, n: "3 Tygodnie (21 dni)" }, { d: 30, n: "Miesiąc (30 dni)" }, { d: 60, n: "2 Miesiące (60 dni)" }, { d: 90, n: "3 Miesiące (90 dni)" }].forEach(st => {
-    list.push({ id: `streak_${st.d}`, cat: "streak", icon: "🔥", name: st.n, desc: `Ćwicz angielski przez ${st.d} dni pod rząd!`, check: p => (p.streakDays || 1) >= st.d, progress: p => `${Math.min(p.streakDays || 1, st.d)}/${st.d}` });
+  [{ d: 2, n: "2 Dni z rzędu", tier: 1 }, { d: 3, n: "3 Dni z rzędu", tier: 1 }, { d: 5, n: "5 Dni z rzędu", tier: 2 }, { d: 7, n: "Tydzień (7 dni)", tier: 2 }, { d: 14, n: "2 Tygodnie (14 dni)", tier: 3 }, { d: 21, n: "3 Tygodnie (21 dni)", tier: 3 }, { d: 30, n: "Miesiąc (30 dni)", tier: 3 }, { d: 60, n: "2 Miesiące (60 dni)", tier: 4 }, { d: 90, n: "3 Miesiące (90 dni)", tier: 4 }].forEach(st => {
+    list.push({ id: `streak_${st.d}`, cat: "streak", tier: st.tier, icon: "🔥", name: st.n, desc: `Ćwicz angielski przez ${st.d} dni pod rząd!`, check: p => (p.streakDays || 1) >= st.d, progress: p => `${Math.min(p.streakDays || 1, st.d)}/${st.d}` });
   });
   const visibleLessons = (state.lessons || []).filter(l => !l.testOnly || state.profile === "tata");
   [1, 2, 3, 5, 8, 13, 21, 35].forEach(cnt => {
+    const tier = cnt <= 2 ? 1 : cnt <= 5 ? 2 : cnt <= 21 ? 3 : 4;
     visibleLessons.forEach(lesson => {
       const shortTitle = lesson.title.replace(/^\d+\.\s*/, "");
-      list.push({ id: `lesson_${lesson.id}_${cnt}`, cat: "lessons", icon: lesson.icon ? Array.from(lesson.icon)[0] : "📘", name: `${shortTitle} (${cnt}x)`, desc: `Ukończ lekcję „${shortTitle}” ${cnt} razy!`, check: p => ((p.lessonCounts && p.lessonCounts[lesson.id]) || 0) >= cnt, progress: p => `${Math.min((p.lessonCounts && p.lessonCounts[lesson.id]) || 0, cnt)}/${cnt}` });
+      list.push({ id: `lesson_${lesson.id}_${cnt}`, cat: "lessons", tier, icon: lesson.icon ? Array.from(lesson.icon)[0] : "📘", name: `${shortTitle} (${cnt}x)`, desc: `Ukończ lekcję „${shortTitle}” ${cnt} razy!`, check: p => ((p.lessonCounts && p.lessonCounts[lesson.id]) || 0) >= cnt, progress: p => `${Math.min((p.lessonCounts && p.lessonCounts[lesson.id]) || 0, cnt)}/${cnt}` });
     });
   });
   [1, 3, 7, 15, 30].forEach(n => {
-    list.push({ id: `perf_${n}`, cat: "special", icon: "🎯", name: `Snajper 100% (${n}x)`, desc: `Ukończ ${n} rund bez żadnego błędu!`, check: p => p.perfectRounds >= n, progress: p => `${Math.min(p.perfectRounds, n)}/${n}` });
+    const tier = n === 1 ? 1 : n <= 7 ? 2 : n === 15 ? 3 : 4;
+    list.push({ id: `perf_${n}`, cat: "special", tier, icon: "🎯", name: `Snajper 100% (${n}x)`, desc: `Ukończ ${n} rund bez żadnego błędu!`, check: p => p.perfectRounds >= n, progress: p => `${Math.min(p.perfectRounds, n)}/${n}` });
   });
   [5, 15, 30, 60, 100].forEach(n => {
-    list.push({ id: `mic_${n}`, cat: "special", icon: "🎤", name: `Mistrz Wymowy (${n}x)`, desc: `Powiedz poprawnie ${n} słówek do mikrofonu!`, check: p => p.micCount >= n, progress: p => `${Math.min(p.micCount, n)}/${n}` });
+    const tier = n === 5 ? 1 : n === 15 ? 2 : n <= 60 ? 3 : 4;
+    list.push({ id: `mic_${n}`, cat: "special", tier, icon: "🎤", name: `Mistrz Wymowy (${n}x)`, desc: `Powiedz poprawnie ${n} słówek do mikrofonu!`, check: p => p.micCount >= n, progress: p => `${Math.min(p.micCount, n)}/${n}` });
   });
   [1, 3, 7, 15].forEach(n => {
-    list.push({ id: `ex_${n}`, cat: "special", icon: "🎓", name: `Bohater Sprawdzianu (${n}x)`, desc: `Ukończ Wielki Sprawdzian ${n} razy!`, check: p => p.examsDone >= n, progress: p => `${Math.min(p.examsDone, n)}/${n}` });
+    const tier = n === 1 ? 1 : n === 3 ? 2 : n === 7 ? 3 : 4;
+    list.push({ id: `ex_${n}`, cat: "special", tier, icon: "🎓", name: `Bohater Sprawdzianu (${n}x)`, desc: `Ukończ Wielki Sprawdzian ${n} razy!`, check: p => p.examsDone >= n, progress: p => `${Math.min(p.examsDone, n)}/${n}` });
   });
   [1, 5, 10, 20].forEach(n => {
-    list.push({ id: `duel_${n}`, cat: "special", icon: "⚔️", name: `Mistrz Pojedynków (${n}x)`, desc: `Wygraj Pojedynek Braci ${n} razy!`, check: p => p.duelsWon >= n, progress: p => `${Math.min(p.duelsWon, n)}/${n}` });
+    const tier = n === 1 ? 1 : n === 5 ? 2 : n === 10 ? 3 : 4;
+    list.push({ id: `duel_${n}`, cat: "special", tier, icon: "⚔️", name: `Mistrz Pojedynków (${n}x)`, desc: `Wygraj Pojedynek Braci ${n} razy!`, check: p => p.duelsWon >= n, progress: p => `${Math.min(p.duelsWon, n)}/${n}` });
   });
   [10, 25, 45, 60].forEach(n => {
-    list.push({ id: `st_${n}`, cat: "special", icon: "🎁", name: `Kolekcjoner Naklejek (${n})`, desc: `Zbierz ${n} naklejek!`, check: () => (state.stats.stickers || []).length >= n, progress: () => `${Math.min((state.stats.stickers || []).length, n)}/${n}` });
+    const tier = n === 10 ? 1 : n === 25 ? 2 : n === 45 ? 3 : 4;
+    list.push({ id: `st_${n}`, cat: "special", tier, icon: "🎁", name: `Kolekcjoner Naklejek (${n})`, desc: `Zbierz ${n} naklejek!`, check: () => (state.stats.stickers || []).length >= n, progress: () => `${Math.min((state.stats.stickers || []).length, n)}/${n}` });
   });
   [{ k: "stars", n: "Arcymistrz Gwiazdek", d: "Zbierz wszystkie odznaki za Gwiazdki!" }, { k: "streak", n: "Arcymistrz Systematyczności", d: "Zbierz wszystkie odznaki za Dni z rzędu!" }, { k: "lessons", n: "Arcymistrz Lekcji", d: "Zbierz wszystkie odznaki za Powtórki lekcji!" }, { k: "special", n: "Arcymistrz Wyzwań", d: "Zbierz wszystkie odznaki w kategorii Wyzwania!" }].forEach(mc => {
     const subIds = list.filter(a => a.cat === mc.k).map(a => a.id);
-    list.push({ id: `master_${mc.k}`, cat: "masters", icon: "👑", name: mc.n, desc: mc.d, check: p => subIds.length > 0 && subIds.every(id => p.badges.includes(id)), progress: p => `${subIds.filter(id => p.badges.includes(id)).length}/${subIds.length}` });
+    list.push({ id: `master_${mc.k}`, cat: "masters", tier: 5, icon: "👑", name: mc.n, desc: mc.d, check: p => subIds.length > 0 && subIds.every(id => p.badges.includes(id)), progress: p => `${subIds.filter(id => p.badges.includes(id)).length}/${subIds.length}` });
   });
   return list;
+}
+
+function rollChestForAchievement(ach) {
+  const tier = ach.tier || 1;
+  if (tier >= 5 || ach.cat === "masters") return "gold";
+  const rnd = Math.random() * 100;
+  if (tier === 4) {
+    return rnd < 65 ? "gold" : "silver"; // 65% Złota, 35% Srebrna
+  }
+  if (tier === 3) {
+    if (rnd < 30) return "gold";        // 30% Złota
+    if (rnd < 80) return "silver";      // 50% Srebrna
+    return "bronze";                    // 20% Brązowa
+  }
+  if (tier === 2) {
+    if (rnd < 15) return "gold";        // 15% Złota
+    if (rnd < 55) return "silver";      // 40% Srebrna
+    return "bronze";                    // 45% Brązowa
+  }
+  // Poziom 1 (Łatwe)
+  if (rnd < 5) return "gold";           // 5% Złota
+  if (rnd < 30) return "silver";        // 25% Srebrna
+  return "bronze";                      // 70% Brązowa
 }
 
 function checkAndUnlockAchievements(profKey) {
@@ -1044,7 +1074,10 @@ function checkAndUnlockAchievements(profKey) {
     });
   }
   if (newly.length > 0) {
-    newly.forEach(ach => state.rewardQueue.push({ profKey, achievement: ach }));
+    newly.forEach(ach => {
+      const rolledChest = rollChestForAchievement(ach);
+      state.rewardQueue.push({ profKey, achievement: ach, chestType: rolledChest });
+    });
     saveCloudData();
     processNextRewardInQueue();
   }
@@ -1056,8 +1089,9 @@ function checkAndUnlockAchievements(profKey) {
 function processNextRewardInQueue() {
   if (state.rewardQueue.length === 0) return;
   const reward = state.rewardQueue[0];
-  const chestType = reward.achievement.cat === "masters" ? "gold" : reward.achievement.cat === "special" ? "silver" : "bronze";
-  renderChestOpeningInsidePopup(reward.profKey, chestType, `Zdobyto odznakę: ${reward.achievement.name}`);
+  const chestType = reward.chestType || rollChestForAchievement(reward.achievement);
+  const chestLabel = chestType === "gold" ? "👑 Złota Skrzynia!" : chestType === "silver" ? "🥈 Srebrna Skrzynia!" : "📦 Brązowa Skrzynia!";
+  renderChestOpeningInsidePopup(reward.profKey, chestType, `Zdobyto odznakę: ${reward.achievement.name} • ${chestLabel}`);
 }
 
 function renderChestOpeningInsidePopup(profKey, tier, title) {

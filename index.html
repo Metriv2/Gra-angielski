@@ -1960,7 +1960,7 @@ function setWardrobeTierFilter(tier) {
 <!-- ======================= POCZĄTEK CZĘŚCI 5 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5 z 6: MENU, ZADANIE DNIA, SMOK, LEKARZ I KOLOROWE PRZEDMIOTY (WERSJA 12.3)
+   CZĘŚĆ 5 z 6: MENU, ZADANIE DNIA, SMOK, LEKARZ I KOLOROWE PRZEDMIOTY (WERSJA 12.4)
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -2194,7 +2194,7 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 12.3
+        🌟 Akademia Angielskiego • Wersja 12.4
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
@@ -2741,42 +2741,55 @@ function renderColorMixGame(lesson) {
 }
 
 // ------------------------------------------------------------------------
-// GABINET MAŁEGO LEKARZA: POWIĘKSZONY AWATAR + STREFY DLA IGORA (8) I HUBERTA (12)
+// GABINET MAŁEGO LEKARZA: STREFY SKALIBROWANE WEDŁUG RYSUNKU Z PAINTA
 // ------------------------------------------------------------------------
 function getDoctorZonesForActivePlayer() {
   const isAdvanced = state.profile === "hubert" || state.profile === "tata";
   const baseZones = [
-    { id: "head_hair", en: "Head",  pl: "Głowa",  top: 9.5,  left: 50,   w: 22,  h: 7.5 },
-    { id: "eyes",      en: "Eyes",  pl: "Oczy",   top: 17.5, left: 50,   w: 16,  h: 3.6 },
-    { id: "ear_l",     en: "Ears",  pl: "Uszy",   top: 18.5, left: 38.2, w: 5.2, h: 5.0 },
-    { id: "ear_r",     en: "Ears",  pl: "Uszy",   top: 18.5, left: 61.8, w: 5.2, h: 5.0 },
-    { id: "nose",      en: "Nose",  pl: "Nos",    top: 21.3, left: 50,   w: 7.5, h: 2.9 },
-    { id: "mouth",     en: "Mouth", pl: "Usta",   top: 24.5, left: 50,   w: 11,  h: 3.3 },
-    { id: "foot_l",    en: "Foot",  pl: "Stopa",  top: 83.8, left: 44.2, w: 9.5, h: 6.5 },
-    { id: "foot_r",    en: "Foot",  pl: "Stopa",  top: 83.8, left: 55.8, w: 9.5, h: 6.5 }
+    // Różowy: Głowa / Włosy
+    { id: "head_hair", en: "Head",  pl: "Głowa",  top: 8.8,  left: 50.0, w: 30.0, h: 8.8,  z: 30 },
+    // Biały: Oczy
+    { id: "eyes",      en: "Eyes",  pl: "Oczy",   top: 19.5, left: 50.0, w: 21.0, h: 4.8,  z: 30 },
+    // Pomarańczowy: Uszy (lewe i prawe)
+    { id: "ear_l",     en: "Ears",  pl: "Uszy",   top: 20.2, left: 35.5, w: 6.5,  h: 6.0,  z: 35 },
+    { id: "ear_r",     en: "Ears",  pl: "Uszy",   top: 20.2, left: 64.5, w: 6.5,  h: 6.0,  z: 35 },
+    // Brązowy: Nos (wyższy z-index, na środku pod/między oczami)
+    { id: "nose",      en: "Nose",  pl: "Nos",    top: 21.8, left: 50.0, w: 6.8,  h: 3.5,  z: 40 },
+    // Zielony: Usta
+    { id: "mouth",     en: "Mouth", pl: "Usta",   top: 26.0, left: 50.0, w: 13.0, h: 4.0,  z: 35 },
+    // Czerwony: Stopy (lewa i prawa)
+    { id: "foot_l",    en: "Foot",  pl: "Stopa",  top: 84.5, left: 43.0, w: 12.0, h: 8.0,  z: 35 },
+    { id: "foot_r",    en: "Foot",  pl: "Stopa",  top: 84.5, left: 57.0, w: 12.0, h: 8.0,  z: 35 }
   ];
 
   if (isAdvanced) {
     return [
       ...baseZones,
-      { id: "neck",   en: "Neck",  pl: "Szyja",  top: 28.5, left: 50,   w: 9.5, h: 4.0 },
-      { id: "tummy",  en: "Tummy", pl: "Brzuch", top: 41.0, left: 50,   w: 15,  h: 13.0 },
-      { id: "arm_l",  en: "Arm",   pl: "Ręka",   top: 34.5, left: 38.0, w: 7.0, h: 15.0 },
-      { id: "arm_r",  en: "Arm",   pl: "Ręka",   top: 34.5, left: 62.0, w: 7.0, h: 15.0 },
-      { id: "hand_l", en: "Hand",  pl: "Dłoń",   top: 50.2, left: 36.2, w: 7.5, h: 6.8 },
-      { id: "hand_r", en: "Hand",  pl: "Dłoń",   top: 50.2, left: 63.8, w: 7.5, h: 6.8 },
-      { id: "knee_l", en: "Knee",  pl: "Kolano", top: 67.2, left: 44.8, w: 8.2, h: 6.5 },
-      { id: "knee_r", en: "Knee",  pl: "Kolano", top: 67.2, left: 55.2, w: 8.2, h: 6.5 },
-      { id: "leg_l",  en: "Leg",   pl: "Noga",   top: 74.2, left: 44.8, w: 8.2, h: 9.0 },
-      { id: "leg_r",  en: "Leg",   pl: "Noga",   top: 74.2, left: 55.2, w: 8.2, h: 9.0 }
+      // Jasnoniebieski: Szyja
+      { id: "neck",   en: "Neck",  pl: "Szyja",  top: 30.2, left: 50.0, w: 12.5, h: 4.0,  z: 35 },
+      // Tułów: Brzuch (bez zmian - jest ok)
+      { id: "tummy",  en: "Tummy", pl: "Brzuch", top: 41.0, left: 50.0, w: 15.0, h: 13.0, z: 30 },
+      // Szary: Ręce (ramiona i przedramiona)
+      { id: "arm_l",  en: "Arm",   pl: "Ręka",   top: 37.5, left: 36.8, w: 8.2,  h: 18.0, z: 30 },
+      { id: "arm_r",  en: "Arm",   pl: "Ręka",   top: 37.5, left: 63.2, w: 8.2,  h: 18.0, z: 30 },
+      // Czarny: Dłonie
+      { id: "hand_l", en: "Hand",  pl: "Dłoń",   top: 55.8, left: 35.0, w: 9.0,  h: 8.0,  z: 35 },
+      { id: "hand_r", en: "Hand",  pl: "Dłoń",   top: 55.8, left: 65.0, w: 9.0,  h: 8.0,  z: 35 },
+      // Niebieski: Nogi (od spodenek do kostek)
+      { id: "leg_l",  en: "Leg",   pl: "Noga",   top: 67.2, left: 44.8, w: 9.0,  h: 17.0, z: 30 },
+      { id: "leg_r",  en: "Leg",   pl: "Noga",   top: 67.2, left: 55.2, w: 9.0,  h: 17.0, z: 30 },
+      // Żółty: Kolana (wewnątrz nóg, wyższy priorytet z-40)
+      { id: "knee_l", en: "Knee",  pl: "Kolano", top: 71.2, left: 44.8, w: 9.2,  h: 6.5,  z: 40 },
+      { id: "knee_r", en: "Knee",  pl: "Kolano", top: 71.2, left: 55.2, w: 9.2,  h: 6.5,  z: 40 }
     ];
   } else {
+    // Igor (4 l.): 8 podstawowych części ciała
     return [
       ...baseZones,
-      { id: "arm_l",  en: "Arm",   pl: "Ręka",   top: 34.5, left: 37.5, w: 7.5, h: 21.5 },
-      { id: "arm_r",  en: "Arm",   pl: "Ręka",   top: 34.5, left: 62.5, w: 7.5, h: 21.5 },
-      { id: "leg_l",  en: "Leg",   pl: "Noga",   top: 67.2, left: 44.8, w: 8.5, h: 16.0 },
-      { id: "leg_r",  en: "Leg",   pl: "Noga",   top: 67.2, left: 55.2, w: 8.5, h: 16.0 }
+      { id: "arm_l",  en: "Arm",   pl: "Ręka",   top: 37.5, left: 36.2, w: 8.8,  h: 25.5, z: 30 },
+      { id: "arm_r",  en: "Arm",   pl: "Ręka",   top: 37.5, left: 63.8, w: 8.8,  h: 25.5, z: 30 },
+      { id: "leg_l",  en: "Leg",   pl: "Noga",   top: 67.2, left: 44.8, w: 9.0,  h: 17.0, z: 30 },
+      { id: "leg_r",  en: "Leg",   pl: "Noga",   top: 67.2, left: 55.2, w: 9.0,  h: 17.0, z: 30 }
     ];
   }
 }
@@ -2796,8 +2809,8 @@ function renderDoctorGame(lesson) {
          ondragover="event.preventDefault(); this.classList.add('ring-2','ring-rose-500','bg-rose-300/50');"
          ondragleave="this.classList.remove('ring-2','ring-rose-500','bg-rose-300/50');"
          ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-rose-500','bg-rose-300/50'); applyBandAidToZone('${z.id}');"
-         class="doc-drop-zone absolute -translate-x-1/2 cursor-pointer rounded-lg border-2 border-dashed border-rose-500/75 hover:border-rose-600 hover:bg-rose-300/40 transition-all flex items-center justify-center z-30"
-         style="top:${z.top}%; left:${z.left}%; width:${z.w}%; height:${z.h}%;"
+         class="doc-drop-zone absolute -translate-x-1/2 cursor-pointer rounded-lg border-2 border-dashed ${z.en === 'Knee' ? 'border-amber-500/80' : 'border-rose-500/75'} hover:border-rose-600 hover:bg-rose-300/40 transition-all flex items-center justify-center"
+         style="top:${z.top}%; left:${z.left}%; width:${z.w}%; height:${z.h}%; z-index:${z.z || 30};"
          title="${z.pl}">
     </div>
   `).join("");
@@ -2900,11 +2913,15 @@ function applyBandAidToZone(zoneId) {
   const patientBox = document.getElementById("doctorPatientBox");
   const fb = document.getElementById("feedbackBanner");
 
-  if (zone.en.toLowerCase() === q.en.toLowerCase()) {
+  // Ponieważ strefa Kolana (Knee) leży wewnątrz strefy Nogi (Leg), kliknięcie w kolano przy pytaniu o Nogę też jest zaliczane
+  const isMatch = zone.en.toLowerCase() === q.en.toLowerCase() ||
+                  (q.en.toLowerCase() === "leg" && zone.en.toLowerCase() === "knee");
+
+  if (isMatch) {
     state.answeredCurrent = true;
     playEffect("success");
     if (zoneEl) {
-      zoneEl.className = "absolute -translate-x-1/2 flex items-center justify-center z-40 pop-correct";
+      zoneEl.className = "absolute -translate-x-1/2 flex items-center justify-center z-50 pop-correct";
       zoneEl.innerHTML = `<span class="text-3xl drop-shadow-lg">🩹</span>`;
     }
     const dragBtn = document.getElementById("draggableBandAid");

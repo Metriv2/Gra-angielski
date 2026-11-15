@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Akademia Angielskiego: Igor i Hubert - Wersja 12.1</title>
+  <title>Akademia Angielskiego: Igor i Hubert - Wersja 12.6</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -70,7 +70,7 @@
           <span>👤</span> Zmień profil
         </button>
         <div id="activeProfileBadge" onclick="speakAvatarGreeting()" class="cursor-pointer kid-card px-3.5 py-1.5 rounded-2xl font-bold text-xs md:text-sm bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-center gap-2 shadow-sm" title="Kliknij awatara!"></div>
-        <span class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 12.1</span>
+        <span class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 12.6</span>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
@@ -171,7 +171,7 @@
   <div id="guideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-3xl max-w-4xl w-full p-6 border-4 border-sky-400 shadow-2xl text-left max-h-[92vh] overflow-y-auto">
       <div class="flex justify-between items-center pb-3 border-b mb-4">
-        <h2 class="text-2xl font-extrabold text-sky-900">📘 Instrukcja Gry (Wersja 12.1)</h2>
+        <h2 class="text-2xl font-extrabold text-sky-900">📘 Instrukcja Gry (Wersja 12.6)</h2>
         <button onclick="closeGuideModal()" class="text-2xl bg-slate-100 w-10 h-10 rounded-full font-bold">✖</button>
       </div>
       <div class="text-sm space-y-3 text-slate-700">Wszystkie moduły posiadają własną instrukcję głosową. Używaj przycisku "Posłuchaj Sówki" oraz przycisku "🆕 Co nowego?".</div>
@@ -284,7 +284,7 @@
 <!-- ======================= POCZĄTEK CZĘŚCI 2 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 2 z 6: BAZA NAKLEJEK, UBRAŃ, ZWIERZĄT, JEDZENIA I LEKCJI (WERSJA 12.1)
+   CZĘŚĆ 2 z 6: BAZA NAKLEJEK, UBRAŃ, ZWIERZĄT, JEDZENIA I LEKCJI (WERSJA 12.6)
    ============================================================================ */
 
 const CURRENT_GAME_VERSION = "12";
@@ -541,7 +541,7 @@ const FULL_LESSONS_DATABASE = [
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO, CHMURA, AUDIO I AWATAR (WERSJA 12.1)
+   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO, CHMURA, AUDIO I AWATAR (WERSJA 12.6)
    ============================================================================ */
 
 const PROFILE_META = {
@@ -1236,7 +1236,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE, SPIŻARNIA I GARDEROBA (WERSJA 12.1)
+   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE, SPIŻARNIA I GARDEROBA (WERSJA 12.6)
    ============================================================================ */
 
 function getActiveProfileKey() {
@@ -1960,7 +1960,7 @@ function setWardrobeTierFilter(tier) {
 <!-- ======================= POCZĄTEK CZĘŚCI 5 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5 z 6: MENU, ZADANIE DNIA, SMOK, LEKARZ I KOLOROWE PRZEDMIOTY (WERSJA 12.5)
+   CZĘŚĆ 5 z 6: MENU, SMOK, LEKARZ Z SUWAKAMI I ZAGADKI (WERSJA 12.6)
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -2022,18 +2022,13 @@ function generateColorMixRoundQuestions(count) {
 function buildColorMixChoicesForQuestion(q) {
   const targetColor = COLOR_MIX_COLORS.find(c => c.en === q.colorEn) || COLOR_MIX_COLORS[0];
   const targetObj = COLOR_MIX_OBJECTS.find(o => o.en === q.objEn) || COLOR_MIX_OBJECTS[0];
-
   const otherColors = shuffleArray(COLOR_MIX_COLORS.filter(c => c.en !== targetColor.en)).slice(0, 2);
   const threeColors = [targetColor, ...otherColors];
-
   const otherObj = shuffleArray(COLOR_MIX_OBJECTS.filter(o => o.en !== targetObj.en))[0] || COLOR_MIX_OBJECTS[1];
   const twoObjects = [targetObj, otherObj];
-
   const choices = [];
   twoObjects.forEach(obj => {
-    threeColors.forEach(col => {
-      choices.push(buildColorMixEntry(col, obj));
-    });
+    threeColors.forEach(col => choices.push(buildColorMixEntry(col, obj)));
   });
   return shuffleArray(choices);
 }
@@ -2194,7 +2189,7 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 12.5
+        🌟 Akademia Angielskiego • Wersja 12.6
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
@@ -2457,7 +2452,6 @@ function startLesson(lessonId, subMode = null) {
   cancelAllSpeechAndTimers();
   state.currentLessonId = lessonId;
   state.isExamMode = false; state.isHardWordsMode = false; state.isCoopDragonMode = false;
-  // Reset pamięci układanki literkowej przy każdym uruchomieniu lekcji lub pod-trybu
   window._letterTargetWord = "";
   window._letterRoundIdx = -1;
   state.letterBuilt = "";
@@ -2481,6 +2475,7 @@ function startLesson(lessonId, subMode = null) {
   state.currentSubMode = subMode;
   state.shopCart = [];
   state.riddleHintShown = false;
+  state.riddleHintStep = 0;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   state.duelScores = { igor: 0, hubert: 0 }; state.duelTurn = "igor"; state.duelReadyWaiting = state.profile === "duel";
 
@@ -2673,6 +2668,7 @@ function renderCurrentQuestion() {
   state.answeredCurrent = false;
   state.currentQuestionMistakes = 0;
   state.riddleHintShown = false;
+  state.riddleHintStep = 0;
 
   if (state.isCoopDragonMode && (state.dragonBattle.dragonHp <= 0 || state.dragonBattle.teamHp <= 0)) {
     return renderEndRoundScreen();
@@ -2702,7 +2698,6 @@ function renderCurrentQuestion() {
   const activeMode = state.isExamMode && q._examModeType ? q._examModeType : state.currentSubMode;
   const lesson = state.lessons.find(l => l.id === state.currentLessonId) || { id: "mix", type: "vocab", items: state.roundQuestions };
 
-  // Zabezpieczenie przed pozostawaniem liter ze starego pytania/lekcji
   if (activeMode === "letters_game") {
     const rawTarget = (q.en || "").trim().toUpperCase();
     if (window._letterTargetWord !== rawTarget) {
@@ -2762,79 +2757,186 @@ function renderColorMixGame(lesson) {
 }
 
 // ------------------------------------------------------------------------
-// GABINET MAŁEGO LEKARZA: STREFY SKORYGOWANE O 1 POZIOM W DÓŁ NA GŁOWIE + STOPY WYŻEJ
+// GABINET MAŁEGO LEKARZA: SUWAKI KALIBRACJI STREF (ZAPIS W CHMURZE LAPTOP == TELEFON)
 // ------------------------------------------------------------------------
+const DEFAULT_DOCTOR_CALIB = {
+  Head:    { label: "👦 Głowa / Włosy (Head)",     en: "Head",  pl: "Głowa",  paired: false, top: 7.0,  left: 50.0, w: 30.0, h: 9.0,  z: 30 },
+  Eyes:    { label: "👀 Oczy (Eyes)",              en: "Eyes",  pl: "Oczy",   paired: false, top: 18.5, left: 50.0, w: 22.0, h: 4.5,  z: 30 },
+  Ears:    { label: "👂 Uszy - Oba (Ears)",        en: "Ears",  pl: "Uszy",   paired: true,  top: 19.5, dx: 14.5,   w: 6.5,  h: 6.0,  z: 35 },
+  Nose:    { label: "👃 Nos (Nose)",               en: "Nose",  pl: "Nos",    paired: false, top: 22.5, left: 50.0, w: 7.5,  h: 3.5,  z: 40 },
+  Mouth:   { label: "👄 Usta (Mouth)",             en: "Mouth", pl: "Usta",   paired: false, top: 26.5, left: 50.0, w: 12.0, h: 3.8,  z: 35 },
+  Neck:    { label: "🧣 Szyja (Neck)",             en: "Neck",  pl: "Szyja",  paired: false, top: 31.0, left: 50.0, w: 12.0, h: 4.0,  z: 35 },
+  Tummy:   { label: "👕 Brzuch / Tułów (Tummy)",   en: "Tummy", pl: "Brzuch", paired: false, top: 40.0, left: 50.0, w: 18.0, h: 15.0, z: 30 },
+  Arm:     { label: "💪 Ręce - Obie (Arm)",        en: "Arm",   pl: "Ręka",   paired: true,  top: 36.0, dx: 14.5,   w: 8.5,  h: 18.0, z: 30 },
+  Hand:    { label: "✋ Dłonie - Obie (Hand)",     en: "Hand",  pl: "Dłoń",   paired: true,  top: 55.0, dx: 16.5,   w: 9.5,  h: 8.0,  z: 35 },
+  Leg:     { label: "🦵 Nogi - Obie (Leg)",        en: "Leg",   pl: "Noga",   paired: true,  top: 68.0, dx: 6.2,    w: 10.0, h: 17.5, z: 30 },
+  Knee:    { label: "🦵 Kolana - Oba (Knee)",      en: "Knee",  pl: "Kolano", paired: true,  top: 72.5, dx: 6.2,    w: 10.5, h: 6.5,  z: 40 },
+  Foot:    { label: "🦶 Stopy - Obie (Foot)",      en: "Foot",  pl: "Stopa",  paired: true,  top: 86.0, dx: 7.5,    w: 12.5, h: 7.0,  z: 35 }
+};
+
+window._docCalibOpen = false;
+window._docCalibKey = "Head";
+
+function mergeDocCalibWithDefaults(raw) {
+  const merged = {};
+  Object.keys(DEFAULT_DOCTOR_CALIB).forEach(k => {
+    merged[k] = { ...DEFAULT_DOCTOR_CALIB[k], ...((raw && raw[k]) || {}) };
+  });
+  return merged;
+}
+
+function getDoctorCalibration() {
+  const fromCloud = (state.stats.tata && state.stats.tata.equipped && state.stats.tata.equipped.doctorCalib) ||
+                    (state.stats.igor && state.stats.igor.equipped && state.stats.igor.equipped.doctorCalib) ||
+                    (state.stats.hubert && state.stats.hubert.equipped && state.stats.hubert.equipped.doctorCalib);
+  if (fromCloud) return mergeDocCalibWithDefaults(fromCloud);
+  try {
+    const saved = localStorage.getItem("akademia_doc_calib_v1");
+    if (saved) return mergeDocCalibWithDefaults(JSON.parse(saved));
+  } catch (e) {}
+  return mergeDocCalibWithDefaults(null);
+}
+
+function saveDoctorCalibration(cal) {
+  const merged = mergeDocCalibWithDefaults(cal);
+  ["igor", "hubert", "tata"].forEach(k => {
+    if (state.stats[k]) {
+      if (!state.stats[k].equipped) state.stats[k].equipped = {};
+      state.stats[k].equipped.doctorCalib = merged;
+    }
+  });
+  try { localStorage.setItem("akademia_doc_calib_v1", JSON.stringify(merged)); } catch (e) {}
+  saveCloudData();
+}
+
 function getDoctorZonesForActivePlayer() {
   const isAdvanced = state.profile === "hubert" || state.profile === "tata";
-  const baseZones = [
-    // Różowy: Głowa / Włosy (obniżone na same włosy)
-    { id: "head_hair", en: "Head",  pl: "Głowa",  top: 12.5, left: 50.0, w: 25.0, h: 7.8,  z: 30 },
-    // Biały: Oczy (obniżone z grzywki prosto na oczy)
-    { id: "eyes",      en: "Eyes",  pl: "Oczy",   top: 21.2, left: 50.0, w: 18.5, h: 3.6,  z: 30 },
-    // Pomarańczowy: Uszy (obniżone na poziom oczu/nosa prosto na małżowiny uszne)
-    { id: "ear_l",     en: "Ears",  pl: "Uszy",   top: 22.0, left: 37.8, w: 4.8,  h: 4.8,  z: 35 },
-    { id: "ear_r",     en: "Ears",  pl: "Uszy",   top: 22.0, left: 62.2, w: 4.8,  h: 4.8,  z: 35 },
-    // Brązowy: Nos (w miejscu, gdzie wcześniej były usta)
-    { id: "nose",      en: "Nose",  pl: "Nos",    top: 24.6, left: 50.0, w: 6.5,  h: 3.0,  z: 40 },
-    // Zielony: Usta (dokładnie w miejscu, gdzie na zrzucie była szyja: ~28%)
-    { id: "mouth",     en: "Mouth", pl: "Usta",   top: 28.0, left: 50.0, w: 10.5, h: 3.3,  z: 35 },
-    // Czerwony: Stopy (podniesione wyżej bezpośrednio na stopy)
-    { id: "foot_l",    en: "Foot",  pl: "Stopa",  top: 81.2, left: 43.8, w: 10.5, h: 5.8,  z: 35 },
-    { id: "foot_r",    en: "Foot",  pl: "Stopa",  top: 81.2, left: 56.2, w: 10.5, h: 5.8,  z: 35 }
-  ];
+  const cal = getDoctorCalibration();
+  const keys = isAdvanced
+    ? ["Head", "Eyes", "Ears", "Nose", "Mouth", "Neck", "Tummy", "Arm", "Hand", "Leg", "Knee", "Foot"]
+    : ["Head", "Eyes", "Ears", "Nose", "Mouth", "Arm", "Leg", "Foot"];
 
-  if (isAdvanced) {
-    return [
-      ...baseZones,
-      // Jasnoniebieski: Szyja (obniżona pod brodę nad podkoszulek)
-      { id: "neck",   en: "Neck",  pl: "Szyja",  top: 32.2, left: 50.0, w: 10.5, h: 3.6,  z: 35 },
-      // Tułów: Brzuch
-      { id: "tummy",  en: "Tummy", pl: "Brzuch", top: 41.0, left: 50.0, w: 15.0, h: 13.0, z: 30 },
-      // Szary: Ręce (ramiona i przedramiona)
-      { id: "arm_l",  en: "Arm",   pl: "Ręka",   top: 36.5, left: 38.0, w: 7.2,  h: 15.5, z: 30 },
-      { id: "arm_r",  en: "Arm",   pl: "Ręka",   top: 36.5, left: 62.0, w: 7.2,  h: 15.5, z: 30 },
-      // Czarny: Dłonie (obniżone na same dłonie i palce)
-      { id: "hand_l", en: "Hand",  pl: "Dłoń",   top: 52.5, left: 36.2, w: 7.8,  h: 7.2,  z: 35 },
-      { id: "hand_r", en: "Hand",  pl: "Dłoń",   top: 52.5, left: 63.8, w: 7.8,  h: 7.2,  z: 35 },
-      // Niebieski: Nogi (od spodenek do kostek)
-      { id: "leg_l",  en: "Leg",   pl: "Noga",   top: 66.5, left: 44.8, w: 8.5,  h: 14.5, z: 30 },
-      { id: "leg_r",  en: "Leg",   pl: "Noga",   top: 66.5, left: 55.2, w: 8.5,  h: 14.5, z: 30 },
-      // Żółty: Kolana (na kreskach kolan, wyższy z-index)
-      { id: "knee_l", en: "Knee",  pl: "Kolano", top: 70.5, left: 44.8, w: 8.5,  h: 5.5,  z: 40 },
-      { id: "knee_r", en: "Knee",  pl: "Kolano", top: 70.5, left: 55.2, w: 8.5,  h: 5.5,  z: 40 }
-    ];
-  } else {
-    // Igor (4 l.): 8 podstawowych części ciała
-    return [
-      ...baseZones,
-      { id: "arm_l",  en: "Arm",   pl: "Ręka",   top: 36.5, left: 37.2, w: 8.0,  h: 22.5, z: 30 },
-      { id: "arm_r",  en: "Arm",   pl: "Ręka",   top: 36.5, left: 62.8, w: 8.0,  h: 22.5, z: 30 },
-      { id: "leg_l",  en: "Leg",   pl: "Noga",   top: 66.5, left: 44.8, w: 8.5,  h: 14.5, z: 30 },
-      { id: "leg_r",  en: "Leg",   pl: "Noga",   top: 66.5, left: 55.2, w: 8.5,  h: 14.5, z: 30 }
-    ];
-  }
+  const zones = [];
+  keys.forEach(k => {
+    const c = cal[k];
+    if (!c) return;
+    if (c.paired) {
+      zones.push({ id: `${k}_L`, groupKey: k, en: c.en, pl: c.pl, top: c.top, left: +(50 - c.dx).toFixed(1), w: c.w, h: c.h, z: c.z });
+      zones.push({ id: `${k}_R`, groupKey: k, en: c.en, pl: c.pl, top: c.top, left: +(50 + c.dx).toFixed(1), w: c.w, h: c.h, z: c.z });
+    } else {
+      zones.push({ id: k, groupKey: k, en: c.en, pl: c.pl, top: c.top, left: c.left, w: c.w, h: c.h, z: c.z });
+    }
+  });
+  return zones;
+}
+
+function renderDoctorZonesInnerHtml() {
+  const activeZones = getDoctorZonesForActivePlayer();
+  const activeKey = window._docCalibKey || "Head";
+  return activeZones.map(z => {
+    const isCalibSelected = window._docCalibOpen && z.groupKey === activeKey;
+    const borderCls = isCalibSelected
+      ? "border-sky-600 bg-sky-300/50 ring-2 ring-sky-500"
+      : (z.en === "Knee" ? "border-amber-500/85 hover:bg-rose-300/40" : "border-rose-500/75 hover:bg-rose-300/40");
+    return `
+      <div id="docZone_${z.id}"
+           data-en="${z.en}" data-pl="${z.pl}"
+           onclick="applyBandAidToZone('${z.id}')"
+           ondragover="event.preventDefault(); this.classList.add('ring-2','ring-rose-500','bg-rose-300/50');"
+           ondragleave="this.classList.remove('ring-2','ring-rose-500','bg-rose-300/50');"
+           ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-rose-500','bg-rose-300/50'); applyBandAidToZone('${z.id}');"
+           class="doc-drop-zone absolute -translate-x-1/2 cursor-pointer rounded-lg border-2 border-dashed ${borderCls} transition-colors flex items-center justify-center"
+           style="top:${z.top}%; left:${z.left}%; width:${z.w}%; height:${z.h}%; z-index:${isCalibSelected ? 45 : (z.z || 30)};"
+           title="${z.pl}">
+        ${isCalibSelected ? `<span class="text-[9px] font-extrabold bg-sky-700 text-white px-1 rounded shadow pointer-events-none">${z.pl}</span>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function renderDoctorCalibSlidersHtml() {
+  if (!window._docCalibOpen) return "";
+  const cal = getDoctorCalibration();
+  const activeKey = window._docCalibKey || "Head";
+  const cfg = cal[activeKey] || cal.Head;
+
+  return `
+    <div class="w-full max-w-md mx-auto mt-3 p-3 bg-indigo-50/90 rounded-2xl border-2 border-indigo-300 text-left text-xs space-y-2 shadow-sm">
+      <div class="font-extrabold text-indigo-950">🔧 Wybierz część ciała do dopasowania:</div>
+      <select onchange="window._docCalibKey=this.value; refreshDoctorZonesAndSliders();" class="w-full p-1.5 rounded-xl border border-indigo-300 font-bold text-xs bg-white">
+        ${Object.keys(cal).map(k => `<option value="${k}" ${k === activeKey ? "selected" : ""}>${cal[k].label}</option>`).join("")}
+      </select>
+      <div>
+        <div class="flex justify-between font-bold"><span>⬆️⬇️ Pozycja Góra/Dół (top):</span><span id="lblDocTop">${cfg.top}%</span></div>
+        <input type="range" min="0" max="94" step="0.5" value="${cfg.top}" oninput="changeDocCalibVal('${activeKey}','top',this.value)" class="w-full accent-indigo-600" />
+      </div>
+      ${cfg.paired ? `
+        <div>
+          <div class="flex justify-between font-bold"><span>↔️ Rozstaw na boki od środka (dx):</span><span id="lblDocPos">${cfg.dx}%</span></div>
+          <input type="range" min="2" max="35" step="0.5" value="${cfg.dx}" oninput="changeDocCalibVal('${activeKey}','dx',this.value)" class="w-full accent-indigo-600" />
+        </div>
+      ` : `
+        <div>
+          <div class="flex justify-between font-bold"><span>⬅️➡️ Pozycja Lewo/Prawo (left):</span><span id="lblDocPos">${cfg.left}%</span></div>
+          <input type="range" min="20" max="80" step="0.5" value="${cfg.left}" oninput="changeDocCalibVal('${activeKey}','left',this.value)" class="w-full accent-indigo-600" />
+        </div>
+      `}
+      <div>
+        <div class="flex justify-between font-bold"><span>↔️ Szerokość ramki (w):</span><span id="lblDocW">${cfg.w}%</span></div>
+        <input type="range" min="3" max="45" step="0.5" value="${cfg.w}" oninput="changeDocCalibVal('${activeKey}','w',this.value)" class="w-full accent-indigo-600" />
+      </div>
+      <div>
+        <div class="flex justify-between font-bold"><span>↕️ Wysokość ramki (h):</span><span id="lblDocH">${cfg.h}%</span></div>
+        <input type="range" min="2" max="35" step="0.5" value="${cfg.h}" oninput="changeDocCalibVal('${activeKey}','h',this.value)" class="w-full accent-indigo-600" />
+      </div>
+      <div class="pt-1 flex justify-between items-center">
+        <button onclick="resetDocCalibDefaults()" class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold rounded-lg text-[10px]">Resetuj domyślne</button>
+        <span class="text-[10px] text-emerald-700 font-extrabold">✓ Zapisano w chmurze (Laptop = Telefon)</span>
+      </div>
+    </div>
+  `;
+}
+
+function toggleDocCalibPanel() {
+  window._docCalibOpen = !window._docCalibOpen;
+  refreshDoctorZonesAndSliders();
+}
+
+function refreshDoctorZonesAndSliders() {
+  const zCont = document.getElementById("doctorZonesLayer");
+  if (zCont) zCont.innerHTML = renderDoctorZonesInnerHtml();
+  const sCont = document.getElementById("doctorCalibSlidersBox");
+  if (sCont) sCont.innerHTML = renderDoctorCalibSlidersHtml();
+}
+
+function changeDocCalibVal(partKey, prop, val) {
+  const cal = getDoctorCalibration();
+  if (!cal[partKey]) return;
+  cal[partKey][prop] = parseFloat(val);
+  saveDoctorCalibration(cal);
+
+  const zCont = document.getElementById("doctorZonesLayer");
+  if (zCont) zCont.innerHTML = renderDoctorZonesInnerHtml();
+
+  if (prop === "top") { const el = document.getElementById("lblDocTop"); if (el) el.textContent = val + "%"; }
+  if (prop === "dx" || prop === "left") { const el = document.getElementById("lblDocPos"); if (el) el.textContent = val + "%"; }
+  if (prop === "w") { const el = document.getElementById("lblDocW"); if (el) el.textContent = val + "%"; }
+  if (prop === "h") { const el = document.getElementById("lblDocH"); if (el) el.textContent = val + "%"; }
+}
+
+function resetDocCalibDefaults() {
+  if (!confirm("Czy na pewno przywrócić domyślne pozycje ramek części ciała?")) return;
+  localStorage.removeItem("akademia_doc_calib_v1");
+  saveDoctorCalibration(DEFAULT_DOCTOR_CALIB);
+  refreshDoctorZonesAndSliders();
 }
 
 function renderDoctorGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const phrase = q.hurtPhrase || `Ouch! My ${q.en.toLowerCase()} hurts!`;
-  const activeZones = getDoctorZonesForActivePlayer();
   const isAdvanced = state.profile === "hubert" || state.profile === "tata";
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
-
-  const zonesHtml = activeZones.map(z => `
-    <div id="docZone_${z.id}"
-         data-en="${z.en}" data-pl="${z.pl}"
-         onclick="applyBandAidToZone('${z.id}')"
-         ondragover="event.preventDefault(); this.classList.add('ring-2','ring-rose-500','bg-rose-300/50');"
-         ondragleave="this.classList.remove('ring-2','ring-rose-500','bg-rose-300/50');"
-         ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-rose-500','bg-rose-300/50'); applyBandAidToZone('${z.id}');"
-         class="doc-drop-zone absolute -translate-x-1/2 cursor-pointer rounded-lg border-2 border-dashed ${z.en === 'Knee' ? 'border-amber-500/85' : 'border-rose-500/75'} hover:border-rose-600 hover:bg-rose-300/40 transition-all flex items-center justify-center"
-         style="top:${z.top}%; left:${z.left}%; width:${z.w}%; height:${z.h}%; z-index:${z.z || 30};"
-         title="${z.pl}">
-    </div>
-  `).join("");
 
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
@@ -2856,29 +2958,36 @@ function renderDoctorGame(lesson) {
       <div id="feedbackBanner" class="min-h-[32px] font-bold text-sm md:text-base mb-2 flex items-center justify-center"></div>
 
       <div class="flex flex-col md:flex-row items-center justify-center gap-6 my-1">
-        <div id="doctorPatientBox" class="relative select-none bg-gradient-to-b from-sky-50 to-rose-50 rounded-3xl border-4 border-rose-300 shadow-inner overflow-hidden shrink-0" style="width: 340px; height: 411px;">
-          <div class="relative w-full h-full" style="transform: scale(1.22); transform-origin: 50% 50%;">
-            <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain pointer-events-none z-10" />
-            ${zonesHtml}
+        <!-- Sztywny wymiar 280x340px (mieści się na telefonie i laptopie 1:1 bez ściskania) -->
+        <div id="doctorPatientBox" class="relative select-none bg-gradient-to-b from-sky-50 to-rose-50 rounded-3xl border-4 border-rose-300 shadow-inner overflow-hidden shrink-0" style="width: 280px; height: 340px; min-width: 280px; min-height: 340px;">
+          <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-fill pointer-events-none z-10" />
+          <div id="doctorZonesLayer" class="absolute inset-0 w-full h-full z-20">
+            ${renderDoctorZonesInnerHtml()}
           </div>
         </div>
 
-        <div class="flex flex-col items-center justify-center p-5 rounded-3xl bg-rose-50 border-3 border-rose-300 shadow-md w-52">
-          <div class="text-xs font-extrabold text-rose-900 uppercase mb-2">🧰 Apteczka Lekarza</div>
-          <div id="draggableBandAid"
-               draggable="true"
-               ondragstart="if(event.dataTransfer) event.dataTransfer.setData('text/plain','bandaid');"
-               ontouchstart="startBandAidTouch(event)"
-               ontouchmove="moveBandAidTouch(event)"
-               ontouchend="endBandAidTouch(event)"
-               class="cursor-grab active:cursor-grabbing w-28 h-28 rounded-3xl bg-white border-4 border-rose-400 shadow-lg flex flex-col items-center justify-center hover:scale-110 transition-transform select-none"
-               style="touch-action: none;">
-            <span class="text-6xl">🩹</span>
-            <span class="text-[11px] font-extrabold text-rose-800 mt-1">Chwyć plaster!</span>
+        <div class="flex flex-col items-center justify-center">
+          <div class="flex flex-col items-center justify-center p-5 rounded-3xl bg-rose-50 border-3 border-rose-300 shadow-md w-52">
+            <div class="text-xs font-extrabold text-rose-900 uppercase mb-2">🧰 Apteczka Lekarza</div>
+            <div id="draggableBandAid"
+                 draggable="true"
+                 ondragstart="if(event.dataTransfer) event.dataTransfer.setData('text/plain','bandaid');"
+                 ontouchstart="startBandAidTouch(event)"
+                 ontouchmove="moveBandAidTouch(event)"
+                 ontouchend="endBandAidTouch(event)"
+                 class="cursor-grab active:cursor-grabbing w-28 h-28 rounded-3xl bg-white border-4 border-rose-400 shadow-lg flex flex-col items-center justify-center hover:scale-110 transition-transform select-none"
+                 style="touch-action: none;">
+              <span class="text-6xl">🩹</span>
+              <span class="text-[11px] font-extrabold text-rose-800 mt-1">Chwyć plaster!</span>
+            </div>
+            <p class="text-[11px] font-bold text-slate-600 mt-3 leading-snug">Przeciągnij plasterek na bolącą część ciała lub dotknij jej bezpośrednio na chłopcu!</p>
           </div>
-          <p class="text-[11px] font-bold text-slate-600 mt-3 leading-snug">Przeciągnij plasterek na bolącą część ciała lub dotknij jej bezpośrednio na chłopcu!</p>
+          <button onclick="toggleDocCalibPanel()" class="mt-3 px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-xs border border-indigo-300">
+            🔧 Dopasuj ramki części ciała (Suwaki)
+          </button>
         </div>
       </div>
+      <div id="doctorCalibSlidersBox">${renderDoctorCalibSlidersHtml()}</div>
     </div>
   `;
   speakSequence([{ lang: "pl", text: "Przyklej plasterek! Pacjent mówi:" }, { lang: "en", text: phrase }]);
@@ -2964,16 +3073,39 @@ function applyBandAidToZone(zoneId) {
 }
 
 // ------------------------------------------------------------------------
-// ZAGADKI DETEKTYWA SÓWKI (CZYTANIE TYLKO PO ANGIELSKU + PODPOWIEDŹ BEZ ODPOWIEDZI)
+// ZAGADKI DETEKTYWA SÓWKI (DWUSTOPNIOWA PODPOWIEDŹ GŁOSOWA: 1. LITERA, 2. OPIS PL)
 // ------------------------------------------------------------------------
+function handleRiddleHintClick() {
+  const q = state.roundQuestions[state.roundIndex];
+  if (!q) return;
+  const firstLetter = (q.en || "?")[0].toUpperCase();
+  const hintBox = document.getElementById("riddleHintBox");
+  const hintBtn = document.getElementById("riddleHintBtn");
+
+  if (!state.riddleHintStep || state.riddleHintStep === 0) {
+    state.riddleHintStep = 1;
+    if (hintBox) {
+      hintBox.classList.remove("hidden");
+      hintBox.innerHTML = `💡 Podpowiedź 1: Szukane słowo po angielsku zaczyna się na literę <strong>"${firstLetter}"</strong>!`;
+    }
+    if (hintBtn) hintBtn.innerHTML = `💡 Druga podpowiedź (po polsku)`;
+    speakSequence([{ lang: "pl", text: `Podpowiedź! Szukane słowo zaczyna się na literę: ${firstLetter}!` }]);
+  } else {
+    state.riddleHintStep = 2;
+    if (hintBox) {
+      hintBox.classList.remove("hidden");
+      hintBox.innerHTML = `💡 Litera: <strong>"${firstLetter}"</strong> &nbsp;•&nbsp; Podpowiedź po polsku: <strong>"${q.cluePl || ''}"</strong>`;
+    }
+    speakSequence([{ lang: "pl", text: `Druga podpowiedź po polsku: ${q.cluePl || ''}` }]);
+  }
+}
+
 function renderRiddlesGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const pool = typeof RIDDLES_POOL !== "undefined" ? RIDDLES_POOL : lesson.items;
   const choices = shuffleArray([q, ...shuffleArray(pool.filter(it => it.en !== q.en)).slice(0, 2)]);
   window._currentChoices = choices;
-
-  const firstLetter = (q.en || "?")[0].toUpperCase();
-  const safeHintText = `Zaczyna się na literę "${firstLetter}" • Podpowiedź: ${q.cluePl || ""}`;
+  state.riddleHintStep = 0;
 
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
@@ -2983,11 +3115,11 @@ function renderRiddlesGame(lesson) {
       <div class="text-xs font-extrabold text-amber-800 uppercase mb-1">🕵️‍♂️ Zagadka Detektywa Sówki (Listen in English!)</div>
       <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-300 mb-3">
         <div class="text-xl md:text-2xl font-extrabold text-slate-900 mb-2">🦉 "${q.clueEn}"</div>
-        <div class="mt-2 flex justify-center gap-2">
+        <div class="mt-2 flex flex-wrap justify-center gap-2">
           <button onclick="speakSequence([{lang:'en',text:'${q.clueEn.replace(/'/g,"\\'")}'}])" class="kid-card px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow">🔊 Posłuchaj po angielsku</button>
-          <button onclick="document.getElementById('riddleHintBox').classList.remove('hidden'); playEffect('beep');" class="kid-card px-4 py-1.5 rounded-xl bg-white border-2 border-amber-400 text-amber-900 font-bold text-xs">💡 Podpowiedź</button>
+          <button id="riddleHintBtn" onclick="handleRiddleHintClick()" class="kid-card px-4 py-1.5 rounded-xl bg-white border-2 border-amber-400 text-amber-900 font-bold text-xs">💡 Podpowiedź (1. Litera / 2. Opis PL)</button>
         </div>
-        <div id="riddleHintBox" class="hidden mt-2.5 text-xs font-extrabold text-emerald-800 bg-emerald-100 py-1.5 px-3 rounded-xl inline-block border border-emerald-300">💡 ${safeHintText}</div>
+        <div id="riddleHintBox" class="hidden mt-2.5 text-xs font-extrabold text-emerald-800 bg-emerald-100 py-1.5 px-3 rounded-xl inline-block border border-emerald-300"></div>
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -3254,10 +3386,11 @@ function renderEndRoundScreen() {
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 5 z 6 ======================== -->
+  
 <!-- ======================= POCZĄTEK CZĘŚCI 6 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 6 z 6: UKŁADANKA LITERKOWA (BEZ PODPOWIEDZI SŁOWA), MEMORY, WYMOWA I PANEL RODZICA (WERSJA 12.1)
+   CZĘŚĆ 6 z 6: UKŁADANKA LITERKOWA (BEZ PODPOWIEDZI SŁOWA), MEMORY, WYMOWA I PANEL RODZICA (WERSJA 12.6)
    ============================================================================ */
 
 // ------------------------------------------------------------------------
@@ -3919,7 +4052,7 @@ function renderParentTestCenter() {
 
   box.innerHTML = `
     <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 12.1)</h3>
+      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 12.6)</h3>
       <span class="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-950 font-extrabold text-xs">Słówka/Lekcje w teście: ${totalPending}</span>
     </div>
     ${v12StatusBox}

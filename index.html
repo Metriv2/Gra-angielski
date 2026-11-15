@@ -1960,8 +1960,83 @@ function setWardrobeTierFilter(tier) {
 <!-- ======================= POCZĄTEK CZĘŚCI 5 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5 z 6: MENU, ZADANIE DNIA, WALKA ZE SMOKIEM I MAŁY LEKARZ (WERSJA 12.2)
+   CZĘŚĆ 5 z 6: MENU, ZADANIE DNIA, SMOK, LEKARZ I KOLOROWE PRZEDMIOTY (WERSJA 12.3)
    ============================================================================ */
+
+const COLOR_MIX_COLORS = [
+  { en: "Red",    dot: "🔴", bg: "#fee2e2", border: "#ef4444", m: "Czerwony",     f: "Czerwona",     n: "Czerwone" },
+  { en: "Blue",   dot: "🔵", bg: "#dbeafe", border: "#3b82f6", m: "Niebieski",    f: "Niebieska",    n: "Niebieskie" },
+  { en: "Green",  dot: "🟢", bg: "#dcfce7", border: "#22c55e", m: "Zielony",      f: "Zielona",      n: "Zielone" },
+  { en: "Yellow", dot: "🟡", bg: "#fef9c3", border: "#eab308", m: "Żółty",        f: "Żółta",        n: "Żółte" },
+  { en: "Orange", dot: "🟠", bg: "#ffedd5", border: "#f97316", m: "Pomarańczowy", f: "Pomarańczowa", n: "Pomarańczowe" },
+  { en: "Purple", dot: "🟣", bg: "#f3e8ff", border: "#a855f7", m: "Fioletowy",    f: "Fioletowa",    n: "Fioletowe" },
+  { en: "Pink",   dot: "🌸", bg: "#fce7f3", border: "#ec4899", m: "Różowy",       f: "Różowa",       n: "Różowe" },
+  { en: "Brown",  dot: "🟤", bg: "#f5ebe6", border: "#78350f", m: "Brązowy",      f: "Brązowa",      n: "Brązowe" },
+  { en: "Black",  dot: "⚫", bg: "#e2e8f0", border: "#1e293b", m: "Czarny",       f: "Czarna",       n: "Czarne" },
+  { en: "White",  dot: "⚪", bg: "#f8fafc", border: "#94a3b8", m: "Biały",        f: "Biała",        n: "Białe" }
+];
+
+const COLOR_MIX_OBJECTS = [
+  { en: "carrot",     pl: "marchewka",  gender: "f", icon: "🥕" },
+  { en: "apple",      pl: "jabłko",     gender: "n", icon: "🍎" },
+  { en: "banana",     pl: "banan",      gender: "m", icon: "🍌" },
+  { en: "strawberry", pl: "truskawka",  gender: "f", icon: "🍓" },
+  { en: "broccoli",   pl: "brokuł",     gender: "m", icon: "🥦" },
+  { en: "tomato",     pl: "pomidor",    gender: "m", icon: "🍅" },
+  { en: "cucumber",   pl: "ogórek",     gender: "m", icon: "🥒" },
+  { en: "pear",       pl: "gruszka",    gender: "f", icon: "🍐" },
+  { en: "watermelon", pl: "arbuz",      gender: "m", icon: "🍉" },
+  { en: "grapes",     pl: "winogrono",  gender: "n", icon: "🍇" },
+  { en: "frog",       pl: "żabka",      gender: "f", icon: "🐸" },
+  { en: "bear",       pl: "niedźwiedź", gender: "m", icon: "🐻" },
+  { en: "pig",        pl: "świnka",     gender: "f", icon: "🐷" },
+  { en: "whale",      pl: "wieloryb",   gender: "m", icon: "🐳" }
+];
+
+function buildColorMixEntry(colorObj, itemObj) {
+  const adjPl = colorObj[itemObj.gender] || colorObj.m;
+  return {
+    en: `${colorObj.en} ${itemObj.en}`,
+    pl: `${adjPl} ${itemObj.pl}`,
+    colorEn: colorObj.en,
+    objEn: itemObj.en,
+    colorBg: colorObj.bg,
+    colorBorder: colorObj.border,
+    colorDot: colorObj.dot,
+    objIcon: itemObj.icon,
+    icon: `${colorObj.dot}${itemObj.icon}`,
+    age: [4, 6]
+  };
+}
+
+function generateColorMixRoundQuestions(count) {
+  const list = [];
+  for (let i = 0; i < count; i++) {
+    const col = COLOR_MIX_COLORS[Math.floor(Math.random() * COLOR_MIX_COLORS.length)];
+    const obj = COLOR_MIX_OBJECTS[Math.floor(Math.random() * COLOR_MIX_OBJECTS.length)];
+    list.push(buildColorMixEntry(col, obj));
+  }
+  return list;
+}
+
+function buildColorMixChoicesForQuestion(q) {
+  const targetColor = COLOR_MIX_COLORS.find(c => c.en === q.colorEn) || COLOR_MIX_COLORS[0];
+  const targetObj = COLOR_MIX_OBJECTS.find(o => o.en === q.objEn) || COLOR_MIX_OBJECTS[0];
+
+  const otherColors = shuffleArray(COLOR_MIX_COLORS.filter(c => c.en !== targetColor.en)).slice(0, 2);
+  const threeColors = [targetColor, ...otherColors];
+
+  const otherObj = shuffleArray(COLOR_MIX_OBJECTS.filter(o => o.en !== targetObj.en))[0] || COLOR_MIX_OBJECTS[1];
+  const twoObjects = [targetObj, otherObj];
+
+  const choices = [];
+  twoObjects.forEach(obj => {
+    threeColors.forEach(col => {
+      choices.push(buildColorMixEntry(col, obj));
+    });
+  });
+  return shuffleArray(choices);
+}
 
 function upgradeBodyLessonForHubert(lessonsArr) {
   const bodyLesson = (lessonsArr || []).find(l => l.id === "body_hurts");
@@ -2119,7 +2194,7 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 12.2
+        🌟 Akademia Angielskiego • Wersja 12.3
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
@@ -2400,12 +2475,16 @@ function startLesson(lessonId, subMode = null) {
   state.duelScores = { igor: 0, hubert: 0 }; state.duelTurn = "igor"; state.duelReadyWaiting = state.profile === "duel";
 
   const totalQ = state.profile === "duel" ? 16 : state.questionsPerRound;
+  if (subMode === "color_mix_game") {
+    state.roundQuestions = generateColorMixRoundQuestions(totalQ);
+    return renderCurrentQuestion();
+  }
+
   const visibleItems = getVisibleLessonItems(lesson.items, true);
   let pool = visibleItems;
 
   if (subMode === "shop_cart_game") pool = visibleItems.filter(i => i.isProduct);
   else if (subMode === "shop_phrases_game") pool = visibleItems.filter(i => i.isPhrase);
-  else if (subMode === "color_mix_game" && typeof COLOR_MIX_POOL !== "undefined") pool = COLOR_MIX_POOL;
   else if (subMode === "riddles_game" && typeof RIDDLES_POOL !== "undefined") pool = RIDDLES_POOL;
   else if (subMode === "letters_game") pool = visibleItems.filter(i => /^[a-zA-Z]+$/.test(i.en.trim()));
 
@@ -2619,8 +2698,46 @@ function renderCurrentQuestion() {
   if (activeMode === "shop_cart_game") return renderShopCartGame(lesson);
   if (activeMode === "doctor_game") return renderDoctorGame(lesson);
   if (activeMode === "riddles_game") return renderRiddlesGame(lesson);
+  if (activeMode === "color_mix_game") return renderColorMixGame(lesson);
   
   renderUniversalVisualQuiz(lesson);
+}
+
+// ------------------------------------------------------------------------
+// KOLOROWE PRZEDMIOTY (3 TE SAME OWOCE/WARZYWA W RÓŻNYCH KOLORACH + 3 INNE)
+// ------------------------------------------------------------------------
+function renderColorMixGame(lesson) {
+  const q = state.roundQuestions[state.roundIndex];
+  const choices = buildColorMixChoicesForQuestion(q);
+  window._currentChoices = choices;
+
+  const mc = document.getElementById("mainContainer");
+  if (!mc) return;
+
+  mc.innerHTML = `
+    ${renderTopGameBar(lesson)}
+    <div class="bg-white rounded-3xl shadow-xl border-4 border-indigo-400 p-4 md:p-6 text-center">
+      <div class="text-xs font-extrabold text-indigo-700 uppercase mb-1">🎨 Kolorowe Przedmioty (Zwróć uwagę na kolor ORAZ na przedmiot!)</div>
+      <div class="flex items-center justify-between bg-indigo-50 p-3 rounded-2xl border-2 border-indigo-200 mb-3 drop-shadow-sm">
+        <button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-12 h-12 rounded-2xl bg-indigo-600 text-white text-2xl shadow flex items-center justify-center">🔊</button>
+        <div class="text-xl md:text-3xl font-extrabold text-slate-900 flex-1 px-2 tracking-wide">"${q.en}"</div>
+        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-indigo-300 text-indigo-900">3 kolory × 2 przedmioty</span>
+      </div>
+      <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+        ${choices.map((it, idx) => `
+          <div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-indigo-400 p-4 shadow flex flex-col items-center justify-between">
+            <div class="w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center relative my-1 shadow-inner float-anim" style="background-color: ${it.colorBg}; border: 5px solid ${it.colorBorder};">
+              <span class="text-5xl md:text-6xl drop-shadow">${it.objIcon}</span>
+              <span class="absolute -top-2 -right-2 text-2xl drop-shadow">${it.colorDot}</span>
+            </div>
+            <div id="vLabel_${idx}" class="w-full py-2 px-2 mt-2 rounded-xl bg-white border font-bold text-slate-700 text-sm shadow-sm uppercase tracking-wide">Wybierz</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+  speakSequence([{ lang: "pl", text: "Wskaż:" }, { lang: "en", text: q.en }]);
 }
 
 // ------------------------------------------------------------------------
@@ -2629,24 +2746,17 @@ function renderCurrentQuestion() {
 function getDoctorZonesForActivePlayer() {
   const isAdvanced = state.profile === "hubert" || state.profile === "tata";
   const baseZones = [
-    // Włosy / Głowa
     { id: "head_hair", en: "Head",  pl: "Głowa",  top: 9.5,  left: 50,   w: 22,  h: 7.5 },
-    // Oczy
     { id: "eyes",      en: "Eyes",  pl: "Oczy",   top: 17.5, left: 50,   w: 16,  h: 3.6 },
-    // Uszy (lewe i prawe ucho bezpośrednio przy głowie)
     { id: "ear_l",     en: "Ears",  pl: "Uszy",   top: 18.5, left: 38.2, w: 5.2, h: 5.0 },
     { id: "ear_r",     en: "Ears",  pl: "Uszy",   top: 18.5, left: 61.8, w: 5.2, h: 5.0 },
-    // Nos
     { id: "nose",      en: "Nose",  pl: "Nos",    top: 21.3, left: 50,   w: 7.5, h: 2.9 },
-    // Usta / Buzia
     { id: "mouth",     en: "Mouth", pl: "Usta",   top: 24.5, left: 50,   w: 11,  h: 3.3 },
-    // Stopy (lewa i prawa stopa)
     { id: "foot_l",    en: "Foot",  pl: "Stopa",  top: 83.8, left: 44.2, w: 9.5, h: 6.5 },
     { id: "foot_r",    en: "Foot",  pl: "Stopa",  top: 83.8, left: 55.8, w: 9.5, h: 6.5 }
   ];
 
   if (isAdvanced) {
-    // Hubert (6 l.) i Tata: ma dodatkowo Szyję, Brzuch, Dłonie oraz Kolana
     return [
       ...baseZones,
       { id: "neck",   en: "Neck",  pl: "Szyja",  top: 28.5, left: 50,   w: 9.5, h: 4.0 },
@@ -2661,7 +2771,6 @@ function getDoctorZonesForActivePlayer() {
       { id: "leg_r",  en: "Leg",   pl: "Noga",   top: 74.2, left: 55.2, w: 8.2, h: 9.0 }
     ];
   } else {
-    // Igor (4 l.): mniej miejsc do przyklejenia (całe ręce i całe nogi bez rozbicia na dłonie/kolana/szyję/brzuch)
     return [
       ...baseZones,
       { id: "arm_l",  en: "Arm",   pl: "Ręka",   top: 34.5, left: 37.5, w: 7.5, h: 21.5 },
@@ -2713,7 +2822,6 @@ function renderDoctorGame(lesson) {
       <div id="feedbackBanner" class="min-h-[32px] font-bold text-sm md:text-base mb-2 flex items-center justify-center"></div>
 
       <div class="flex flex-col md:flex-row items-center justify-center gap-6 my-1">
-        <!-- Duży Pacjent (proporcje 240:290 = 340:411 + powiększenie 1.22x wewnątrz ramki) -->
         <div id="doctorPatientBox" class="relative select-none bg-gradient-to-b from-sky-50 to-rose-50 rounded-3xl border-4 border-rose-300 shadow-inner overflow-hidden shrink-0" style="width: 340px; height: 411px;">
           <div class="relative w-full h-full" style="transform: scale(1.22); transform-origin: 50% 50%;">
             <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain pointer-events-none z-10" />
@@ -2721,7 +2829,6 @@ function renderDoctorGame(lesson) {
           </div>
         </div>
 
-        <!-- Apteczka z przeciąganym plasterkiem -->
         <div class="flex flex-col items-center justify-center p-5 rounded-3xl bg-rose-50 border-3 border-rose-300 shadow-md w-52">
           <div class="text-xs font-extrabold text-rose-900 uppercase mb-2">🧰 Apteczka Lekarza</div>
           <div id="draggableBandAid"
@@ -2899,16 +3006,12 @@ function renderUniversalVisualQuiz(lesson) {
   const numChoices = isAdvanced ? 6 : 3;
 
   let allPool = [];
-  if (state.currentSubMode === "color_mix_game" && typeof COLOR_MIX_POOL !== "undefined") {
-    allPool = COLOR_MIX_POOL;
-  } else {
-    state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
-      if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
-        getVisibleLessonItems(l.items, true).forEach(it => allPool.push(it));
-      }
-    });
-  }
-  const visLessonItems = state.currentSubMode === "color_mix_game" ? allPool : getVisibleLessonItems(lesson.items, true);
+  state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
+    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
+      getVisibleLessonItems(l.items, true).forEach(it => allPool.push(it));
+    }
+  });
+  const visLessonItems = getVisibleLessonItems(lesson.items, true);
   let src = visLessonItems.length >= numChoices ? visLessonItems : allPool;
 
   const choices = shuffleArray([q, ...shuffleArray(src.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);

@@ -1276,7 +1276,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE, SPIŻARNIA I GARDEROBA (WERSJA 12.7)
+   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE (NAGRODA + ZAWSZE JEDZENIE) I GARDEROBA (WERSJA 13.0)
    ============================================================================ */
 
 function getActiveProfileKey() {
@@ -1309,9 +1309,6 @@ function getAll131OutfitsFlat() {
   return flat;
 }
 
-// ------------------------------------------------------------------------
-// GENERATOR OSIĄGNIĘĆ (Z POZIOMAMI TRUDNOŚCI 1–5 DO LOSOWANIA SKRZYŃ)
-// ------------------------------------------------------------------------
 function getAllAchievements() {
   const list = [];
   [10, 25, 50, 100, 200, 350, 500, 750, 1000].forEach(t => {
@@ -1361,16 +1358,8 @@ function rollChestForAchievement(ach) {
   if (tier >= 5 || ach.cat === "masters") return "gold";
   const rnd = Math.random() * 100;
   if (tier === 4) return rnd < 65 ? "gold" : "silver";
-  if (tier === 3) {
-    if (rnd < 30) return "gold";
-    if (rnd < 80) return "silver";
-    return "bronze";
-  }
-  if (tier === 2) {
-    if (rnd < 15) return "gold";
-    if (rnd < 55) return "silver";
-    return "bronze";
-  }
+  if (tier === 3) { if (rnd < 30) return "gold"; if (rnd < 80) return "silver"; return "bronze"; }
+  if (tier === 2) { if (rnd < 15) return "gold"; if (rnd < 55) return "silver"; return "bronze"; }
   if (rnd < 5) return "gold";
   if (rnd < 30) return "silver";
   return "bronze";
@@ -1397,7 +1386,7 @@ function checkAndUnlockAchievements(profKey) {
 }
 
 // ------------------------------------------------------------------------
-// SYSTEM SKRZYŃ, DROP JEDZENIA (1-5 SZT.), SKLEPIK I NAGRODY GŁOSOWE
+// SYSTEM SKRZYŃ: GŁÓWNA NAGRODA (UBRANIE/ZWIERZAK/NAKLEJKA) + ZAWSZE JEDZENIE (1-5 SZT.)
 // ------------------------------------------------------------------------
 function buyChestWithStars(tier, cost) {
   const profKey = getActiveProfileKey();
@@ -1407,9 +1396,7 @@ function buyChestWithStars(tier, cost) {
   if ((p.stars || 0) < cost) {
     playEffect("wrong");
     const missing = cost - (p.stars || 0);
-    speakSequence([
-      { lang: "pl", text: `Masz za mało gwiazdek! Brakuje Ci jeszcze ${missing} gwiazdek. Rozwiąż więcej zadań!` }
-    ]);
+    speakSequence([{ lang: "pl", text: `Masz za mało gwiazdek! Brakuje Ci jeszcze ${missing} gwiazdek. Rozwiąż więcej zadań!` }]);
     return;
   }
 
@@ -1422,9 +1409,7 @@ function buyChestWithStars(tier, cost) {
   const tierSpeak = tier === "gold" ? "złotą skrzynię" : tier === "silver" ? "srebrną skrzynię" : "brązową skrzynię";
   renderChestOpeningInsidePopup(profKey, tier, `🛒 Kupiono za ${cost} ⭐: ${tierLabel}`);
   setTimeout(() => {
-    speakSequence([
-      { lang: "pl", text: `Super! Wymieniono ${cost} gwiazdek na ${tierSpeak}! Kliknij skrzynię, aby ją otworzyć!` }
-    ]);
+    speakSequence([{ lang: "pl", text: `Super! Wymieniono ${cost} gwiazdek na ${tierSpeak}! Kliknij skrzynię, aby ją otworzyć!` }]);
   }, 120);
 }
 
@@ -1437,9 +1422,7 @@ function processNextRewardInQueue() {
   renderChestOpeningInsidePopup(reward.profKey, chestType, `Zdobyto odznakę: ${reward.achievement.name} • ${chestLabel}`);
   setTimeout(() => {
     if (typeof speakSequence === "function") {
-      speakSequence([
-        { lang: "pl", text: `Gratulacje! Zdobyto osiągnięcie: ${reward.achievement.name}! Twoja nagroda to ${chestSpeak}! Kliknij skrzynię, aby ją otworzyć!` }
-      ]);
+      speakSequence([{ lang: "pl", text: `Gratulacje! Zdobyto osiągnięcie: ${reward.achievement.name}! Twoja nagroda to ${chestSpeak}! Kliknij skrzynię, aby ją otworzyć!` }]);
     }
   }, 150);
 }
@@ -1448,16 +1431,12 @@ function renderChestOpeningInsidePopup(profKey, tier, title) {
   const modal = document.getElementById("rewardPopupModal");
   const content = document.getElementById("rewardPopupContent");
   if (!modal || !content) return;
-  
   modal.classList.remove("hidden"); modal.classList.add("flex");
   const p = ensurePlayerStructure(state.stats[profKey]);
   state.stats[profKey] = p;
-  
   const bg = tier === "gold" ? "from-amber-200 to-yellow-500" : tier === "silver" ? "from-slate-200 to-slate-400" : "from-orange-200 to-amber-700";
   const border = tier === "gold" ? "border-amber-400" : tier === "silver" ? "border-slate-400" : "border-amber-800";
-  
   content.className = `bg-gradient-to-b ${bg} rounded-3xl max-w-md w-full p-6 border-4 ${border} shadow-2xl text-center transform transition-all duration-500 scale-95`;
-  
   content.innerHTML = `
     <h3 class="text-xl font-extrabold text-white drop-shadow-md mb-2">${title}</h3>
     <div class="text-8xl my-6 float-anim cursor-pointer drop-shadow-2xl hover:scale-110 transition-transform" onclick="openChestReal('${profKey}','${tier}')">
@@ -1479,38 +1458,24 @@ function openChestReal(profKey, tier) {
   
   let outfitTier = "bronze";
   const rnd = Math.random() * 100;
-  if (tier === "bronze") {
-    if (rnd < 5) outfitTier = "gold";
-    else if (rnd < 20) outfitTier = "silver";
-    else outfitTier = "bronze";
-  } else if (tier === "silver") {
-    if (rnd < 10) outfitTier = "gold";
-    else if (rnd < 45) outfitTier = "silver";
-    else outfitTier = "bronze";
-  } else if (tier === "gold") {
-    if (rnd < 15) outfitTier = "gold";
-    else if (rnd < 60) outfitTier = "silver";
-    else outfitTier = "bronze";
-  }
+  if (tier === "bronze") { if (rnd < 5) outfitTier = "gold"; else if (rnd < 20) outfitTier = "silver"; }
+  else if (tier === "silver") { if (rnd < 10) outfitTier = "gold"; else if (rnd < 45) outfitTier = "silver"; }
+  else if (tier === "gold") { if (rnd < 15) outfitTier = "gold"; else if (rnd < 60) outfitTier = "silver"; }
 
   const allOutfits = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat() : [];
   let unownedOutfits = allOutfits.filter(o => o.tier === outfitTier && !p.unlockedItems.includes(o.src));
-  if (unownedOutfits.length === 0) {
-    unownedOutfits = allOutfits.filter(o => !p.unlockedItems.includes(o.src));
-  }
+  if (unownedOutfits.length === 0) unownedOutfits = allOutfits.filter(o => !p.unlockedItems.includes(o.src));
 
   const canDropOutfit = unownedOutfits.length > 0;
   const canDropPet = missingPets.length > 0;
   const canDropSticker = missingStickers.length > 0;
-  const canDropFood = (typeof areNewFeaturesActive === "function" ? areNewFeaturesActive() : true) && foodPool.length > 0;
 
   let poolChoices = [];
-  if (canDropOutfit) poolChoices.push(...Array(35).fill("outfit"));
-  if (canDropPet) poolChoices.push(...Array(25).fill("pet"));
-  if (canDropSticker) poolChoices.push(...Array(20).fill("sticker"));
-  if (canDropFood) poolChoices.push(...Array(20).fill("food"));
+  if (canDropOutfit) poolChoices.push(...Array(45).fill("outfit"));
+  if (canDropPet) poolChoices.push(...Array(30).fill("pet"));
+  if (canDropSticker) poolChoices.push(...Array(25).fill("sticker"));
 
-  let dropType = poolChoices.length > 0 ? poolChoices[Math.floor(Math.random() * poolChoices.length)] : (canDropFood ? "food" : "none");
+  let dropType = poolChoices.length > 0 ? poolChoices[Math.floor(Math.random() * poolChoices.length)] : "coins";
   let rewardHtml = ""; let rewardName = "";
   let speechSegments = [];
 
@@ -1518,52 +1483,45 @@ function openChestReal(profKey, tier) {
     const animal = missingPets[Math.floor(Math.random() * missingPets.length)];
     p.memoryAnimals.push(animal.id);
     rewardName = `Towarzysz: ${animal.pl}`;
-    rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">${animal.icon}</div>`;
-    speechSegments = [
-      { lang: "pl", text: `Brawo! Ze skrzynki wylosowano nowego towarzysza! To jest ${animal.pl}, po angielsku` },
-      { lang: "en", text: animal.en }
-    ];
+    rewardHtml = `<div class="my-2 drop-shadow-lg pop-correct bg-white/70 rounded-full w-28 h-28 mx-auto flex items-center justify-center" style="font-size: 62px;">${animal.icon}</div>`;
+    speechSegments.push({ lang: "pl", text: `Brawo! Ze skrzynki wylosowano nowego towarzysza! To jest ${animal.pl}, po angielsku` }, { lang: "en", text: animal.en });
   } else if (dropType === "sticker") {
     const sticker = missingStickers[Math.floor(Math.random() * missingStickers.length)];
     if (!state.stats.stickers) state.stats.stickers = [];
     state.stats.stickers.push(sticker.id);
     rewardName = `Naklejka: ${sticker.name}`;
-    rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">${sticker.icon}</div>`;
-    speechSegments = [
-      { lang: "pl", text: `Super! Wylosowano nową naklejkę do klasera: ${sticker.name}!` }
-    ];
+    rewardHtml = `<div class="my-2 drop-shadow-lg pop-correct bg-white/70 rounded-full w-28 h-28 mx-auto flex items-center justify-center" style="font-size: 62px;">${sticker.icon}</div>`;
+    speechSegments.push({ lang: "pl", text: `Super! Wylosowano nową naklejkę do klasera: ${sticker.name}!` });
   } else if (dropType === "outfit") {
     const outfit = unownedOutfits[Math.floor(Math.random() * unownedOutfits.length)];
     p.unlockedItems.push(outfit.src);
     rewardName = `Ubranie: ${outfit.name}`;
-    rewardHtml = `<img src="${outfit.src}" class="w-32 h-32 object-contain mx-auto my-4 drop-shadow-xl pop-correct bg-white/60 rounded-full p-2" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${outfit.fallbackSrc}';}else{this.style.display='none';}" />`;
-    const cleanOutfitName = outfit.name.replace(/[_-]/g, " ");
-    speechSegments = [
-      { lang: "pl", text: "Ekstra! Wylosowano nowe przebranie do garderoby:" },
-      { lang: "en", text: cleanOutfitName }
-    ];
-  } else if (dropType === "food") {
+    rewardHtml = `<img src="${outfit.src}" class="w-28 h-28 object-contain mx-auto my-2 drop-shadow-xl pop-correct bg-white/70 rounded-full p-2" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${outfit.fallbackSrc}';}else{this.style.display='none';}" />`;
+    speechSegments.push({ lang: "pl", text: "Ekstra! Wylosowano nowe przebranie do garderoby:" }, { lang: "en", text: outfit.name.replace(/[_-]/g, " ") });
+  } else {
+    p.stars = (p.stars || 0) + 25;
+    rewardName = "Bonus: +25 Złotych Gwiazdek!";
+    rewardHtml = `<div class="my-2 drop-shadow-lg pop-correct bg-white/70 rounded-full w-28 h-28 mx-auto flex items-center justify-center" style="font-size: 62px;">⭐</div>`;
+    speechSegments.push({ lang: "pl", text: "Brawo! Masz już całą kolekcję, więc otrzymujesz dwadzieścia pięć złotych gwiazdek!" });
+  }
+
+  // ZAWSZE DODATKOWO WYPADA JEDZENIE DLA ZWIERZAKA (1-5 SZT.)
+  let bonusFoodHtml = "";
+  if (foodPool.length > 0) {
     const food = foodPool[Math.floor(Math.random() * foodPool.length)];
     const qty = Math.floor(Math.random() * 5) + 1;
     if (!p.petFood) p.petFood = {};
     p.petFood[food.id] = (p.petFood[food.id] || 0) + qty;
-    rewardName = `Przysmak dla zwierzaka: ${qty}x ${food.pl} (${food.en})`;
-    rewardHtml = `
-      <div class="my-4 drop-shadow-lg pop-correct bg-white/75 rounded-full w-32 h-32 mx-auto flex flex-col items-center justify-center relative">
-        <div style="font-size: 62px; line-height: 1;">${food.icon}</div>
-        <span class="mt-1 px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-xs shadow">+${qty} szt.</span>
+    bonusFoodHtml = `
+      <div class="my-3 p-2.5 rounded-2xl bg-emerald-600/90 border-2 border-emerald-200 text-white flex items-center justify-center gap-3 shadow-md">
+        <span class="text-4xl">${food.icon}</span>
+        <div class="text-left">
+          <div class="text-[10px] font-extrabold uppercase text-emerald-100">🍎 Dodatek do Spiżarni Zwierzaka:</div>
+          <div class="text-sm font-extrabold">+${qty}x ${food.pl} (${food.en})</div>
+        </div>
       </div>
     `;
-    speechSegments = [
-      { lang: "pl", text: `Mniam! Ze skrzynki wypada jedzenie dla zwierzaka! ${qty} razy ${food.pl}! Po angielsku:` },
-      { lang: "en", text: `${qty} ${food.en}` }
-    ];
-  } else {
-    rewardName = "Garść monet!";
-    rewardHtml = `<div class="my-4 drop-shadow-lg pop-correct bg-white/60 rounded-full w-32 h-32 mx-auto flex items-center justify-center" style="font-size: 70px;">🪙</div>`;
-    speechSegments = [
-      { lang: "pl", text: "Brawo! Ze skrzynki wypada garść złotych monet!" }
-    ];
+    speechSegments.push({ lang: "pl", text: `Oraz dodatkowo do spiżarni wpada jedzenie dla zwierzaka: ${qty} razy ${food.pl}!` });
   }
 
   state.stats[profKey] = p;
@@ -1571,15 +1529,14 @@ function openChestReal(profKey, tier) {
   playEffect("fanfare");
 
   content.innerHTML = `
-    <h3 class="text-2xl font-extrabold text-white drop-shadow-md mb-2">Zdobywasz:</h3>
+    <h3 class="text-2xl font-extrabold text-white drop-shadow-md mb-1">Zdobywasz:</h3>
     ${rewardHtml}
-    <p class="text-white font-extrabold text-xl drop-shadow mb-4">${rewardName}</p>
-    <button onclick="closeRewardPopup()" class="w-full py-3 bg-white text-slate-800 font-extrabold text-lg rounded-2xl shadow-lg hover:bg-slate-100">Super! Odbierz</button>
+    <p class="text-white font-extrabold text-lg drop-shadow mb-2">${rewardName}</p>
+    ${bonusFoodHtml}
+    <button onclick="closeRewardPopup()" class="w-full py-3 mt-1 bg-white text-slate-800 font-extrabold text-lg rounded-2xl shadow-lg hover:bg-slate-100">Super! Odbierz</button>
   `;
 
-  if (typeof speakSequence === "function" && speechSegments.length > 0) {
-    speakSequence(speechSegments);
-  }
+  if (typeof speakSequence === "function" && speechSegments.length > 0) speakSequence(speechSegments);
 }
 
 function closeRewardPopup() {
@@ -1587,10 +1544,7 @@ function closeRewardPopup() {
   const modal = document.getElementById("rewardPopupModal");
   if (modal) { modal.classList.remove("flex"); modal.classList.add("hidden"); }
   const avModal = document.getElementById("avatarModal");
-  if (avModal && !avModal.classList.contains("hidden")) {
-    updateAvatarPreviewWithCalibrator();
-    renderAvatarItems();
-  }
+  if (avModal && !avModal.classList.contains("hidden")) { updateAvatarPreviewWithCalibrator(); renderAvatarItems(); }
   if (typeof updateHeaderUI === "function") updateHeaderUI();
   if (state.rewardQueue.length > 0) {
     state.rewardQueue.shift();
@@ -1599,32 +1553,15 @@ function closeRewardPopup() {
 }
 
 // ------------------------------------------------------------------------
-// NAKLEJKI I ODZNAKI (KLASERY)
+// NAKLEJKI, ODZNAKI I GARDEROBA
 // ------------------------------------------------------------------------
-function openStickersModal() {
-  if (!state.profile || state.profile === "duel") return;
-  state.selectedStickerCat = "all";
-  renderStickers();
-  const m = document.getElementById("stickersModal");
-  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-}
-function closeStickersModal() {
-  const m = document.getElementById("stickersModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
-}
+function openStickersModal() { if (!state.profile || state.profile === "duel") return; state.selectedStickerCat = "all"; renderStickers(); const m = document.getElementById("stickersModal"); if (m) { m.classList.remove("hidden"); m.classList.add("flex"); } }
+function closeStickersModal() { const m = document.getElementById("stickersModal"); if (m) { m.classList.add("hidden"); m.classList.remove("flex"); } }
 function renderStickers() {
-  const tabs = document.getElementById("stickerCategoryTabs");
-  const grid = document.getElementById("stickersGrid");
-  const total = document.getElementById("stickerModalTotal");
+  const tabs = document.getElementById("stickerCategoryTabs"), grid = document.getElementById("stickersGrid"), total = document.getElementById("stickerModalTotal");
   if (!tabs || !grid || !total) return;
-
   total.textContent = (state.stats.stickers || []).length;
-  tabs.innerHTML = STICKER_CATEGORIES.map(c => `
-    <button onclick="state.selectedStickerCat='${c.id}'; renderStickers();" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedStickerCat === c.id ? 'bg-pink-500 text-white border-pink-600' : 'bg-white text-pink-700 border-pink-200'} shadow-sm">
-      ${c.icon} ${c.name}
-    </button>
-  `).join("");
-
+  tabs.innerHTML = STICKER_CATEGORIES.map(c => `<button onclick="state.selectedStickerCat='${c.id}'; renderStickers();" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedStickerCat === c.id ? 'bg-pink-500 text-white border-pink-600' : 'bg-white text-pink-700 border-pink-200'} shadow-sm">${c.icon} ${c.name}</button>`).join("");
   const filtered = state.selectedStickerCat === "all" ? STICKER_POOL : STICKER_POOL.filter(s => s.cat === state.selectedStickerCat);
   grid.innerHTML = filtered.map(s => {
     const owns = (state.stats.stickers || []).includes(s.id);
@@ -1633,374 +1570,154 @@ function renderStickers() {
   }).join("");
 }
 
-function openBadgesModal() {
-  if (!state.profile || state.profile === "duel") return;
-  state.selectedBadgeCat = "all";
-  document.getElementById("badgesModalPlayerName").textContent = getActiveProfileLabel();
-  renderBadges();
-  const m = document.getElementById("badgesModal");
-  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-}
-function closeBadgesModal() {
-  const m = document.getElementById("badgesModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
-}
+function openBadgesModal() { if (!state.profile || state.profile === "duel") return; state.selectedBadgeCat = "all"; document.getElementById("badgesModalPlayerName").textContent = getActiveProfileLabel(); renderBadges(); const m = document.getElementById("badgesModal"); if (m) { m.classList.remove("hidden"); m.classList.add("flex"); } }
+function closeBadgesModal() { const m = document.getElementById("badgesModal"); if (m) { m.classList.add("hidden"); m.classList.remove("flex"); } }
 function renderBadges() {
-  const tabs = document.getElementById("badgeCategoryTabs");
-  const grid = document.getElementById("badgesGrid");
+  const tabs = document.getElementById("badgeCategoryTabs"), grid = document.getElementById("badgesGrid");
   if (!tabs || !grid) return;
   const p = state.stats[getActiveProfileKey()];
   if (!p) return;
-
   const cats = [{id:"all", n:"Wszystkie"}, {id:"stars", n:"⭐ Gwiazdki"}, {id:"streak", n:"🔥 Dni"}, {id:"lessons", n:"📘 Lekcje"}, {id:"special", n:"🏆 Wyzwania"}, {id:"masters", n:"👑 Arcymistrz"}];
-  tabs.innerHTML = cats.map(c => `
-    <button onclick="state.selectedBadgeCat='${c.id}'; renderBadges();" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedBadgeCat === c.id ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-amber-800 border-amber-200'} shadow-sm">
-      ${c.n}
-    </button>
-  `).join("");
-
+  tabs.innerHTML = cats.map(c => `<button onclick="state.selectedBadgeCat='${c.id}'; renderBadges();" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedBadgeCat === c.id ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-amber-800 border-amber-200'} shadow-sm">${c.n}</button>`).join("");
   const allAch = getAllAchievements();
   const filtered = state.selectedBadgeCat === "all" ? allAch : allAch.filter(a => a.cat === state.selectedBadgeCat);
   grid.innerHTML = filtered.map(a => {
     const owns = p.badges.includes(a.id);
     if (owns) return `<div onclick="speakSequence([{lang:'pl', text:'Odznaka zdobyta! ${a.name}. ${a.desc}'}])" class="cursor-pointer hover:scale-105 transition-transform bg-gradient-to-br from-amber-100 to-yellow-50 rounded-2xl p-3 border-2 border-amber-400 shadow-sm flex items-center gap-3"><div class="text-4xl drop-shadow-md float-anim">${a.icon}</div><div><div class="font-extrabold text-amber-900 text-sm leading-tight">${a.name}</div><div class="text-[10px] text-amber-700 mt-0.5 leading-tight">${a.desc}</div></div></div>`;
-    
     return `<div onclick="speakSequence([{lang:'pl', text:'Zablokowana odznaka. Co musisz zrobić? ${a.desc}'}])" class="cursor-pointer hover:scale-105 transition-transform bg-slate-100 rounded-2xl p-3 border-2 border-dashed border-slate-300 opacity-70 flex items-center gap-3"><div class="text-3xl grayscale opacity-50">🔒</div><div><div class="font-bold text-slate-600 text-sm leading-tight">${a.name}</div><div class="text-[10px] text-slate-500 mt-0.5 leading-tight">Postęp: ${a.progress(p)}</div></div></div>`;
   }).join("");
 }
 
-// ------------------------------------------------------------------------
-// GARDEROBA, SPIŻARNIA ZWIERZAKÓW I KALIBRACJA AWATARA
-// ------------------------------------------------------------------------
-function openAvatarModal() {
-  if (!state.profile || state.profile === "duel") return;
-  document.getElementById("avatarModalPlayerName").textContent = getActiveProfileLabel();
-  updateAvatarPreviewWithCalibrator();
-  renderAvatarItems();
-  const m = document.getElementById("avatarModal");
-  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-}
-function closeAvatarModal() {
-  saveCloudData(); updateHeaderUI();
-  const m = document.getElementById("avatarModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
-}
+function openAvatarModal() { if (!state.profile || state.profile === "duel") return; document.getElementById("avatarModalPlayerName").textContent = getActiveProfileLabel(); updateAvatarPreviewWithCalibrator(); renderAvatarItems(); const m = document.getElementById("avatarModal"); if (m) { m.classList.remove("hidden"); m.classList.add("flex"); } }
+function closeAvatarModal() { saveCloudData(); updateHeaderUI(); const m = document.getElementById("avatarModal"); if (m) { m.classList.add("hidden"); m.classList.remove("flex"); } }
 
 function updateAvatarPreviewWithCalibrator() {
   const box = document.getElementById("avatarPreviewBox");
   if (!box || !state.profile) return;
-
-  const cal = getAvatarCalibration();
-  const activeKey = window._calibActiveType || "shirt";
-  const cfg = cal[activeKey];
-
+  const cal = getAvatarCalibration(), activeKey = window._calibActiveType || "shirt", cfg = cal[activeKey];
   box.innerHTML = `
     <div class="flex flex-col items-center w-full">
-      <div onclick="speakAvatarGreeting()" class="cursor-pointer hover:scale-105 transition-transform" title="Kliknij bohatera!">
-        ${renderBoyAvatarSvg(getActiveProfileKey(), 165)}
-      </div>
-      <button onclick="window._calibOpen=!window._calibOpen;updateAvatarPreviewWithCalibrator();" class="mt-4 px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-xs border border-indigo-300">
-        🔧 ${window._calibOpen ? "Ukryj suwaki dopasowania" : "Dopasuj wymiary (Suwaki)"}
-      </button>
+      <div onclick="speakAvatarGreeting()" class="cursor-pointer hover:scale-105 transition-transform" title="Kliknij bohatera!">${renderBoyAvatarSvg(getActiveProfileKey(), 165)}</div>
+      <button onclick="window._calibOpen=!window._calibOpen;updateAvatarPreviewWithCalibrator();" class="mt-4 px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-xs border border-indigo-300">🔧 ${window._calibOpen ? "Ukryj suwaki dopasowania" : "Dopasuj wymiary (Suwaki)"}</button>
       ${window._calibOpen ? `
         <div class="w-full mt-2 p-2.5 bg-white rounded-2xl border-2 border-indigo-300 text-left text-[11px] space-y-1.5 shadow-sm">
           <div class="font-extrabold text-indigo-950 mb-1">Wybierz typ ubrania do regulacji:</div>
-          <select onchange="window._calibActiveType=this.value;updateAvatarPreviewWithCalibrator();" class="w-full p-1 rounded-lg border border-slate-300 font-bold text-xs mb-1 bg-slate-50">
-            ${Object.keys(cal).map(k => `<option value="${k}" ${k === activeKey ? "selected" : ""}>${cal[k].label}</option>`).join("")}
-          </select>
-          <div>
-            <div class="flex justify-between font-bold"><span>⬆️⬇️ Pozycja Góra/Dół (top):</span><span>${cfg.top}%</span></div>
-            <input type="range" min="-15" max="75" step="1" value="${cfg.top}" oninput="changeCalibVal('${activeKey}','top',this.value)" class="w-full accent-indigo-600" />
-          </div>
-          <div>
-            <div class="flex justify-between font-bold"><span>↔️ Szerokość (scaleX):</span><span>${cfg.scaleX}</span></div>
-            <input type="range" min="0.45" max="1.60" step="0.02" value="${cfg.scaleX}" oninput="changeCalibVal('${activeKey}','scaleX',this.value)" class="w-full accent-indigo-600" />
-          </div>
-          <div>
-            <div class="flex justify-between font-bold"><span>↕️ Wysokość (scaleY):</span><span>${cfg.scaleY}</span></div>
-            <input type="range" min="0.50" max="1.60" step="0.02" value="${cfg.scaleY}" oninput="changeCalibVal('${activeKey}','scaleY',this.value)" class="w-full accent-indigo-600" />
-          </div>
-          <div class="pt-1 flex justify-between gap-1">
-            <button onclick="resetCalibDefaults()" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold rounded-lg text-[10px]">Resetuj wymiary</button>
-            <span class="text-[10px] text-emerald-700 font-bold self-center">✓ Automatyczny zapis w chmurze</span>
-          </div>
+          <select onchange="window._calibActiveType=this.value;updateAvatarPreviewWithCalibrator();" class="w-full p-1 rounded-lg border border-slate-300 font-bold text-xs mb-1 bg-slate-50">${Object.keys(cal).map(k => `<option value="${k}" ${k === activeKey ? "selected" : ""}>${cal[k].label}</option>`).join("")}</select>
+          <div><div class="flex justify-between font-bold"><span>⬆️⬇️ Pozycja Góra/Dół (top):</span><span>${cfg.top}%</span></div><input type="range" min="-15" max="75" step="1" value="${cfg.top}" oninput="changeCalibVal('${activeKey}','top',this.value)" class="w-full accent-indigo-600" /></div>
+          <div><div class="flex justify-between font-bold"><span>↔️ Szerokość (scaleX):</span><span>${cfg.scaleX}</span></div><input type="range" min="0.45" max="1.60" step="0.02" value="${cfg.scaleX}" oninput="changeCalibVal('${activeKey}','scaleX',this.value)" class="w-full accent-indigo-600" /></div>
+          <div><div class="flex justify-between font-bold"><span>↕️ Wysokość (scaleY):</span><span>${cfg.scaleY}</span></div><input type="range" min="0.50" max="1.60" step="0.02" value="${cfg.scaleY}" oninput="changeCalibVal('${activeKey}','scaleY',this.value)" class="w-full accent-indigo-600" /></div>
+          <div class="pt-1 flex justify-between gap-1"><button onclick="resetCalibDefaults()" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold rounded-lg text-[10px]">Resetuj wymiary</button><span class="text-[10px] text-emerald-700 font-bold self-center">✓ Zapisano w chmurze</span></div>
         </div>
       ` : ""}
     </div>
   `;
 }
 
-function changeCalibVal(typeKey, prop, val) {
-  const cal = getAvatarCalibration();
-  cal[typeKey][prop] = parseFloat(val);
-  saveAvatarCalibration(cal);
-  updateAvatarPreviewWithCalibrator();
-  if (typeof updateHeaderUI === "function") updateHeaderUI();
-}
-
-function resetCalibDefaults() {
-  state.calibration = JSON.parse(JSON.stringify(DEFAULT_AVATAR_CALIBRATION));
-  localStorage.removeItem("akademia_avatar_calib_v4");
-  saveCloudData();
-  updateAvatarPreviewWithCalibrator();
-  if (typeof updateHeaderUI === "function") updateHeaderUI();
-}
+function changeCalibVal(typeKey, prop, val) { const cal = getAvatarCalibration(); cal[typeKey][prop] = parseFloat(val); saveAvatarCalibration(cal); updateAvatarPreviewWithCalibrator(); if (typeof updateHeaderUI === "function") updateHeaderUI(); }
+function resetCalibDefaults() { state.calibration = JSON.parse(JSON.stringify(DEFAULT_AVATAR_CALIBRATION)); localStorage.removeItem("akademia_avatar_calib_v4"); saveCloudData(); updateAvatarPreviewWithCalibrator(); if (typeof updateHeaderUI === "function") updateHeaderUI(); }
 
 function feedCompanionPet(foodId) {
-  const profKey = getActiveProfileKey();
-  const p = ensurePlayerStructure(state.stats[profKey]);
-  const petId = p.avatar && p.avatar.pet;
-
-  if (!petId) {
-    playEffect("wrong");
-    speakSequence([{ lang: "pl", text: "Najpierw wybierz swojego zwierzaka towarzysza z listy powyżej!" }]);
-    return;
-  }
-
+  const profKey = getActiveProfileKey(), p = ensurePlayerStructure(state.stats[profKey]), petId = p.avatar && p.avatar.pet;
+  if (!petId) { playEffect("wrong"); speakSequence([{ lang: "pl", text: "Najpierw wybierz swojego zwierzaka towarzysza z listy powyżej!" }]); return; }
   const currentQty = (p.petFood && p.petFood[foodId]) || 0;
   if (currentQty <= 0) return;
-
   const foodObj = (typeof PET_FOOD_POOL !== "undefined" ? PET_FOOD_POOL : []).find(f => f.id === foodId);
   const petObj = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).find(a => a.id === petId);
   if (!foodObj || !petObj) return;
-
   p.petFood[foodId] = currentQty - 1;
   if (p.petFood[foodId] <= 0) delete p.petFood[foodId];
-
   if (!p.petXp) p.petXp = {};
   const oldLv = getPetLevelInfo(p.petXp[petId] || 0).level;
   p.petXp[petId] = (p.petXp[petId] || 0) + 1;
   const newLvInfo = getPetLevelInfo(p.petXp[petId]);
-
   state.stats[profKey] = p;
   if (typeof advanceDailyQuestProgress === "function") advanceDailyQuestProgress(profKey, "feed_pet", 1);
-  saveCloudData();
-  playEffect("success");
-
-  updateAvatarPreviewWithCalibrator();
-  renderAvatarItems();
-  if (typeof updateHeaderUI === "function") updateHeaderUI();
-
-  const segs = [
-    { lang: "pl", text: `Mniam mniam! ${petObj.pl} zjada ze smakiem: ${foodObj.pl}!` },
-    { lang: "en", text: `Yummy ${foodObj.en}!` }
-  ];
-  if (newLvInfo.level > oldLv) {
-    segs.push({ lang: "pl", text: `Brawo! ${petObj.pl} awansuje na poziom przyjaźni ${newLvInfo.level}!` });
-  }
+  saveCloudData(); playEffect("success");
+  updateAvatarPreviewWithCalibrator(); renderAvatarItems(); if (typeof updateHeaderUI === "function") updateHeaderUI();
+  const segs = [{ lang: "pl", text: `Mniam mniam! ${petObj.pl} zjada ze smakiem: ${foodObj.pl}!` }, { lang: "en", text: `Yummy ${foodObj.en}!` }];
+  if (newLvInfo.level > oldLv) segs.push({ lang: "pl", text: `Brawo! ${petObj.pl} awansuje na poziom przyjaźni ${newLvInfo.level}!` });
   speakSequence(segs);
 }
 
 function renderAvatarItems() {
-  const profKey = getActiveProfileKey();
-  const p = ensurePlayerStructure(state.stats[profKey]);
+  const profKey = getActiveProfileKey(), p = ensurePlayerStructure(state.stats[profKey]);
   state.stats[profKey] = p;
   const container = document.getElementById("avatarItemsContainer");
   if (!container) return;
-
   const all131 = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat() : [];
   const countOwned = list => list.filter(it => p.unlockedItems.includes(it.src)).length;
-
-  const ownedAll = countOwned(all131);
-  const ownedBronze = countOwned(all131.filter(i => i.tier === "bronze"));
-  const ownedSilver = countOwned(all131.filter(i => i.tier === "silver"));
-  const ownedGold = countOwned(all131.filter(i => i.tier === "gold"));
-
   const tierTabs = [
-    { id: "all", label: `Wszystkie (${ownedAll}/131)` },
-    { id: "bronze", label: `📦 Brązowa (${ownedBronze}/30)` },
-    { id: "silver", label: `🥈 Srebrna (${ownedSilver}/56)` },
-    { id: "gold", label: `👑 Złota (${ownedGold}/45)` }
+    { id: "all", label: `Wszystkie (${countOwned(all131)}/131)` },
+    { id: "bronze", label: `📦 Brązowa (${countOwned(all131.filter(i => i.tier === "bronze"))}/30)` },
+    { id: "silver", label: `🥈 Srebrna (${countOwned(all131.filter(i => i.tier === "silver"))}/56)` },
+    { id: "gold", label: `👑 Złota (${countOwned(all131.filter(i => i.tier === "gold"))}/45)` }
   ];
-
-  let shopHtml = "";
-  if (typeof areNewFeaturesActive === "function" && areNewFeaturesActive()) {
-    shopHtml = `
-      <div class="p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-300 shadow-sm mb-3">
-        <div class="flex flex-wrap items-center justify-between gap-1 mb-2">
-          <div class="text-xs font-extrabold text-amber-950">🛒 Sklepik ze Skrzyniami</div>
-          <span class="px-2.5 py-0.5 rounded-full bg-white border border-amber-400 text-amber-900 font-extrabold text-xs">Twoje Gwiazdki: ⭐ ${p.stars || 0}</span>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <button onclick="buyChestWithStars('bronze', 50)" class="kid-card py-2 px-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-extrabold text-[11px] shadow flex flex-col items-center">
-            <span class="text-lg">📦 Brązowa</span><span class="text-amber-200">Koszt: 50 ⭐</span>
-          </button>
-          <button onclick="buyChestWithStars('silver', 120)" class="kid-card py-2 px-2 rounded-xl bg-slate-500 hover:bg-slate-600 text-white font-extrabold text-[11px] shadow flex flex-col items-center">
-            <span class="text-lg">🥈 Srebrna</span><span class="text-slate-100">Koszt: 120 ⭐</span>
-          </button>
-          <button onclick="buyChestWithStars('gold', 250)" class="kid-card py-2 px-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold text-[11px] shadow flex flex-col items-center border border-amber-600">
-            <span class="text-lg">👑 Złota</span><span>Koszt: 250 ⭐</span>
-          </button>
-        </div>
+  let shopHtml = areNewFeaturesActive() ? `
+    <div class="p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-300 shadow-sm mb-3">
+      <div class="flex flex-wrap items-center justify-between gap-1 mb-2"><div class="text-xs font-extrabold text-amber-950">🛒 Sklepik ze Skrzyniami</div><span class="px-2.5 py-0.5 rounded-full bg-white border border-amber-400 text-amber-900 font-extrabold text-xs">Twoje Gwiazdki: ⭐ ${p.stars || 0}</span></div>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="buyChestWithStars('bronze', 50)" class="kid-card py-2 px-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-extrabold text-[11px] shadow flex flex-col items-center"><span class="text-lg">📦 Brązowa</span><span class="text-amber-200">Koszt: 50 ⭐</span></button>
+        <button onclick="buyChestWithStars('silver', 120)" class="kid-card py-2 px-2 rounded-xl bg-slate-500 hover:bg-slate-600 text-white font-extrabold text-[11px] shadow flex flex-col items-center"><span class="text-lg">🥈 Srebrna</span><span class="text-slate-100">Koszt: 120 ⭐</span></button>
+        <button onclick="buyChestWithStars('gold', 250)" class="kid-card py-2 px-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold text-[11px] shadow flex flex-col items-center border border-amber-600"><span class="text-lg">👑 Złota</span><span>Koszt: 250 ⭐</span></button>
       </div>
-    `;
-  }
-
-  let html = `
-    ${shopHtml}
-    <div class="flex flex-wrap gap-1.5 mb-3 pb-2 border-b border-indigo-100">
-      ${tierTabs.map(t => `
-        <button onclick="setWardrobeTierFilter('${t.id}')" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedWardrobeTier === t.id ? 'bg-indigo-600 text-white border-indigo-800' : 'bg-white text-slate-700 border-slate-200'}">
-          ${t.label}
-        </button>
-      `).join("")}
-    </div>
-  `;
-
-  const categories = [
-    { key: "head", title: "🧢 Nakrycia głowy i Hełmy" },
-    { key: "torso", title: "👕 Koszulki, Kurtki i Zbroje" },
-    { key: "legs", title: "👖 Spodnie i Szorty" }
-  ];
-
+    </div>` : "";
+  let html = `${shopHtml}<div class="flex flex-wrap gap-1.5 mb-3 pb-2 border-b border-indigo-100">${tierTabs.map(t => `<button onclick="setWardrobeTierFilter('${t.id}')" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedWardrobeTier === t.id ? 'bg-indigo-600 text-white border-indigo-800' : 'bg-white text-slate-700 border-slate-200'}">${t.label}</button>`).join("")}</div>`;
+  const categories = [{ key: "head", title: "🧢 Nakrycia głowy i Hełmy" }, { key: "torso", title: "👕 Koszulki, Kurtki i Zbroje" }, { key: "legs", title: "👖 Spodnie i Szorty" }];
   const filteredOutfits = state.selectedWardrobeTier === "all" ? all131 : all131.filter(it => it.tier === state.selectedWardrobeTier);
-
   categories.forEach(cat => {
     const catItems = filteredOutfits.filter(it => it.slot === cat.key);
-    const catOwned = countOwned(catItems);
-    html += `<div class="mb-4">
-      <h3 class="text-sm font-extrabold text-slate-700 mb-2 border-b pb-1">${cat.title} (${catOwned}/${catItems.length})</h3>
-      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
-
+    html += `<div class="mb-4"><h3 class="text-sm font-extrabold text-slate-700 mb-2 border-b pb-1">${cat.title} (${countOwned(catItems)}/${catItems.length})</h3><div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
     catItems.forEach(item => {
-      const isUnlocked = p.unlockedItems.includes(item.src);
-      const isEquipped = p.avatar && p.avatar[cat.key] === item.src;
+      const isUnlocked = p.unlockedItems.includes(item.src), isEquipped = p.avatar && p.avatar[cat.key] === item.src;
       const tierBadgeColor = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-800" : "bg-amber-700 text-white";
-
-      if (isUnlocked) {
-        html += `
-          <div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm">
-            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span>
-            <img src="${item.src}" class="w-14 h-14 object-contain mb-1 drop-shadow" alt="${item.name}" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${item.fallbackSrc}';}" />
-            <div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>
-            ${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}
-          </div>
-        `;
-      } else {
-        html += `
-          <div class="rounded-2xl border-2 border-slate-200 bg-slate-100 p-2 flex flex-col items-center justify-between text-center opacity-55">
-            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span>
-            <div class="text-2xl my-2">🔒</div>
-            <div class="text-[10px] font-bold text-slate-500 leading-tight break-all">${item.name}</div>
-          </div>
-        `;
-      }
+      html += isUnlocked
+        ? `<div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm"><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><img src="${item.src}" class="w-14 h-14 object-contain mb-1 drop-shadow" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${item.fallbackSrc}';}" /><div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}</div>`
+        : `<div class="rounded-2xl border-2 border-slate-200 bg-slate-100 p-2 flex flex-col items-center justify-between text-center opacity-55"><span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><div class="text-2xl my-2">🔒</div><div class="text-[10px] font-bold text-slate-500 leading-tight break-all">${item.name}</div></div>`;
     });
     html += `</div></div>`;
   });
 
-  // SEKCJA: 50 ZWIERZĄT-TOWARZYSZY + SPIŻARNIA I KARMIENIE
   const allPets = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
   const ownedPetsCount = allPets.filter(a => (p.memoryAnimals || []).includes(a.id)).length;
-  
-  html += `<div id="companionPetsSection" class="mb-4 pt-2">
-    <div class="flex items-center justify-between border-b border-amber-200 pb-1 mb-2">
-      <h3 class="text-sm font-extrabold text-amber-800">🐾 Twój Towarzysz (Zwierzak)</h3>
-      <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">${ownedPetsCount}/${allPets.length}</span>
-    </div>`;
-
-  // SPIŻARNIA OWOCÓW I WARZYW DO KARMIENIA ZWIERZAKA
-  if (typeof areNewFeaturesActive === "function" && areNewFeaturesActive()) {
+  html += `<div id="companionPetsSection" class="mb-4 pt-2"><div class="flex items-center justify-between border-b border-amber-200 pb-1 mb-2"><h3 class="text-sm font-extrabold text-amber-800">🐾 Twój Towarzysz (Zwierzak)</h3><span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">${ownedPetsCount}/${allPets.length}</span></div>`;
+  if (areNewFeaturesActive()) {
     const foodPool = typeof PET_FOOD_POOL !== "undefined" ? PET_FOOD_POOL : [];
     const ownedFoods = foodPool.filter(f => (p.petFood && p.petFood[f.id]) > 0);
     const activePetObj = allPets.find(a => a.id === (p.avatar && p.avatar.pet));
     const lvInfo = activePetObj ? getPetLevelInfo((p.petXp && p.petXp[activePetObj.id]) || 0) : null;
-
-    html += `
-      <div id="petPantrySection" class="mb-3 p-3 rounded-2xl bg-emerald-50/90 border-2 border-emerald-300 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <div class="text-xs font-extrabold text-emerald-950">
-            🍎 Spiżarnia Zwierzaka ${activePetObj ? `• Karmisz: ${activePetObj.icon} ${activePetObj.pl} (Poziom ${lvInfo.level} • ${lvInfo.inLevel}/3 🍎)` : `• (Wybierz zwierzaka poniżej!)`}
-          </div>
-        </div>
-        ${ownedFoods.length === 0
-          ? `<div class="text-[11px] font-bold text-slate-500 bg-white/80 p-2.5 rounded-xl border border-emerald-200">Koszyk w spiżarni jest pusty! Otwieraj skrzynie z nagrodami, aby wylosować owoce i warzywa (po 1–5 sztuk)!</div>`
-          : `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-              ${ownedFoods.map(f => `
-                <button onclick="feedCompanionPet('${f.id}')" class="kid-card cursor-pointer p-2 rounded-xl bg-white hover:bg-emerald-100 border-2 border-emerald-300 flex flex-col items-center shadow-sm">
-                  <div class="text-2xl">${f.icon}</div>
-                  <div class="text-[10px] font-extrabold text-slate-800 mt-0.5">${f.pl}</div>
-                  <span class="mt-0.5 px-2 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[9px]">Ilość: ${p.petFood[f.id]}x</span>
-                </button>
-              `).join("")}
-            </div>`
-        }
-      </div>
-    `;
+    html += `<div id="petPantrySection" class="mb-3 p-3 rounded-2xl bg-emerald-50/90 border-2 border-emerald-300 shadow-sm"><div class="text-xs font-extrabold text-emerald-950 mb-2">🍎 Spiżarnia Zwierzaka ${activePetObj ? `• Karmisz: ${activePetObj.icon} ${activePetObj.pl} (Poziom ${lvInfo.level} • ${lvInfo.inLevel}/3 🍎)` : `• (Wybierz zwierzaka poniżej!)`}</div>${ownedFoods.length === 0 ? `<div class="text-[11px] font-bold text-slate-500 bg-white/80 p-2.5 rounded-xl border border-emerald-200">Koszyk w spiżarni jest pusty! Otwieraj skrzynie z nagrodami, aby wylosować owoce i warzywa (po 1–5 sztuk)!</div>` : `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">${ownedFoods.map(f => `<button onclick="feedCompanionPet('${f.id}')" class="kid-card cursor-pointer p-2 rounded-xl bg-white hover:bg-emerald-100 border-2 border-emerald-300 flex flex-col items-center shadow-sm"><div class="text-2xl">${f.icon}</div><div class="text-[10px] font-extrabold text-slate-800 mt-0.5">${f.pl}</div><span class="mt-0.5 px-2 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[9px]">Ilość: ${p.petFood[f.id]}x</span></button>`).join("")}</div>`}</div>`;
   }
-
-  html += `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
-  
-  const isNoneEquipped = !p.avatar.pet;
-  html += `
-    <div onclick="equipAvatarItem('pet', '')" class="cursor-pointer rounded-2xl border-3 ${isNoneEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-center text-center shadow-sm h-full min-h-[75px]">
-      <div class="text-xl opacity-50 mb-1">❌</div>
-      <div class="text-[9px] font-bold text-slate-600">Schowaj</div>
-    </div>
-  `;
-  
+  html += `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2"><div onclick="equipAvatarItem('pet', '')" class="cursor-pointer rounded-2xl border-3 ${!p.avatar.pet ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-center text-center shadow-sm h-full min-h-[75px]"><div class="text-xl opacity-50 mb-1">❌</div><div class="text-[9px] font-bold text-slate-600">Schowaj</div></div>`;
   allPets.forEach(an => {
-    const isUnlocked = (p.memoryAnimals || []).includes(an.id);
-    const isEquipped = p.avatar && p.avatar.pet === an.id;
-    const lv = getPetLevelInfo((p.petXp && p.petXp[an.id]) || 0);
-
-    if (isUnlocked) {
-      html += `
-        <div onclick="equipAvatarItem('pet', '${an.id}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-center text-center shadow-sm h-full min-h-[75px]">
-          <div class="text-3xl float-anim mb-1">${an.icon}</div>
-          <div class="text-[10px] font-extrabold text-slate-800 leading-tight">${an.pl}</div>
-          <div class="text-[8px] font-bold text-amber-700">${lv.fed > 0 ? `❤️ Lv.${lv.level} (${lv.inLevel}/3)` : an.en}</div>
-          ${isEquipped ? `<div class="text-[8px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Towarzyszy ✓</div>` : ``}
-        </div>
-      `;
-    } else {
-      html += `
-        <div class="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-100/70 p-2 flex flex-col items-center justify-center text-center opacity-60 h-full min-h-[75px]">
-          <div class="text-xl grayscale opacity-50 mb-1">🔒</div>
-          <div class="text-[10px] font-bold text-slate-500 leading-tight">${an.pl}</div>
-          <div class="text-[8px] text-slate-400">Ze skrzyni</div>
-        </div>
-      `;
-    }
+    const isUnlocked = (p.memoryAnimals || []).includes(an.id), isEquipped = p.avatar && p.avatar.pet === an.id, lv = getPetLevelInfo((p.petXp && p.petXp[an.id]) || 0);
+    html += isUnlocked
+      ? `<div onclick="equipAvatarItem('pet', '${an.id}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-center text-center shadow-sm h-full min-h-[75px]"><div class="text-3xl float-anim mb-1">${an.icon}</div><div class="text-[10px] font-extrabold text-slate-800 leading-tight">${an.pl}</div><div class="text-[8px] font-bold text-amber-700">${lv.fed > 0 ? `❤️ Lv.${lv.level} (${lv.inLevel}/3)` : an.en}</div>${isEquipped ? `<div class="text-[8px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Towarzyszy ✓</div>` : ``}</div>`
+      : `<div class="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-100/70 p-2 flex flex-col items-center justify-center text-center opacity-60 h-full min-h-[75px]"><div class="text-xl grayscale opacity-50 mb-1">🔒</div><div class="text-[10px] font-bold text-slate-500 leading-tight">${an.pl}</div><div class="text-[8px] text-slate-400">Ze skrzyni</div></div>`;
   });
-
   html += `</div></div>`;
   container.innerHTML = html;
 }
 
 function equipAvatarItem(category, itemSrc) {
-  const profKey = getActiveProfileKey();
-  const p = ensurePlayerStructure(state.stats[profKey]);
-  
+  const profKey = getActiveProfileKey(), p = ensurePlayerStructure(state.stats[profKey]);
   if (!p.avatar) p.avatar = { head: "", torso: "", legs: "", pet: "" };
   p.avatar[category] = p.avatar[category] === itemSrc ? "" : itemSrc;
   state.stats[profKey] = p;
-
   if (typeof classifyHeadItem === "function" && category !== "pet") {
     if (category === "head") window._calibActiveType = classifyHeadItem(itemSrc);
     if (category === "torso") window._calibActiveType = classifyTorsoItem(itemSrc);
     if (category === "legs") window._calibActiveType = classifyLegsItem(itemSrc);
   }
-
-  if (typeof playEffect === "function") playEffect("beep");
-  updateAvatarPreviewWithCalibrator();
-  renderAvatarItems();
-  
-  if (typeof saveCloudData === "function") saveCloudData();
-  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  playEffect("beep"); updateAvatarPreviewWithCalibrator(); renderAvatarItems(); saveCloudData(); updateHeaderUI();
 }
-
-function setWardrobeTierFilter(tier) {
-  state.selectedWardrobeTier = tier;
-  renderAvatarItems();
-}
+function setWardrobeTierFilter(tier) { state.selectedWardrobeTier = tier; renderAvatarItems(); }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 4 z 6 ======================== -->
 
 <!-- ======================= POCZĄTEK CZĘŚCI 5A ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5A: MENU, ZADANIE DNIA, PODGLĄD IGORA U TATY I NAWIGACJA (WERSJA 12.9)
+   CZĘŚĆ 5A: MENU, LEKCJA PANKEJKI, ZADANIE DNIA GŁOSOWE I PODGLĄD TATY (WERSJA 13.0)
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -2096,8 +1813,37 @@ function upgradeBodyLessonForHubert(lessonsArr) {
 }
 upgradeBodyLessonForHubert(FULL_LESSONS_DATABASE);
 
+function ensurePancakesLessonExists(lessonsArr) {
+  if (!Array.isArray(lessonsArr)) return;
+  if (lessonsArr.some(l => l.id === "pancakes_cooking")) return;
+  lessonsArr.push({
+    id: "pancakes_cooking",
+    title: "10. Pieczenie Pankejków (Pancakes)",
+    subtitle: "Zakupy składników, kuchnia, owoce i karmienie zwierzaka!",
+    icon: "🥞👨‍🍳",
+    color: "from-amber-400 to-orange-500",
+    borderColor: "border-amber-400",
+    type: "vocab_and_pancakes",
+    testOnly: true,
+    items: [
+      { en: "Pancakes", pl: "Pankejksy", phonetic: "penkejks", icon: "🥞", age: [4, 6] },
+      { en: "Flour",    pl: "Mąka",      phonetic: "flałer",   icon: "🌾", age: [4, 6] },
+      { en: "Egg",      pl: "Jajko",     phonetic: "eg",       icon: "🥚", age: [4, 6] },
+      { en: "Yoghurt",  pl: "Jogurt",    phonetic: "jogert",   icon: "🥛", age: [4, 6] },
+      { en: "Honey",    pl: "Miód",      phonetic: "hani",     icon: "🍯", age: [4, 6] },
+      { en: "Oil",      pl: "Olej",      phonetic: "ojl",      icon: "🫗", age: [4, 6] },
+      { en: "Mix",      pl: "Mieszać",   phonetic: "miks",     icon: "🥣", age: [4, 6] },
+      { en: "Add",      pl: "Dodać",     phonetic: "ad",       icon: "➕", age: [4, 6] }
+    ]
+  });
+}
+ensurePancakesLessonExists(FULL_LESSONS_DATABASE);
+
 function getVisibleLessonItems(items, applyAgeFilter = true) {
-  if (state && state.lessons) upgradeBodyLessonForHubert(state.lessons);
+  if (state && state.lessons) {
+    upgradeBodyLessonForHubert(state.lessons);
+    ensurePancakesLessonExists(state.lessons);
+  }
   if (!Array.isArray(items)) return [];
   let list = state.profile === "tata" ? [...items] : items.filter(it => !it.testOnly);
 
@@ -2135,20 +1881,40 @@ function removeHardWordIfMastered(q) {
   }
 }
 
+// ------------------------------------------------------------------------
+// ZADANIE DNIA OD SÓWKI (Z PEŁNYM CZYTANIEM GŁOSOWYM DLA DZIECI)
+// ------------------------------------------------------------------------
 function ensureDailyQuestForPlayer(profKey) {
   if (!PROFILE_META[profKey]) return;
   const p = ensurePlayerStructure(state.stats[profKey]);
   const today = new Date().toISOString().slice(0, 10);
   if (!p.dailyQuest || p.dailyQuest.date !== today || !p.dailyQuest.type) {
     const quests = [
-      { type: "stars", title: "Zdobyj dzisiaj 10 złotych gwiazdek ⭐", target: 10, rewardStars: 30 },
-      { type: "perfect", title: "Ukończ dzisiaj 1 rundę bez żadnego błędu 🎯", target: 1, rewardStars: 30 },
-      { type: "rounds", title: "Ukończ dzisiaj 2 dowolne lekcje 🏆", target: 2, rewardStars: 30 },
-      { type: "feed_pet", title: "Nakarm dzisiaj swojego zwierzaka w Garderobie 🍎", target: 1, rewardStars: 30 }
+      { type: "stars", title: "Zdobądź dzisiaj 10 złotych gwiazdek ⭐", speakPl: "Zadanie dnia od Sówki! Zdobądź dzisiaj dziesięć złotych gwiazdek w dowolnych lekcjach, a w nagrodę dostaniesz trzydzieści dodatkowych gwiazdek!", target: 10, rewardStars: 30 },
+      { type: "perfect", title: "Ukończ dzisiaj 1 rundę bez żadnego błędu 🎯", speakPl: "Zadanie dnia od Sówki! Ukończ dzisiaj jedną całą lekcję bez ani jednego błędu, a w nagrodę otrzymasz trzydzieści złotych gwiazdek!", target: 1, rewardStars: 30 },
+      { type: "rounds", title: "Ukończ dzisiaj 2 dowolne lekcje 🏆", speakPl: "Zadanie dnia od Sówki! Zagraj i ukończ dzisiaj dwie dowolne lekcje, a w nagrodę otrzymasz trzydzieści złotych gwiazdek!", target: 2, rewardStars: 30 },
+      { type: "feed_pet", title: "Nakarm dzisiaj swojego zwierzaka w Garderobie 🍎", speakPl: "Zadanie dnia od Sówki! Wejdź u góry w Awatar, zjedź na dół do spiżarni i nakarm swojego zwierzaka owocem lub warzywem, a dostaniesz trzydzieści gwiazdek!", target: 1, rewardStars: 30 }
     ];
     const picked = quests[Math.floor(Math.random() * quests.length)];
-    p.dailyQuest = { date: today, type: picked.type, title: picked.title, target: picked.target, progress: 0, rewardStars: picked.rewardStars, claimed: false };
+    p.dailyQuest = { date: today, type: picked.type, title: picked.title, speakPl: picked.speakPl, target: picked.target, progress: 0, rewardStars: picked.rewardStars, claimed: false };
     state.stats[profKey] = p;
+  }
+}
+
+function speakDailyQuestInstruction() {
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  ensureDailyQuestForPlayer(profKey);
+  const dq = state.stats[profKey].dailyQuest;
+  if (!dq) return;
+
+  const isDone = dq.progress >= dq.target;
+  if (dq.claimed) {
+    speakSequence([{ lang: "pl", text: "Dzisiejsze zadanie dnia zostało już wykonane i nagroda została odebrana! Wróć jutro po kolejne zadanie!" }]);
+  } else if (isDone) {
+    speakSequence([{ lang: "pl", text: "Brawo! Wykonałeś już dzisiejsze zadanie dnia! Kliknij zielony przycisk Odbierz, aby dostać trzydzieści złotych gwiazdek!" }]);
+  } else {
+    const desc = dq.speakPl || `Zadanie dnia od Sówki: ${dq.title}. Twój aktualny postęp to ${dq.progress} z ${dq.target}.`;
+    speakSequence([{ lang: "pl", text: `${desc} Aktualny postęp: ${dq.progress} z ${dq.target}.` }]);
   }
 }
 
@@ -2226,7 +1992,7 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 12.9
+        🌟 Akademia Angielskiego • Wersja 13.0
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
@@ -2291,6 +2057,7 @@ function chooseProfile(prof) {
 function showLessonMenu() {
   cancelAllSpeechAndTimers();
   if (!state.profile) { showStartScreen(); return; }
+  ensurePancakesLessonExists(state.lessons);
   state.currentLessonId = null;
   state.isExamMode = false;
   state.isHardWordsMode = false;
@@ -2314,7 +2081,7 @@ function showLessonMenu() {
 
   const whatsNewGlow = shouldGlowWhatsNew() ? "tutorial-highlight" : "";
   const whatsNewBtnMenu = (state.profile !== "duel" && areNewFeaturesActive())
-    ? `<button id="menuWhatsNewBtn" onclick="openWhatsNewModal(true)" class="kid-card px-4 py-2.5 rounded-2xl bg-rose-100 border-3 border-rose-400 text-rose-900 font-extrabold text-sm flex items-center gap-2 shadow-sm ${whatsNewGlow}"><span>🆕🦉</span> Co nowego w Wersji 12?</button>`
+    ? `<button id="menuWhatsNewBtn" onclick="openWhatsNewModal(true)" class="kid-card px-4 py-2.5 rounded-2xl bg-rose-100 border-3 border-rose-400 text-rose-900 font-extrabold text-sm flex items-center gap-2 shadow-sm ${whatsNewGlow}"><span>🆕🦉</span> Co nowego w Wersji 13?</button>`
     : "";
 
   const tataSimSwitchHtml = state.profile === "tata"
@@ -2331,16 +2098,16 @@ function showLessonMenu() {
     if (dq && dq.title) {
       const isDone = dq.progress >= dq.target;
       dailyQuestBanner = `
-        <div id="dailyQuestBannerBox" class="mb-4 p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-yellow-50 to-emerald-50 border-2 ${isDone ? 'border-emerald-400' : 'border-amber-300'} flex flex-wrap items-center justify-between gap-2 shadow-sm">
+        <div id="dailyQuestBannerBox" onclick="speakDailyQuestInstruction()" class="cursor-pointer hover:brightness-95 transition-all mb-4 p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-yellow-50 to-emerald-50 border-2 ${isDone ? 'border-emerald-400' : 'border-amber-300'} flex flex-wrap items-center justify-between gap-2 shadow-sm" title="Kliknij, aby Sówka przeczytała zadanie!">
           <div class="flex items-center gap-2.5">
-            <span class="text-3xl">${dq.claimed ? '✅' : isDone ? '🎁' : '📅'}</span>
+            <span class="text-3xl">${dq.claimed ? '✅' : isDone ? '🎁' : '🦉🔊'}</span>
             <div>
-              <div class="text-[11px] font-extrabold uppercase text-amber-800">Zadanie Dnia od Sówki (+${dq.rewardStars} ⭐)</div>
+              <div class="text-[11px] font-extrabold uppercase text-amber-800">Zadanie Dnia od Sówki (+${dq.rewardStars} ⭐) • Kliknij, aby posłuchać 🔊</div>
               <div class="text-xs md:text-sm font-extrabold text-slate-900">${dq.title}</div>
             </div>
           </div>
-          <div>
-            ${dq.claimed ? `<span class="px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-xs border border-emerald-300">Odebrano nagrodę ✓</span>` : isDone ? `<button onclick="claimDailyQuestReward()" class="kid-card px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow animate-bounce">🎁 Odbierz +${dq.rewardStars} ⭐!</button>` : `<span class="px-3 py-1.5 rounded-xl bg-white text-slate-700 font-extrabold text-xs border border-amber-300">Postęp: ${dq.progress}/${dq.target}</span>`}
+          <div onclick="event.stopPropagation()">
+            ${dq.claimed ? `<span class="px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-xs border border-emerald-300">Odebrano nagrodę ✓</span>` : isDone ? `<button onclick="claimDailyQuestReward()" class="kid-card px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow animate-bounce">🎁 Odbierz +${dq.rewardStars} ⭐!</button>` : `<button onclick="speakDailyQuestInstruction()" class="px-3 py-1.5 rounded-xl bg-white text-slate-700 font-extrabold text-xs border border-amber-300">🔊 Posłuchaj (${dq.progress}/${dq.target})</button>`}
           </div>
         </div>
       `;
@@ -2457,6 +2224,7 @@ function startLesson(lessonId, subMode = null) {
   state.letterBuilt = ""; state.letterPool = [];
 
   upgradeBodyLessonForHubert(state.lessons);
+  ensurePancakesLessonExists(state.lessons);
   const lesson = state.lessons.find(l => l.id === lessonId);
   if (!lesson) return;
 
@@ -2475,6 +2243,11 @@ function startLesson(lessonId, subMode = null) {
   state.shopCart = []; state.riddleHintShown = false; state.riddleHintStep = 0;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   state.duelScores = { igor: 0, hubert: 0 }; state.duelTurn = "igor"; state.duelReadyWaiting = state.profile === "duel";
+
+  if (subMode === "pancake_cooking_game") {
+    state.roundQuestions = [{ en: "Pancakes", pl: "Pankejksy", icon: "🥞" }];
+    if (typeof startPancakeCookingGame === "function") return startPancakeCookingGame(lesson);
+  }
 
   const totalQ = state.profile === "duel" ? 16 : state.questionsPerRound;
   if (subMode === "color_mix_game") {
@@ -3286,15 +3059,529 @@ function renderEndRoundScreen() {
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 5B ======================= -->
+
+<!-- ======================= POCZĄTEK CZĘŚCI 5C ======================= -->
+<script>
+/* ============================================================================
+   CZĘŚĆ 5C: KUCHNIA PANKEJKÓW (PIEKARNIA + MISKA + OWOCE + ZWIERZAK) (WERSJA 13.0)
+   ============================================================================ */
+
+const _origRenderTopGameBarV12 = typeof renderTopGameBar === "function" ? renderTopGameBar : null;
+
+renderTopGameBar = function(lesson) {
+  if (!state.isExamMode && !state.isHardWordsMode && !state.isCoopDragonMode && lesson && lesson.id === "pancakes_cooking" && state.profile !== "duel") {
+    const totalQ = state.roundQuestions.length || 1;
+    const micBtn = `<button onclick="startLesson('${lesson.id}','mic_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'mic_game' ? 'bg-rose-600 text-white' : 'bg-white text-slate-700'}">🎤 Wymowa</button>`;
+    const flashBtn = `<button onclick="startFlashcards('${lesson.id}')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-indigo-50 text-indigo-800 border-indigo-300">🃏 Fiszki</button>`;
+    const lettersBtn = `<button id="subModeBtn_letters_game" onclick="startLesson('${lesson.id}','letters_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'letters_game' ? 'bg-purple-600 text-white border-purple-700' : 'bg-purple-50 text-purple-900 border-purple-300'}">🧩 Literki</button>`;
+    const cookBtn = `<button id="subModeBtn_pancake_cooking_game" onclick="startLesson('${lesson.id}','pancake_cooking_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'pancake_cooking_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">👨‍🍳 Kuchnia Pankejków</button>`;
+    const quizBtn = `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>`;
+    const tataSwitchBar = state.profile === "tata"
+      ? `<button onclick="toggleTataPreviewAge()" class="px-2.5 py-1 rounded-xl font-extrabold text-xs border-2 ${state.tataPreviewAsIgor ? 'bg-amber-400 text-amber-950 border-amber-600' : 'bg-sky-600 text-white border-sky-800'}">${state.tataPreviewAsIgor ? '👦 Widok: IGOR (4 l.) 🔄' : '🧑 Widok: HUBERT (6 l.) 🔄'}</button>`
+      : "";
+
+    let dotsHtml = "";
+    for (let i = 0; i < totalQ; i++) {
+      let badgeTxt = `${i + 1}`; let bg = "bg-slate-200 text-slate-600 border-slate-300";
+      if (i < state.roundIndex) {
+        bg = state.roundResults[i] === "correct" ? "bg-emerald-500 text-white border-emerald-600" : "bg-amber-500 text-white border-amber-600";
+        badgeTxt = state.roundResults[i] === "correct" ? "✓" : "✗";
+      } else if (i === state.roundIndex) {
+        bg = "bg-amber-400 text-amber-950 border-amber-600 ring-2 ring-amber-600 animate-pulse font-extrabold";
+      }
+      dotsHtml += `<div class="w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${bg}">${badgeTxt}</div>`;
+    }
+
+    return `
+      <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-amber-300 flex flex-col gap-2 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap gap-1.5 items-center">${flashBtn}${quizBtn}${cookBtn}${lettersBtn}${micBtn}${tataSwitchBar}</div>
+          <button onclick="showLessonMenu()" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Menu 🏠</button>
+        </div>
+        ${state.currentSubMode !== "pancake_cooking_game" ? `<div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100"><span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}</div>` : ""}
+      </div>
+    `;
+  }
+  return _origRenderTopGameBarV12 ? _origRenderTopGameBarV12(lesson) : "";
+};
+
+// ------------------------------------------------------------------------
+// SCENARIUSZ: OD PIEKARNI PRZEZ KUCHNIĘ DO KARMIENIA ZWIERZAKA
+// ------------------------------------------------------------------------
+const PANCAKE_BASE_INGREDIENTS = [
+  { id: "flour",   en: "Flour",   pl: "Mąka",   icon: "🌾" },
+  { id: "egg",     en: "Egg",     pl: "Jajko",  icon: "🥚" },
+  { id: "yoghurt", en: "Yoghurt", pl: "Jogurt", icon: "🥛" },
+  { id: "honey",   en: "Honey",   pl: "Miód",   icon: "🍯" },
+  { id: "oil",     en: "Oil",     pl: "Olej",   icon: "🫗" }
+];
+
+const PANCAKE_TOPPING_FRUITS = [
+  { id: "strawberry", en: "Strawberry", pl: "Truskawka", icon: "🍓" },
+  { id: "banana",     en: "Banana",     pl: "Banan",     icon: "🍌" },
+  { id: "apple",      en: "Apple",      pl: "Jabłko",    icon: "🍎" },
+  { id: "grapes",     en: "Grapes",     pl: "Winogrona", icon: "🍇" },
+  { id: "blueberry",  en: "Blueberry",  pl: "Jagody",    icon: "🫐" },
+  { id: "honey_top",  en: "Honey",      pl: "Miód",      icon: "🍯" }
+];
+
+function startPancakeCookingGame(lesson) {
+  cancelAllSpeechAndTimers();
+  state.currentLessonId = "pancakes_cooking";
+  state.currentSubMode = "pancake_cooking_game";
+  state.pancakeState = {
+    stage: "bakery_shop", // bakery_shop -> bowl_add -> bowl_mix -> fry_pan -> decorate_fruits -> feed_pet
+    shopIdx: 0,
+    boughtItems: [],
+    addIdx: 0,
+    addedItems: [],
+    mixClicks: 0,
+    addedToppings: [],
+    selectedFruitForVoice: PANCAKE_TOPPING_FRUITS[0].id
+  };
+  renderPancakeCookingStage(lesson);
+}
+
+function renderPancakeCookingStage(lesson) {
+  const activeLesson = lesson || state.lessons.find(l => l.id === "pancakes_cooking");
+  const ps = state.pancakeState;
+  const mc = document.getElementById("mainContainer");
+  if (!mc || !ps) return;
+
+  const isIgor = isEffectiveIgorMode();
+
+  // ETAP 1: ZAKUPY W PIEKARNI / SKLEPIE ZE ZWROTAMI
+  if (ps.stage === "bakery_shop") {
+    const targetIng = PANCAKE_BASE_INGREDIENTS[ps.shopIdx];
+    const choices = shuffleArray([
+      targetIng,
+      ...shuffleArray(PANCAKE_BASE_INGREDIENTS.filter(i => i.id !== targetIng.id)).slice(0, 2)
+    ]);
+    window._pancakeShopChoices = choices;
+
+    const askPhrase = ps.shopIdx === 0
+      ? `Good morning! Please give me ${targetIng.en.toLowerCase()}!`
+      : `Please give me ${targetIng.en.toLowerCase()}!`;
+
+    mc.innerHTML = `
+      ${renderTopGameBar(activeLesson)}
+      <div class="bg-white rounded-3xl shadow-xl border-4 border-amber-400 p-4 md:p-6 text-center max-w-3xl mx-auto">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold text-xs">🏪 Etap 1/5: Zakupy w Piekarni i Sklepie (${ps.shopIdx + 1}/5)</span>
+          <button onclick="psSkipToKitchen()" class="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">Mam już składniki ➔ Kuchnia ⏭️</button>
+        </div>
+
+        <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-300 mb-3 flex items-center justify-between gap-2">
+          <button onclick="speakSequence([{lang:'en',text:'${askPhrase.replace(/'/g,"\\'")}'}])" class="kid-card w-12 h-12 rounded-2xl bg-amber-500 text-white text-2xl shadow flex items-center justify-center shrink-0">🔊</button>
+          <div class="flex-1 text-left px-2">
+            <div class="text-xs font-extrabold text-amber-800 uppercase">Powiedz sprzedawcy:</div>
+            <div class="text-base md:text-xl font-extrabold text-slate-900">"${askPhrase}"</div>
+            <div class="text-xs font-bold text-slate-600">${ps.shopIdx === 0 ? "Dzień dobry! Poproszę mąkę!" : `Poproszę: ${targetIng.pl.toLowerCase()}!`}</div>
+          </div>
+          <div class="text-4xl">🧑‍🍳</div>
+        </div>
+
+        <div class="mb-3 p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center gap-2 text-xs font-bold text-slate-700">
+          <span>Koszyk na pankejki:</span>
+          ${ps.boughtItems.length ? ps.boughtItems.map(ic => `<span class="text-2xl pop-correct">${ic}</span>`).join("") : `<span class="text-slate-400">pusty</span>`}
+        </div>
+
+        <div id="pancakeFeedback" class="min-h-[30px] font-extrabold text-sm mb-2"></div>
+
+        <div class="grid grid-cols-3 gap-3">
+          ${choices.map((it, idx) => `
+            <div onclick="pickPancakeShopItem(${idx})" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-200 bg-amber-50/40 hover:border-amber-500 p-4 shadow flex flex-col items-center">
+              <div class="text-6xl my-2 float-anim">${it.icon}</div>
+              <div class="w-full py-1.5 px-2 rounded-xl bg-white border border-amber-300 font-extrabold text-xs text-amber-950 uppercase">${it.en}</div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+    speakSequence([
+      { lang: "pl", text: ps.shopIdx === 0 ? "Wchodzimy do sklepu po składniki na pankejki! Powiedz:" : "Poproś o kolejny składnik:" },
+      { lang: "en", text: askPhrase }
+    ]);
+    return;
+  }
+
+  // ETAP 2: WRZUCANIE WSZYSTKICH 5 SKŁADNIKÓW Z KARTKI DO MISKI ("ADD ...")
+  if (ps.stage === "bowl_add") {
+    const targetIng = PANCAKE_BASE_INGREDIENTS[ps.addIdx];
+    const cmdEn = `Add ${targetIng.en.toLowerCase()}!`;
+
+    mc.innerHTML = `
+      ${renderTopGameBar(activeLesson)}
+      <div class="bg-white rounded-3xl shadow-xl border-4 border-sky-400 p-4 md:p-6 text-center max-w-3xl mx-auto">
+        <div class="text-xs font-extrabold text-sky-800 uppercase mb-1">🥣 Etap 2/5: Dodajemy składniki do miski (${ps.addIdx + 1}/5)</div>
+        <div class="bg-sky-50 p-3.5 rounded-2xl border-2 border-sky-200 mb-3 flex items-center justify-between gap-2">
+          <button onclick="speakSequence([{lang:'en',text:'${cmdEn}'}])" class="kid-card w-12 h-12 rounded-2xl bg-sky-500 text-white text-2xl shadow flex items-center justify-center">🔊</button>
+          <div class="flex-1">
+            <div class="text-xl md:text-3xl font-extrabold text-slate-900">"${cmdEn}"</div>
+            <div class="text-xs font-bold text-slate-600">Kliknij właściwy składnik, aby dodać go do miski!</div>
+          </div>
+        </div>
+
+        <div id="pancakeFeedback" class="min-h-[30px] font-extrabold text-sm mb-2"></div>
+
+        <!-- Miska ze składnikami -->
+        <div class="w-44 h-28 mx-auto mb-4 rounded-b-full bg-gradient-to-b from-amber-100 to-amber-300 border-4 border-amber-500 shadow-inner flex flex-wrap items-center justify-center gap-1 p-2">
+          ${ps.addedItems.length ? ps.addedItems.map(ic => `<span class="text-3xl pop-correct">${ic}</span>`).join("") : `<span class="text-xs font-bold text-amber-800">🥣 Pusta miska</span>`}
+        </div>
+
+        <!-- Wszystkie 5 składników z kartki dostępne dla obu chłopców -->
+        <div class="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
+          ${PANCAKE_BASE_INGREDIENTS.map(ing => {
+            const alreadyIn = ps.addedItems.includes(ing.icon);
+            return `
+              <button onclick="addIngredientToBowl('${ing.id}')" ${alreadyIn ? "disabled" : ""} class="kid-card rounded-2xl border-3 ${alreadyIn ? 'border-emerald-300 bg-emerald-50 opacity-45 cursor-not-allowed' : 'border-sky-300 bg-white hover:bg-sky-50'} p-3 shadow flex flex-col items-center">
+                <span class="text-4xl mb-1">${ing.icon}</span>
+                <span class="font-extrabold text-xs text-slate-900">${ing.en}</span>
+                <span class="text-[10px] font-bold text-slate-500">${ing.pl}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+    speakSequence([{ lang: "en", text: cmdEn }, { lang: "pl", text: `Dodaj: ${targetIng.pl}!` }]);
+    return;
+  }
+
+  // ETAP 3: MIESZANIE CIASTA ("MIX!") I SMAŻENIE PANKEJKÓW ("PANCAKES!")
+  if (ps.stage === "bowl_mix") {
+    const isMixed = ps.mixClicks >= 3;
+    mc.innerHTML = `
+      ${renderTopGameBar(activeLesson)}
+      <div class="bg-white rounded-3xl shadow-xl border-4 border-purple-400 p-5 text-center max-w-2xl mx-auto">
+        <div class="text-xs font-extrabold text-purple-700 uppercase mb-1">🥄🍳 Etap 3/5: Mieszamy i smażymy pankejki!</div>
+        <div class="bg-purple-50 p-3.5 rounded-2xl border-2 border-purple-200 mb-4 flex items-center justify-between">
+          <button onclick="speakSequence([{lang:'en',text:'${isMixed ? 'Fry the pancakes!' : 'Mix! Mix the ingredients!'}'}])" class="kid-card w-12 h-12 rounded-2xl bg-purple-600 text-white text-2xl shadow flex items-center justify-center">🔊</button>
+          <div class="flex-1">
+            <div class="text-xl md:text-2xl font-extrabold text-slate-900">${isMixed ? '"Pancakes! Fry the pancakes!"' : '"Mix! Mix the ingredients!"'}</div>
+            <div class="text-xs font-bold text-slate-600">${isMixed ? "Ciasto gotowe! Kliknij patelnię, aby usmażyć pankejksy!" : `Kliknij miskę 3 razy, aby wymieszać składniki (${ps.mixClicks}/3)!`}</div>
+          </div>
+        </div>
+
+        ${!isMixed ? `
+          <div onclick="clickMixBowl()" class="kid-card cursor-pointer w-52 h-40 mx-auto rounded-b-full bg-gradient-to-b from-yellow-100 to-amber-300 border-4 border-amber-500 shadow-xl flex flex-col items-center justify-center relative">
+            <div class="text-5xl mb-1">🥄🥣</div>
+            <div class="font-extrabold text-sm text-amber-950">Kliknij, aby mieszać! (${ps.mixClicks}/3)</div>
+          </div>
+        ` : `
+          <div onclick="fryPancakesOnPan()" class="kid-card cursor-pointer w-56 h-44 mx-auto rounded-3xl bg-gradient-to-b from-slate-700 to-slate-900 border-4 border-amber-400 shadow-xl flex flex-col items-center justify-center text-white">
+            <div class="text-6xl mb-1 float-anim">🍳🥞</div>
+            <div class="font-extrabold text-base text-amber-300">Usmaż Pankejksy! 🔥</div>
+          </div>
+        `}
+      </div>
+    `;
+    speakSequence([
+      { lang: "en", text: isMixed ? "Pancakes!" : "Mix!" },
+      { lang: "pl", text: isMixed ? "Ciasto wymieszane! Kliknij patelnię, aby usmażyć pankejksy!" : "Mieszamy! Kliknij trzy razy w miskę!" }
+    ]);
+    return;
+  }
+
+  // ETAP 4: DEKOROWANIE OWOCAMI (IGOR: KLIKANIE + OPCJONALNY MIKROFON, HUBERT: GŁOSOWO)
+  if (ps.stage === "decorate_fruits") {
+    const toppingsHtml = ps.addedToppings.length
+      ? ps.addedToppings.map(ic => `<span class="text-3xl pop-correct">${ic}</span>`).join(" ")
+      : `<span class="text-xs text-slate-400">Dodaj ulubione owoce na górę!</span>`;
+
+    mc.innerHTML = `
+      ${renderTopGameBar(activeLesson)}
+      <div class="bg-white rounded-3xl shadow-xl border-4 border-pink-400 p-4 md:p-6 text-center max-w-3xl mx-auto">
+        <div class="text-xs font-extrabold text-pink-700 uppercase mb-1">🍓🍌 Etap 4/5: Dekorujemy Pankejksy! (${isIgor ? "Tryb Igora: kliknij owoc lub powiedz" : "Tryb Huberta: powiedz po angielsku jaki owoc dodać!"})</div>
+        
+        <!-- Talerz z usmażonymi pankejkami -->
+        <div class="my-3 p-4 rounded-3xl bg-gradient-to-b from-amber-50 to-orange-50 border-3 border-amber-300 max-w-md mx-auto shadow-inner">
+          <div class="flex justify-center gap-1 min-h-[38px] mb-1">${toppingsHtml}</div>
+          <div class="text-7xl drop-shadow-md">🥞</div>
+          <div class="text-xs font-extrabold text-amber-900 mt-1">Twoje Pankejksy (${ps.addedToppings.length} dodatków)</div>
+        </div>
+
+        <div id="pancakeFruitStatus" class="min-h-[34px] font-extrabold text-sm text-rose-800 mb-2 flex items-center justify-center"></div>
+
+        ${isIgor ? `
+          <p class="text-xs font-bold text-slate-600 mb-2">Kliknij dowolny owoc, aby położyć go na pankejkach (możesz też poćwiczyć wymowę mikrofonem 🎤):</p>
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4">
+            ${PANCAKE_TOPPING_FRUITS.map(f => `
+              <div class="rounded-2xl border-2 border-pink-300 bg-pink-50/40 p-2 flex flex-col items-center shadow-sm">
+                <button onclick="igorClickFruitTopping('${f.id}')" class="kid-card flex flex-col items-center w-full">
+                  <span class="text-4xl">${f.icon}</span>
+                  <span class="font-extrabold text-xs text-slate-900 mt-1">${f.en}</span>
+                  <span class="text-[10px] text-slate-500">${f.pl}</span>
+                </button>
+                <button onclick="voiceAddFruitTopping('${f.id}')" class="mt-1.5 w-full py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px]">🎤 Powiedz</button>
+              </div>
+            `).join("")}
+          </div>
+        ` : `
+          <p class="text-xs font-bold text-slate-600 mb-2">Wybierz owoc i naciśnij <strong>🎤 Powiedz po angielsku</strong>, aby dodać go na pankejksy!</p>
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
+            ${PANCAKE_TOPPING_FRUITS.map(f => {
+              const sel = ps.selectedFruitForVoice === f.id;
+              return `
+                <div onclick="selectFruitForHubertVoice('${f.id}')" class="kid-card cursor-pointer rounded-2xl border-3 ${sel ? 'border-rose-500 bg-rose-50 ring-2 ring-rose-400' : 'border-slate-200 bg-white'} p-2.5 flex flex-col items-center shadow-sm">
+                  <span class="text-4xl">${f.icon}</span>
+                  <span class="font-extrabold text-xs text-slate-900 mt-1">${f.en}</span>
+                  <span class="text-[10px] text-slate-500">${f.pl}</span>
+                </div>
+              `;
+            }).join("")}
+          </div>
+          <div class="flex flex-wrap justify-center gap-2 mb-4">
+            <button onclick="speakSelectedFruitHint()" class="kid-card px-4 py-2 rounded-xl bg-sky-500 text-white font-bold text-xs shadow">🔊 Podpowiedz wymowę</button>
+            <button onclick="voiceAddFruitTopping(state.pancakeState.selectedFruitForVoice)" class="kid-card px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-sm shadow-lg">🎤 Powiedz nazwę owocu!</button>
+            <button onclick="parentApprovePancakeFruit()" class="kid-card px-3.5 py-2 rounded-xl bg-emerald-500 text-emerald-950 font-bold text-xs border border-emerald-700">🔒 Zalicz (Tata)</button>
+          </div>
+        `}
+
+        <button onclick="goToFeedPetWithPancakes()" class="kid-card w-full max-w-md py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base shadow-lg">
+          🍽️ Gotowe! Podaj Pankejksy Zwierzakowi ➔
+        </button>
+      </div>
+    `;
+    speakSequence([
+      { lang: "pl", text: isIgor ? "Pankejksy usmażone! Kliknij owoce, które chcesz położyć na górze!" : "Pankejksy usmażone! Wybierz owoc i powiedz jego nazwę po angielsku do mikrofonu!" }
+    ]);
+    return;
+  }
+
+  // ETAP 5: FINAŁ – POCZĘSTUNEK DLA ZWIERZAKA-TOWARZYSZA + ZWROTY Z PIEKARNI
+  if (ps.stage === "feed_pet") {
+    const profKey = getActiveProfileKey();
+    const p = ensurePlayerStructure(state.stats[profKey]);
+    const petObj = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).find(a => a.id === (p.avatar && p.avatar.pet));
+    const petIcon = petObj ? petObj.icon : "🦉";
+    const petNamePl = petObj ? petObj.pl : "Sówka";
+
+    mc.innerHTML = `
+      ${renderTopGameBar(activeLesson)}
+      <div class="bg-white rounded-3xl shadow-xl border-4 border-emerald-400 p-6 text-center max-w-2xl mx-auto">
+        <div class="text-xs font-extrabold text-emerald-700 uppercase mb-2">🐾 Etap 5/5: Czas na poczęstunek!</div>
+        <div class="text-7xl my-2 float-anim">${petIcon}</div>
+        <div class="bg-emerald-50 p-3.5 rounded-2xl border-2 border-emerald-300 mb-4">
+          <div class="text-lg md:text-2xl font-extrabold text-emerald-950">${petNamePl} mówi: "I'm hungry! Please give me pancakes!"</div>
+          <div class="text-xs font-bold text-slate-600 mt-0.5">Jestem głodny! Poproszę pankejksy!</div>
+        </div>
+
+        <div onclick="servePancakesToPet()" class="kid-card cursor-pointer p-4 rounded-3xl bg-amber-50 hover:bg-amber-100 border-4 border-amber-400 max-w-xs mx-auto shadow-lg">
+          <div class="flex justify-center gap-1 mb-1">${ps.addedToppings.map(ic => `<span class="text-2xl">${ic}</span>`).join("")}</div>
+          <div class="text-6xl">🥞</div>
+          <div class="mt-2 py-2 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-sm">🍽️ Podaj i powiedz: "Thank you! Goodbye!"</div>
+        </div>
+      </div>
+    `;
+    speakSequence([
+      { lang: "en", text: "I am hungry! Please give me pancakes!" },
+      { lang: "pl", text: `${petNamePl} jest głodny! Kliknij talerz z pankejkami, aby go poczęstować!` }
+    ]);
+  }
+}
+
+function psSkipToKitchen() {
+  state.pancakeState.stage = "bowl_add";
+  renderPancakeCookingStage();
+}
+
+function pickPancakeShopItem(idx) {
+  const ps = state.pancakeState;
+  const targetIng = PANCAKE_BASE_INGREDIENTS[ps.shopIdx];
+  const chosen = window._pancakeShopChoices[idx];
+  const fb = document.getElementById("pancakeFeedback");
+
+  if (chosen.id === targetIng.id) {
+    playEffect("success");
+    ps.boughtItems.push(chosen.icon);
+    if (fb) fb.innerHTML = `<span class="text-emerald-600">✅ Thank you! Masz: ${chosen.pl} (${chosen.en})!</span>`;
+    ps.shopIdx++;
+    if (ps.shopIdx >= PANCAKE_BASE_INGREDIENTS.length) {
+      speakSequence([{ lang: "en", text: "Thank you! Goodbye!" }, { lang: "pl", text: "Wszystkie składniki kupione! Idziemy do kuchni!" }], () => {
+        ps.stage = "bowl_add";
+        renderPancakeCookingStage();
+      });
+    } else {
+      speakSequence([{ lang: "en", text: "Thank you!" }], () => renderPancakeCookingStage());
+    }
+  } else {
+    playEffect("wrong");
+    if (fb) fb.innerHTML = `<span class="text-rose-600">❌ To jest ${chosen.pl} (${chosen.en}). Poprosiliśmy o: ${targetIng.en}!</span>`;
+    speakSequence([{ lang: "pl", text: `Oj nie, to jest ${chosen.pl}. Poproś o:` }, { lang: "en", text: targetIng.en }]);
+  }
+}
+
+function addIngredientToBowl(ingId) {
+  const ps = state.pancakeState;
+  const targetIng = PANCAKE_BASE_INGREDIENTS[ps.addIdx];
+  const chosen = PANCAKE_BASE_INGREDIENTS.find(i => i.id === ingId);
+  const fb = document.getElementById("pancakeFeedback");
+  if (!chosen || !targetIng) return;
+
+  if (chosen.id === targetIng.id) {
+    playEffect("success");
+    ps.addedItems.push(chosen.icon);
+    ps.addIdx++;
+    if (ps.addIdx >= PANCAKE_BASE_INGREDIENTS.length) {
+      if (fb) fb.innerHTML = `<span class="text-emerald-600">✅ Wszystkie składniki w misce!</span>`;
+      speakSequence([{ lang: "pl", text: "Super! Wszystkie składniki są już w misce! Teraz czas na mieszanie!" }], () => {
+        ps.stage = "bowl_mix";
+        renderPancakeCookingStage();
+      });
+    } else {
+      renderPancakeCookingStage();
+    }
+  } else {
+    playEffect("wrong");
+    if (fb) fb.innerHTML = `<span class="text-rose-600">❌ Najpierw dodaj: ${targetIng.en} (${targetIng.pl})!</span>`;
+    speakSequence([{ lang: "pl", text: "Najpierw dodaj:" }, { lang: "en", text: targetIng.en }]);
+  }
+}
+
+function clickMixBowl() {
+  const ps = state.pancakeState;
+  ps.mixClicks++;
+  playEffect("beep");
+  if (ps.mixClicks >= 3) {
+    playEffect("success");
+    speakSequence([{ lang: "en", text: "Mix, mix, mix!" }], () => renderPancakeCookingStage());
+  } else {
+    renderPancakeCookingStage();
+  }
+}
+
+function fryPancakesOnPan() {
+  playEffect("fanfare");
+  state.pancakeState.stage = "decorate_fruits";
+  renderPancakeCookingStage();
+}
+
+function igorClickFruitTopping(fruitId) {
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId);
+  if (!f) return;
+  state.pancakeState.addedToppings.push(f.icon);
+  playEffect("success");
+  renderPancakeCookingStage();
+  speakSequence([{ lang: "en", text: `Add ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Dodano: ${f.pl}!` }]);
+}
+
+function selectFruitForHubertVoice(fruitId) {
+  state.pancakeState.selectedFruitForVoice = fruitId;
+  playEffect("beep");
+  renderPancakeCookingStage();
+}
+
+function speakSelectedFruitHint() {
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === state.pancakeState.selectedFruitForVoice);
+  if (!f) return;
+  speakSequence([{ lang: "pl", text: "Powiedz:" }, { lang: "en", text: f.en }]);
+}
+
+function parentApprovePancakeFruit() {
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === state.pancakeState.selectedFruitForVoice);
+  if (!f) return;
+  state.pancakeState.addedToppings.push(f.icon);
+  playEffect("success");
+  renderPancakeCookingStage();
+  speakSequence([{ lang: "en", text: `Yummy ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Tata zalicza! Dodano: ${f.pl}!` }]);
+}
+
+function voiceAddFruitTopping(fruitId) {
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId);
+  if (!f) return;
+  cancelAllSpeechAndTimers();
+  playEffect("beep");
+  const stBox = document.getElementById("pancakeFruitStatus");
+  if (stBox) stBox.innerHTML = `🎙️ MÓW TERAZ PO ANGIELSKU: <strong>"${f.en}"</strong> (lub "Add ${f.en.toLowerCase()}")!`;
+
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    if (stBox) stBox.innerHTML = `❌ Brak obsługi mikrofonu w przeglądarce. Kliknij 🔒 Zalicz (Tata).`;
+    return;
+  }
+  let handled = false;
+  try {
+    const rec = new SpeechRec();
+    rec.lang = "en-US"; rec.interimResults = true;
+    rec.onresult = (e) => {
+      if (handled) return;
+      let heard = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) heard += e.results[i][0].transcript.toLowerCase();
+      const target = f.en.toLowerCase();
+      if (heard.includes(target) || (target.length > 4 && heard.includes(target.slice(0, 4)))) {
+        handled = true;
+        try { rec.stop(); } catch (err) {}
+        state.pancakeState.addedToppings.push(f.icon);
+        playEffect("success");
+        renderPancakeCookingStage();
+        speakSequence([{ lang: "en", text: `Add ${target}!` }, { lang: "pl", text: `Brawo! Pięknie powiedziane! Dodano: ${f.pl}!` }]);
+      }
+    };
+    rec.onend = () => {
+      if (!handled && stBox) stBox.innerHTML = `🎧 Nie usłyszałem "${f.en}". Spróbuj jeszcze raz lub kliknij 🔒 Zalicz (Tata)!`;
+    };
+    rec.start();
+    setTimeout(() => { if (!handled) { handled = true; try { rec.stop(); } catch (err) {} } }, 6000);
+  } catch (err) {}
+}
+
+function goToFeedPetWithPancakes() {
+  playEffect("beep");
+  state.pancakeState.stage = "feed_pet";
+  renderPancakeCookingStage();
+}
+
+function servePancakesToPet() {
+  const profKey = getActiveProfileKey();
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  const petId = p.avatar && p.avatar.pet;
+  if (petId) {
+    if (!p.petXp) p.petXp = {};
+    p.petXp[petId] = (p.petXp[petId] || 0) + 1;
+  }
+  p.stars = (p.stars || 0) + 5;
+  p.cups = (p.cups || 0) + 1;
+  p.lessonCounts["pancakes_cooking"] = (p.lessonCounts["pancakes_cooking"] || 0) + 1;
+  state.stats[profKey] = p;
+  advanceDailyQuestProgress(profKey, "stars", 5);
+  advanceDailyQuestProgress(profKey, "rounds", 1);
+  if (petId) advanceDailyQuestProgress(profKey, "feed_pet", 1);
+  checkAndUnlockAchievements(profKey);
+  saveCloudData();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  playEffect("fanfare");
+
+  const mc = document.getElementById("mainContainer");
+  if (mc) {
+    mc.innerHTML = `
+      <div class="bg-white rounded-3xl shadow-2xl border-4 border-amber-400 p-6 text-center max-w-xl mx-auto">
+        <div class="text-6xl mb-2">🥞🎉🏆</div>
+        <h2 class="text-3xl font-extrabold text-amber-950 mb-2">Yummy! Thank you! Goodbye!</h2>
+        <p class="text-slate-700 font-bold mb-4">Pankejksy zjedzone ze smakiem! Zdobywasz <strong>+5 ⭐</strong> oraz Puchar Mistrza Kuchni${petId ? " + punkt przyjaźni dla Twojego zwierzaka" : ""}!</p>
+        <div class="flex flex-col gap-2">
+          <button onclick="startPancakeCookingGame()" class="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-base shadow">🔄 Usmaż kolejną porcję!</button>
+          <button onclick="showLessonMenu()" class="w-full py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-base shadow">🏠 Wróć do Lekcji</button>
+        </div>
+      </div>
+    `;
+  }
+  speakSequence([
+    { lang: "en", text: "Yummy pancakes! Thank you! Goodbye!" },
+    { lang: "pl", text: "Brawo! Upiekłeś pyszne pankejksy i zdobywasz pięć złotych gwiazdek!" }
+  ]);
+}
+</script>
+<!-- ======================== KONIEC CZĘŚCI 5C ======================= -->
   
 <!-- ======================= POCZĄTEK CZĘŚCI 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 6: LITERKI, MEMORY, WYMOWA, PRZYIMKI I PANEL RODZICA (WERSJA 12.9)
+   CZĘŚĆ 6: LITERKI (Z WIDOCZNĄ RESZTĄ SŁOWA U IGORA), MEMORY, WYMOWA (WERSJA 13.0)
    ============================================================================ */
 
 // ------------------------------------------------------------------------
-// UKŁADANKA LITERKOWA (HUBERT: CAŁE SŁOWO, IGOR: PIERWSZA LITERA)
+// UKŁADANKA LITERKOWA (HUBERT: CAŁE SŁOWO, IGOR: PIERWSZA LITERA + WIDOCZNA RESZTA)
 // ------------------------------------------------------------------------
 function renderLettersGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
@@ -3324,12 +3611,12 @@ function renderLettersGame(lesson) {
   let slotsHtml = "";
   if (isIgor) {
     const isSolved = Boolean(state.letterBuilt);
-    const firstSlot = isSolved ? `<span class="text-emerald-700">${state.letterBuilt}</span>` : `<span class="text-purple-500 animate-pulse">?</span>`;
+    const firstSlot = isSolved ? `<span class="text-emerald-700">${state.letterBuilt}</span>` : `<span class="text-purple-600 animate-pulse">?</span>`;
     slotsHtml = `
       <div class="flex flex-wrap justify-center gap-1.5 my-3">
         <div class="w-12 h-14 md:w-14 md:h-16 rounded-2xl border-4 ${isSolved ? 'border-emerald-500 bg-emerald-50' : 'border-purple-500 bg-purple-50'} flex items-center justify-center text-2xl md:text-3xl font-extrabold shadow">${firstSlot}</div>
         ${rawWord.slice(1).split("").map(ch => `
-          <div class="w-12 h-14 md:w-14 md:h-16 rounded-2xl border-2 ${isSolved ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-slate-300 bg-slate-100 text-slate-400'} flex items-center justify-center text-2xl md:text-3xl font-extrabold">${isSolved ? ch : '•'}</div>
+          <div class="w-12 h-14 md:w-14 md:h-16 rounded-2xl border-2 ${isSolved ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-slate-300 bg-slate-100 text-slate-700'} flex items-center justify-center text-2xl md:text-3xl font-extrabold">${ch}</div>
         `).join("")}
       </div>
     `;
@@ -3349,7 +3636,7 @@ function renderLettersGame(lesson) {
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
     <div class="bg-white rounded-3xl shadow-xl border-4 border-purple-400 p-4 md:p-6 text-center max-w-2xl mx-auto w-full">
-      <div class="text-xs font-extrabold text-purple-700 uppercase mb-1">🧩 Układanka Literkowa (${isIgor ? 'Wskaż pierwszą literę' : 'Posłuchaj i ułóż słowo'})</div>
+      <div class="text-xs font-extrabold text-purple-700 uppercase mb-1">🧩 Układanka Literkowa (${isIgor ? 'Wskaż brakującą pierwszą literę' : 'Posłuchaj i ułóż słowo'})</div>
       <div class="flex items-center justify-center gap-4 my-2">
         <button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-14 h-14 rounded-2xl bg-purple-600 text-white text-3xl shadow flex items-center justify-center" title="Posłuchaj słowa">🔊</button>
         <div class="text-6xl md:text-7xl float-anim drop-shadow-sm">${q.icon || '⭐'}</div>

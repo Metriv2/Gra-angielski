@@ -541,7 +541,7 @@ const FULL_LESSONS_DATABASE = [
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO (LIVE TOUR), CHMURA I AWATAR (WERSJA 12.7)
+   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO (LIVE TOUR), CHMURA I AWATAR (WERSJA 12.8)
    ============================================================================ */
 
 const PROFILE_META = {
@@ -662,6 +662,7 @@ const PARENT_PIN = "0608";
 let audioCtx = null;
 let activeSpeechToken = 0;
 let pendingAdvanceTimer = null;
+let cloudSyncReady = false;
 
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec";
 
@@ -736,6 +737,57 @@ function ensurePlayerStructure(p) {
       pet: rawAvatar.pet ? String(rawAvatar.pet).replace(/^mem_/, "p_") : ""
     },
     equipped: { ...def.equipped, ...(p.equipped || {}) }
+  };
+}
+
+function mergePlayerProgressSafe(localRaw, cloudRaw) {
+  const loc = ensurePlayerStructure(localRaw);
+  const cld = ensurePlayerStructure(cloudRaw);
+  if (!cloudRaw) return loc;
+  if (!localRaw) return cld;
+
+  const mergedLessonCounts = { ...loc.lessonCounts };
+  Object.keys(cld.lessonCounts || {}).forEach(k => {
+    mergedLessonCounts[k] = Math.max(mergedLessonCounts[k] || 0, cld.lessonCounts[k] || 0);
+  });
+
+  const mergedPetXp = { ...loc.petXp };
+  Object.keys(cld.petXp || {}).forEach(k => {
+    mergedPetXp[k] = Math.max(mergedPetXp[k] || 0, cld.petXp[k] || 0);
+  });
+
+  const mergedPetFood = { ...cld.petFood };
+  Object.keys(loc.petFood || {}).forEach(k => {
+    if (mergedPetFood[k] === undefined) mergedPetFood[k] = loc.petFood[k];
+  });
+
+  return {
+    ...loc,
+    ...cld,
+    stars: Math.max(loc.stars || 0, cld.stars || 0),
+    cups: Math.max(loc.cups || 0, cld.cups || 0),
+    perfectRounds: Math.max(loc.perfectRounds || 0, cld.perfectRounds || 0),
+    examsDone: Math.max(loc.examsDone || 0, cld.examsDone || 0),
+    duelsWon: Math.max(loc.duelsWon || 0, cld.duelsWon || 0),
+    streakDays: Math.max(loc.streakDays || 0, cld.streakDays || 0),
+    micCount: Math.max(loc.micCount || 0, cld.micCount || 0),
+    lastPlayDate: (cld.lastPlayDate || "") >= (loc.lastPlayDate || "") ? cld.lastPlayDate : loc.lastPlayDate,
+    lastBirthdayRewardYear: Math.max(loc.lastBirthdayRewardYear || 0, cld.lastBirthdayRewardYear || 0),
+    seenVersion: cld.seenVersion || loc.seenVersion || "",
+    badges: Array.from(new Set([...(loc.badges || []), ...(cld.badges || [])])),
+    unlockedItems: Array.from(new Set([...(loc.unlockedItems || []), ...(cld.unlockedItems || [])])),
+    memoryAnimals: Array.from(new Set([...(loc.memoryAnimals || []), ...(cld.memoryAnimals || [])])),
+    hardWords: (cld.hardWords && cld.hardWords.length > 0) ? cld.hardWords : (loc.hardWords || []),
+    petFood: mergedPetFood,
+    petXp: mergedPetXp,
+    lessonCounts: mergedLessonCounts,
+    avatar: {
+      head: cld.avatar.head || loc.avatar.head || "",
+      torso: cld.avatar.torso || loc.avatar.torso || "",
+      legs: cld.avatar.legs || loc.avatar.legs || "",
+      pet: cld.avatar.pet || loc.avatar.pet || ""
+    },
+    equipped: { ...(loc.equipped || {}), ...(cld.equipped || {}) }
   };
 }
 
@@ -891,12 +943,14 @@ function closeWhatsNewModal() {
 }
 
 function speakWhatsNewTour(onlyStep = 0) {
-  // Ukrywamy modal z listą, aby Sówka mogła na żywo pokazać prawdziwe przyciski na ekranie!
   const m = document.getElementById("whatsNewModal");
   if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
   if (typeof closeAvatarModal === "function") closeAvatarModal();
   if (typeof closeBadgesModal === "function") closeBadgesModal();
   if (typeof closeStickersModal === "function") closeStickersModal();
+
+  // Przechodzimy do menu lekcji PRZED startem speakSequence, aby showLessonMenu() nie anulowało tokenu mowy!
+  if (typeof showLessonMenu === "function") showLessonMenu();
 
   const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : "Tato";
   const hl = (elOrId, on) => {
@@ -915,9 +969,8 @@ function speakWhatsNewTour(onlyStep = 0) {
       lang: "pl",
       text: `Cześć ${kidName}! Już pokazuję gdzie pojawiły się nowości! Po pierwsze: Zadanie Dnia! Tutaj, w menu lekcji na samej górze nad kafelkami, codziennie czeka nowa misja. Gdy ją wykonasz, kliknij tutaj zielony przycisk Odbierz i zgarnij trzydzieści gwiazdek!`,
       onStart: () => {
-        if (typeof showLessonMenu === "function") showLessonMenu();
         setOwlFloatingGuide(true, "📅 Krok 1 z 5: Zadanie Dnia (+30 ⭐)", "Spójrz na żółty pasek na górze menu lekcji – tam codziennie czeka nowe zadanie!");
-        setTimeout(() => hl("dailyQuestBannerBox", true), 80);
+        hl("dailyQuestBannerBox", true);
       },
       onEnd: () => hl("dailyQuestBannerBox", false)
     },
@@ -949,7 +1002,7 @@ function speakWhatsNewTour(onlyStep = 0) {
           setTimeout(() => {
             const pantry = document.getElementById("petPantrySection") || document.getElementById("companionPetsSection");
             hl(pantry, true);
-          }, 250);
+          }, 150);
         }
       },
       onEnd: () => {
@@ -963,40 +1016,28 @@ function speakWhatsNewTour(onlyStep = 0) {
     {
       stepId: 4,
       lang: "pl",
-      text: "Po czwarte: Gra Mały Lekarz! W menu lekcji klikasz kafelek czwarty: Moje Ciało, a potem na górnym pasku klikasz czerwony przycisk Mały Lekarz! Zobacz, właśnie go podświetlam – tutaj chwytasz plasterek z apteczki i przyklejasz na chłopca!",
+      text: "Po czwarte: Gra Mały Lekarz! W menu lekcji klikasz kafelek czwarty: Moje Ciało! Tutaj właśnie go podświetlam. Gdy wejdziesz do środka, na górnym pasku lekcji zobaczysz przycisk Mały Lekarz – tam przyklejasz plasterek tam, gdzie boli pacjenta!",
       onStart: () => {
-        setOwlFloatingGuide(true, "🩺🩹 Krok 4 z 5: Mały Lekarz (Lekcja 4)", "Wejdź w „4. Moje Ciało”, a potem kliknij podświetlony przycisk „🩺 Mały Lekarz”!");
-        if (typeof startLesson === "function") {
-          startLesson("body_hurts", "doctor_game");
-          setTimeout(() => {
-            hl("subModeBtn_doctor_game", true);
-            hl("draggableBandAid", true);
-          }, 120);
-        }
+        setOwlFloatingGuide(true, "🩺🩹 Krok 4 z 5: Mały Lekarz (Lekcja 4)", "Kliknij podświetlony kafelek „4. Moje Ciało”, a na górze wybierz „🩺 Mały Lekarz”!");
+        hl("lessonCard_body_hurts", true);
       },
       onEnd: () => {
-        hl("subModeBtn_doctor_game", false);
-        hl("draggableBandAid", false);
+        hl("lessonCard_body_hurts", false);
       }
     },
     // KROK 5: ZAGADKI SÓWKI (LEKCJA 5), KOLOROWE PRZEDMIOTY (LEKCJA 6) I LITERKI
     {
       stepId: 5,
       lang: "pl",
-      text: "I po piąte: nowe gry w lekcjach! W lekcji piątej Dżungla i Zwierzęta pojawił się przycisk Zagadki Sówki, w lekcji szóstej Kolory klikasz przycisk Kolorowe Przedmioty, a obok w każdej lekcji czeka fioletowy przycisk Literki! Miłej zabawy!",
+      text: "I po piąte: nowe gry w lekcjach! W lekcji piątej Dżungla i Zwierzęta pojawił się przycisk Zagadki Sówki, w lekcji szóstej Kolory klikasz przycisk Kolorowe Przedmioty, a w każdej lekcji czeka też fioletowy przycisk Literki! Miłej zabawy!",
       onStart: () => {
-        setOwlFloatingGuide(true, "🕵️‍♂️🎨🧩 Krok 5 z 5: Zagadki, Kolorowe Przedmioty i Literki", "W lekcji 5 kliknij „🕵️‍♂️ Zagadki Sówki”, w lekcji 6 „🎨 Kolorowe Przedmioty”, a obok „🧩 Literki”!");
-        if (typeof startLesson === "function") {
-          startLesson("colors", "color_mix_game");
-          setTimeout(() => {
-            hl("subModeBtn_color_mix_game", true);
-            hl("subModeBtn_letters_game", true);
-          }, 120);
-        }
+        setOwlFloatingGuide(true, "🕵️‍♂️🎨🧩 Krok 5 z 5: Zagadki (Lekcja 5), Kolorowe Przedmioty (Lekcja 6) i Literki", "Wejdź w lekcję 5 („🕵️‍♂️ Zagadki Sówki”) lub lekcję 6 („🎨 Kolorowe Przedmioty”) albo kliknij „🧩 Literki”!");
+        hl("lessonCard_jungle_animals", true);
+        hl("lessonCard_colors", true);
       },
       onEnd: () => {
-        hl("subModeBtn_color_mix_game", false);
-        hl("subModeBtn_letters_game", false);
+        hl("lessonCard_jungle_animals", false);
+        hl("lessonCard_colors", false);
       }
     }
   ];
@@ -1004,19 +1045,20 @@ function speakWhatsNewTour(onlyStep = 0) {
   const stepsToRun = onlyStep > 0 ? allSteps.filter(s => s.stepId === onlyStep) : allSteps;
   speakSequence(stepsToRun, () => {
     setOwlFloatingGuide(false);
-    if (typeof showLessonMenu === "function") showLessonMenu();
   });
 }
 
 // ------------------------------------------------------------------------
-// KOMUNIKACJA Z CHMURĄ (ZAPIS / ODCZYT)
+// KOMUNIKACJA Z CHMURĄ (ZAPIS / ODCZYT Z OCHRONĄ POSTĘPÓW)
 // ------------------------------------------------------------------------
 function loadCloudData() {
+  let localStatsCache = null;
   try {
-    const localSaved = localStorage.getItem("akademia_save_v10");
+    const localSaved = localStorage.getItem("akademia_save_v12") || localStorage.getItem("akademia_save_v10");
     if (localSaved) {
       const parsed = JSON.parse(localSaved);
       if (parsed.stats) {
+        localStatsCache = parsed.stats;
         state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
         state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
         state.stats.tata = ensurePlayerStructure(parsed.stats.tata);
@@ -1031,6 +1073,9 @@ function loadCloudData() {
       if (parsed.calibration) {
         state.calibration = mergeCalibrationWithDefaults(parsed.calibration);
       }
+      if (parsed.questionsPerRound) {
+        state.questionsPerRound = parseInt(parsed.questionsPerRound) || 8;
+      }
     }
   } catch (e) {}
 
@@ -1039,10 +1084,14 @@ function loadCloudData() {
     .then(data => {
       if (data.stats) {
         const pStats = JSON.parse(data.stats);
-        state.stats.igor = ensurePlayerStructure({ ...state.stats.igor, ...pStats.igor });
-        state.stats.hubert = ensurePlayerStructure({ ...state.stats.hubert, ...pStats.hubert });
-        state.stats.tata = ensurePlayerStructure({ ...state.stats.tata, ...(pStats.tata || {}) });
-        if (pStats.stickers) state.stats.stickers = pStats.stickers;
+        state.stats.igor = mergePlayerProgressSafe(localStatsCache && localStatsCache.igor, pStats.igor);
+        state.stats.hubert = mergePlayerProgressSafe(localStatsCache && localStatsCache.hubert, pStats.hubert);
+        state.stats.tata = mergePlayerProgressSafe(localStatsCache && localStatsCache.tata, pStats.tata);
+
+        const localStickers = (localStatsCache && Array.isArray(localStatsCache.stickers)) ? localStatsCache.stickers : [];
+        const cloudStickers = Array.isArray(pStats.stickers) ? pStats.stickers : [];
+        state.stats.stickers = Array.from(new Set([...localStickers, ...cloudStickers]));
+
         if (pStats.featuresPublishedForKids !== undefined) {
           state.featuresPublishedForKids = Boolean(pStats.featuresPublishedForKids);
         }
@@ -1059,7 +1108,12 @@ function loadCloudData() {
         custom.forEach(cl => {
           if (baseIds.includes(cl.id)) {
             const target = state.lessons.find(l => l.id === cl.id);
-            if (target && Array.isArray(cl.items)) target.items = cl.items;
+            if (target && Array.isArray(cl.items)) {
+              const knownEn = new Set(target.items.map(x => x.en.toLowerCase()));
+              cl.items.forEach(it => {
+                if (!knownEn.has(it.en.toLowerCase())) target.items.push(it);
+              });
+            }
           } else {
             state.lessons.push(cl);
           }
@@ -1067,6 +1121,8 @@ function loadCloudData() {
       }
       upgradeNumbersLessonForIgor(state.lessons);
       if (data.questionsPerRound) state.questionsPerRound = parseInt(data.questionsPerRound) || 8;
+      cloudSyncReady = true;
+      saveCloudData();
       if (typeof updateHeaderUI === "function") updateHeaderUI();
       if (state.profile && typeof showLessonMenu === "function") showLessonMenu(); 
       else if (typeof showStartScreen === "function") showStartScreen();
@@ -1074,6 +1130,8 @@ function loadCloudData() {
     .catch(err => {
       console.error("Błąd pobierania danych:", err);
       upgradeNumbersLessonForIgor(state.lessons);
+      cloudSyncReady = true;
+      if (typeof updateHeaderUI === "function") updateHeaderUI();
       if (state.profile && typeof showLessonMenu === "function") showLessonMenu(); 
       else if (typeof showStartScreen === "function") showStartScreen();
     });
@@ -1083,12 +1141,16 @@ function saveCloudData() {
   state.stats.featuresPublishedForKids = Boolean(state.featuresPublishedForKids);
   state.stats.calibration = state.calibration;
   try {
-    localStorage.setItem("akademia_save_v10", JSON.stringify({
+    const serialized = JSON.stringify({
       stats: state.stats,
       questionsPerRound: state.questionsPerRound,
       calibration: state.calibration
-    }));
+    });
+    localStorage.setItem("akademia_save_v12", serialized);
+    localStorage.setItem("akademia_save_v10", serialized);
   } catch (e) {}
+
+  if (!cloudSyncReady) return;
 
   const payload = {
     action: "save",

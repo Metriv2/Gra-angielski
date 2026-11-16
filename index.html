@@ -541,7 +541,7 @@ const FULL_LESSONS_DATABASE = [
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO (LIVE TOUR), CHMURA I AWATAR (WERSJA 12.8)
+   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO, CHMURA, PODGLĄD IGORA (WERSJA 12.9)
    ============================================================================ */
 
 const PROFILE_META = {
@@ -792,7 +792,8 @@ function mergePlayerProgressSafe(localRaw, cloudRaw) {
 }
 
 var state = {
-  profile: null, turtleMode: false, questionsPerRound: 8, currentLessonId: null, currentSubMode: "listen_pick",
+  profile: null, tataPreviewAsIgor: false,
+  turtleMode: false, questionsPerRound: 8, currentLessonId: null, currentSubMode: "listen_pick",
   isExamMode: false, isHardWordsMode: false, isCoopDragonMode: false,
   roundIndex: 0, roundQuestions: [], roundResults: [], currentQuestionMistakes: 0,
   roundScore: 0, roundMistakes: 0, answeredCurrent: false, flashcardIndex: 0, shopCart: [], riddleHintShown: false,
@@ -811,6 +812,25 @@ var state = {
   },
   memoryGameCards: [], memoryFlippedIndexes: [], memoryMatchedPairs: 0
 };
+
+function isEffectiveIgorMode() {
+  if (state.profile === "igor") return true;
+  if (state.profile === "tata" && state.tataPreviewAsIgor) return true;
+  if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelTurn === "igor") return true;
+  return false;
+}
+
+function toggleTataPreviewAge() {
+  if (state.profile !== "tata") return;
+  state.tataPreviewAsIgor = !state.tataPreviewAsIgor;
+  playEffect("beep");
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  if (state.currentLessonId && typeof startLesson === "function" && state.currentLessonId !== "grand_exam" && state.currentLessonId !== "hard_words_training" && state.currentLessonId !== "dragon_coop") {
+    startLesson(state.currentLessonId, state.currentSubMode);
+  } else if (typeof showLessonMenu === "function") {
+    showLessonMenu();
+  }
+}
 
 function getAvatarCalibration() {
   if (typeof state !== "undefined" && state && state.calibration) return state.calibration;
@@ -848,9 +868,6 @@ function updateWhatsNewButtonGlow() {
   btn.classList.toggle("tutorial-highlight", shouldGlowWhatsNew());
 }
 
-// ------------------------------------------------------------------------
-// PŁYWAJĄCY PASEK PRZEWODNIKA SÓWKI + INTERAKTYWNY POKAZ NOWOŚCI NA ŻYWO
-// ------------------------------------------------------------------------
 function setOwlFloatingGuide(visible, titleText = "", stepText = "") {
   let bar = document.getElementById("owlTourFloatingBanner");
   if (!bar) {
@@ -859,10 +876,7 @@ function setOwlFloatingGuide(visible, titleText = "", stepText = "") {
     bar.className = "fixed bottom-3 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[95%] bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-4 border-amber-500 rounded-3xl p-3.5 shadow-2xl hidden";
     document.body.appendChild(bar);
   }
-  if (!visible) {
-    bar.classList.add("hidden");
-    return;
-  }
+  if (!visible) { bar.classList.add("hidden"); return; }
   bar.classList.remove("hidden");
   bar.innerHTML = `
     <div class="flex items-center justify-between gap-3">
@@ -901,38 +915,7 @@ function openWhatsNewModal(autoStartLiveTour = true) {
   updateWhatsNewButtonGlow();
   const menuBtn = document.getElementById("menuWhatsNewBtn");
   if (menuBtn) menuBtn.classList.remove("tutorial-highlight");
-
-  const box = document.getElementById("whatsNewContentBox");
-  if (box) {
-    const items = [
-      { idx: 1, icon: "📅⭐", title: "1. Zadanie Dnia od Sówki (+30 ⭐)", where: "Gdzie: Menu Lekcji ➔ żółty pasek na samej górze nad kafelkami lekcji." },
-      { idx: 2, icon: "🐉🛡️", title: "2. Wspólna Walka ze Smokiem (Kooperacja Braci)", where: "Gdzie: Górny pasek „👤 Zmień profil” ➔ kafelek „BRACIA RAZEM” ➔ „🐉🛡️ Wspólna Walka ze Smokiem”." },
-      { idx: 3, icon: "🍎🐾", title: "3. Jedzenie ze Skrzyń i Karmienie Zwierzaków", where: "Gdzie: Górny pasek „👑 Awatar” ➔ zjedź na dół do sekcji „🍎 Spiżarnia Zwierzaka” i kliknij owoc!" },
-      { idx: 4, icon: "🩺🩹", title: "4. Mały Lekarz (Przyklejanie plastra na chłopca)", where: "Gdzie: Menu Lekcji ➔ „4. Moje Ciało” ➔ na górnym pasku lekcji kliknij „🩺 Mały Lekarz”." },
-      { idx: 5, icon: "🕵️‍♂️🎨🧩", title: "5. Zagadki Sówki, Kolorowe Przedmioty i Literki", where: "Gdzie: W lekcji 5 kliknij „🕵️‍♂️ Zagadki Sówki”, w lekcji 6 „🎨 Kolorowe Przedmioty”, a w każdej lekcji „🧩 Literki”!" }
-    ];
-    box.innerHTML = items.map(it => `
-      <div class="p-3.5 rounded-2xl bg-rose-50/70 border-2 border-rose-200 flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-start gap-3 flex-1 min-w-[220px]">
-          <div class="text-4xl shrink-0">${it.icon}</div>
-          <div>
-            <h3 class="font-extrabold text-rose-950 text-sm md:text-base">${it.title}</h3>
-            <p class="text-xs text-slate-700 font-bold mt-0.5">${it.where}</p>
-          </div>
-        </div>
-        <button onclick="speakWhatsNewTour(${it.idx})" class="kid-card px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold text-xs shadow shrink-0">
-          👁️ Pokaż gdzie kliknąć!
-        </button>
-      </div>
-    `).join("");
-  }
-
-  if (autoStartLiveTour) {
-    speakWhatsNewTour(0);
-  } else {
-    const m = document.getElementById("whatsNewModal");
-    if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-  }
+  if (autoStartLiveTour) speakWhatsNewTour(0);
 }
 
 function closeWhatsNewModal() {
@@ -948,8 +931,6 @@ function speakWhatsNewTour(onlyStep = 0) {
   if (typeof closeAvatarModal === "function") closeAvatarModal();
   if (typeof closeBadgesModal === "function") closeBadgesModal();
   if (typeof closeStickersModal === "function") closeStickersModal();
-
-  // Przechodzimy do menu lekcji PRZED startem speakSequence, aby showLessonMenu() nie anulowało tokenu mowy!
   if (typeof showLessonMenu === "function") showLessonMenu();
 
   const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : "Tato";
@@ -963,89 +944,47 @@ function speakWhatsNewTour(onlyStep = 0) {
   const getChangeProfBtn = () => document.querySelector('#topHeader button[onclick*="showStartScreen"]');
 
   const allSteps = [
-    // KROK 1: ZADANIE DNIA W MENU LEKCJI
     {
-      stepId: 1,
-      lang: "pl",
-      text: `Cześć ${kidName}! Już pokazuję gdzie pojawiły się nowości! Po pierwsze: Zadanie Dnia! Tutaj, w menu lekcji na samej górze nad kafelkami, codziennie czeka nowa misja. Gdy ją wykonasz, kliknij tutaj zielony przycisk Odbierz i zgarnij trzydzieści gwiazdek!`,
-      onStart: () => {
-        setOwlFloatingGuide(true, "📅 Krok 1 z 5: Zadanie Dnia (+30 ⭐)", "Spójrz na żółty pasek na górze menu lekcji – tam codziennie czeka nowe zadanie!");
-        hl("dailyQuestBannerBox", true);
-      },
+      stepId: 1, lang: "pl",
+      text: `Cześć ${kidName}! Już pokazuję gdzie pojawiły się nowości! Po pierwsze: Zadanie Dnia! Tutaj, w menu lekcji na samej górze nad kafelkami, codziennie czeka nowa misja. Gdy ją wykonasz, kliknij zielony przycisk Odbierz i zgarnij trzydzieści gwiazdek!`,
+      onStart: () => { setOwlFloatingGuide(true, "📅 Krok 1 z 5: Zadanie Dnia (+30 ⭐)", "Spójrz na żółty pasek na górze menu lekcji – tam codziennie czeka nowe zadanie!"); hl("dailyQuestBannerBox", true); },
       onEnd: () => hl("dailyQuestBannerBox", false)
     },
-    // KROK 2: WSPÓLNA WALKA ZE SMOKIEM
     {
-      stepId: 2,
-      lang: "pl",
-      text: "Po drugie: Wspólna Walka ze Smokiem dla obu braci! Aby w nią zagrać, kliknij tutaj na górze przycisk Zmień profil, potem wybierz fioletowy kafelek Bracia Razem i kliknij zielony przycisk Wspólna Walka ze Smokiem!",
-      onStart: () => {
-        setOwlFloatingGuide(true, "🐉🛡️ Krok 2 z 5: Wspólna Walka ze Smokiem", "Kliknij na górze „👤 Zmień profil” ➔ „BRACIA RAZEM” ➔ „🐉🛡️ Wspólna Walka ze Smokiem”!");
-        hl(getChangeProfBtn(), true);
-        if (state.profile === "tata") hl("btnCoopDragonMenu", true);
-      },
-      onEnd: () => {
-        hl(getChangeProfBtn(), false);
-        hl("btnCoopDragonMenu", false);
-      }
+      stepId: 2, lang: "pl",
+      text: "Po drugie: Wspólna Walka ze Smokiem dla obu braci! Kliknij tutaj na górze przycisk Zmień profil, potem wybierz fioletowy kafelek Bracia Razem i kliknij zielony przycisk Wspólna Walka ze Smokiem!",
+      onStart: () => { setOwlFloatingGuide(true, "🐉🛡️ Krok 2 z 5: Wspólna Walka ze Smokiem", "Kliknij na górze „👤 Zmień profil” ➔ „BRACIA RAZEM” ➔ „🐉🛡️ Wspólna Walka ze Smokiem”!"); hl(getChangeProfBtn(), true); if (state.profile === "tata") hl("btnCoopDragonMenu", true); },
+      onEnd: () => { hl(getChangeProfBtn(), false); hl("btnCoopDragonMenu", false); }
     },
-    // KROK 3: JEDZENIE ZE SKRZYŃ I KARMIENIE ZWIERZAKA W GARDEROBIE
     {
-      stepId: 3,
-      lang: "pl",
-      text: "Po trzecie: Jedzenie ze Skrzyń i Karmienie Zwierzaków! Kliknij na górze przycisk Awatar. Teraz otwieram garderobę i zjeżdżam na sam dół! Tutaj, w zielonej Spiżarni Zwierzaka, kliknij dowolny owoc lub warzywo, aby nakarmić swojego towarzysza!",
+      stepId: 3, lang: "pl",
+      text: "Po trzecie: Jedzenie ze Skrzyń i Karmienie Zwierzaków! Kliknij na górze przycisk Awatar. Teraz otwieram garderobę i zjeżdżam na sam dół! Tutaj, w zielonej Spiżarni Zwierzaka, kliknij owoc lub warzywo, aby nakarmić swojego towarzysza!",
       onStart: () => {
         setOwlFloatingGuide(true, "🍎🐾 Krok 3 z 5: Spiżarnia i Karmienie Zwierzaka", "Kliknij na górze „👑 Awatar” ➔ zjedź na dół do „🍎 Spiżarnia Zwierzaka” i kliknij przysmak!");
         hl("navAvatarBtn", true);
         if (state.profile !== "duel" && typeof openAvatarModal === "function") {
           openAvatarModal();
-          setTimeout(() => {
-            const pantry = document.getElementById("petPantrySection") || document.getElementById("companionPetsSection");
-            hl(pantry, true);
-          }, 150);
+          setTimeout(() => { const pantry = document.getElementById("petPantrySection") || document.getElementById("companionPetsSection"); hl(pantry, true); }, 150);
         }
       },
-      onEnd: () => {
-        const pantry = document.getElementById("petPantrySection") || document.getElementById("companionPetsSection");
-        hl(pantry, false);
-        hl("navAvatarBtn", false);
-        if (typeof closeAvatarModal === "function") closeAvatarModal();
-      }
+      onEnd: () => { const pantry = document.getElementById("petPantrySection") || document.getElementById("companionPetsSection"); hl(pantry, false); hl("navAvatarBtn", false); if (typeof closeAvatarModal === "function") closeAvatarModal(); }
     },
-    // KROK 4: MAŁY LEKARZ W LEKCJI 4 (MOJE CIAŁO)
     {
-      stepId: 4,
-      lang: "pl",
-      text: "Po czwarte: Gra Mały Lekarz! W menu lekcji klikasz kafelek czwarty: Moje Ciało! Tutaj właśnie go podświetlam. Gdy wejdziesz do środka, na górnym pasku lekcji zobaczysz przycisk Mały Lekarz – tam przyklejasz plasterek tam, gdzie boli pacjenta!",
-      onStart: () => {
-        setOwlFloatingGuide(true, "🩺🩹 Krok 4 z 5: Mały Lekarz (Lekcja 4)", "Kliknij podświetlony kafelek „4. Moje Ciało”, a na górze wybierz „🩺 Mały Lekarz”!");
-        hl("lessonCard_body_hurts", true);
-      },
-      onEnd: () => {
-        hl("lessonCard_body_hurts", false);
-      }
+      stepId: 4, lang: "pl",
+      text: "Po czwarte: Gra Mały Lekarz! W menu lekcji klikasz kafelek czwarty: Moje Ciało, a potem na górnym pasku lekcji wybierasz przycisk Mały Lekarz – tam przyklejasz plasterek tam, gdzie boli pacjenta!",
+      onStart: () => { setOwlFloatingGuide(true, "🩺🩹 Krok 4 z 5: Mały Lekarz (Lekcja 4)", "Kliknij podświetlony kafelek „4. Moje Ciało”, a na górze wybierz „🩺 Mały Lekarz”!"); hl("lessonCard_body_hurts", true); },
+      onEnd: () => hl("lessonCard_body_hurts", false)
     },
-    // KROK 5: ZAGADKI SÓWKI (LEKCJA 5), KOLOROWE PRZEDMIOTY (LEKCJA 6) I LITERKI
     {
-      stepId: 5,
-      lang: "pl",
+      stepId: 5, lang: "pl",
       text: "I po piąte: nowe gry w lekcjach! W lekcji piątej Dżungla i Zwierzęta pojawił się przycisk Zagadki Sówki, w lekcji szóstej Kolory klikasz przycisk Kolorowe Przedmioty, a w każdej lekcji czeka też fioletowy przycisk Literki! Miłej zabawy!",
-      onStart: () => {
-        setOwlFloatingGuide(true, "🕵️‍♂️🎨🧩 Krok 5 z 5: Zagadki (Lekcja 5), Kolorowe Przedmioty (Lekcja 6) i Literki", "Wejdź w lekcję 5 („🕵️‍♂️ Zagadki Sówki”) lub lekcję 6 („🎨 Kolorowe Przedmioty”) albo kliknij „🧩 Literki”!");
-        hl("lessonCard_jungle_animals", true);
-        hl("lessonCard_colors", true);
-      },
-      onEnd: () => {
-        hl("lessonCard_jungle_animals", false);
-        hl("lessonCard_colors", false);
-      }
+      onStart: () => { setOwlFloatingGuide(true, "🕵️‍♂️🎨🧩 Krok 5 z 5: Zagadki (Lekcja 5), Kolorowe Przedmioty (Lekcja 6) i Literki", "Wejdź w lekcję 5 („🕵️‍♂️ Zagadki Sówki”) lub lekcję 6 („🎨 Kolorowe Przedmioty”) albo kliknij „🧩 Literki”!"); hl("lessonCard_jungle_animals", true); hl("lessonCard_colors", true); },
+      onEnd: () => { hl("lessonCard_jungle_animals", false); hl("lessonCard_colors", false); }
     }
   ];
 
   const stepsToRun = onlyStep > 0 ? allSteps.filter(s => s.stepId === onlyStep) : allSteps;
-  speakSequence(stepsToRun, () => {
-    setOwlFloatingGuide(false);
-  });
+  speakSequence(stepsToRun, () => setOwlFloatingGuide(false));
 }
 
 // ------------------------------------------------------------------------
@@ -1063,19 +1002,11 @@ function loadCloudData() {
         state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
         state.stats.tata = ensurePlayerStructure(parsed.stats.tata);
         if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
-        if (parsed.stats.featuresPublishedForKids !== undefined) {
-          state.featuresPublishedForKids = Boolean(parsed.stats.featuresPublishedForKids);
-        }
-        if (parsed.stats.calibration) {
-          state.calibration = mergeCalibrationWithDefaults(parsed.stats.calibration);
-        }
+        if (parsed.stats.featuresPublishedForKids !== undefined) state.featuresPublishedForKids = Boolean(parsed.stats.featuresPublishedForKids);
+        if (parsed.stats.calibration) state.calibration = mergeCalibrationWithDefaults(parsed.stats.calibration);
       }
-      if (parsed.calibration) {
-        state.calibration = mergeCalibrationWithDefaults(parsed.calibration);
-      }
-      if (parsed.questionsPerRound) {
-        state.questionsPerRound = parseInt(parsed.questionsPerRound) || 8;
-      }
+      if (parsed.calibration) state.calibration = mergeCalibrationWithDefaults(parsed.calibration);
+      if (parsed.questionsPerRound) state.questionsPerRound = parseInt(parsed.questionsPerRound) || 8;
     }
   } catch (e) {}
 
@@ -1087,14 +1018,10 @@ function loadCloudData() {
         state.stats.igor = mergePlayerProgressSafe(localStatsCache && localStatsCache.igor, pStats.igor);
         state.stats.hubert = mergePlayerProgressSafe(localStatsCache && localStatsCache.hubert, pStats.hubert);
         state.stats.tata = mergePlayerProgressSafe(localStatsCache && localStatsCache.tata, pStats.tata);
-
         const localStickers = (localStatsCache && Array.isArray(localStatsCache.stickers)) ? localStatsCache.stickers : [];
         const cloudStickers = Array.isArray(pStats.stickers) ? pStats.stickers : [];
         state.stats.stickers = Array.from(new Set([...localStickers, ...cloudStickers]));
-
-        if (pStats.featuresPublishedForKids !== undefined) {
-          state.featuresPublishedForKids = Boolean(pStats.featuresPublishedForKids);
-        }
+        if (pStats.featuresPublishedForKids !== undefined) state.featuresPublishedForKids = Boolean(pStats.featuresPublishedForKids);
         if (pStats.calibration) {
           state.calibration = mergeCalibrationWithDefaults(pStats.calibration);
           state.stats.calibration = state.calibration;
@@ -1110,13 +1037,9 @@ function loadCloudData() {
             const target = state.lessons.find(l => l.id === cl.id);
             if (target && Array.isArray(cl.items)) {
               const knownEn = new Set(target.items.map(x => x.en.toLowerCase()));
-              cl.items.forEach(it => {
-                if (!knownEn.has(it.en.toLowerCase())) target.items.push(it);
-              });
+              cl.items.forEach(it => { if (!knownEn.has(it.en.toLowerCase())) target.items.push(it); });
             }
-          } else {
-            state.lessons.push(cl);
-          }
+          } else state.lessons.push(cl);
         });
       }
       upgradeNumbersLessonForIgor(state.lessons);
@@ -1124,7 +1047,7 @@ function loadCloudData() {
       cloudSyncReady = true;
       saveCloudData();
       if (typeof updateHeaderUI === "function") updateHeaderUI();
-      if (state.profile && typeof showLessonMenu === "function") showLessonMenu(); 
+      if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
       else if (typeof showStartScreen === "function") showStartScreen();
     })
     .catch(err => {
@@ -1132,7 +1055,7 @@ function loadCloudData() {
       upgradeNumbersLessonForIgor(state.lessons);
       cloudSyncReady = true;
       if (typeof updateHeaderUI === "function") updateHeaderUI();
-      if (state.profile && typeof showLessonMenu === "function") showLessonMenu(); 
+      if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
       else if (typeof showStartScreen === "function") showStartScreen();
     });
 }
@@ -1141,28 +1064,13 @@ function saveCloudData() {
   state.stats.featuresPublishedForKids = Boolean(state.featuresPublishedForKids);
   state.stats.calibration = state.calibration;
   try {
-    const serialized = JSON.stringify({
-      stats: state.stats,
-      questionsPerRound: state.questionsPerRound,
-      calibration: state.calibration
-    });
+    const serialized = JSON.stringify({ stats: state.stats, questionsPerRound: state.questionsPerRound, calibration: state.calibration });
     localStorage.setItem("akademia_save_v12", serialized);
     localStorage.setItem("akademia_save_v10", serialized);
   } catch (e) {}
-
   if (!cloudSyncReady) return;
-
-  const payload = {
-    action: "save",
-    data: {
-      stats: state.stats,
-      calibration: state.calibration,
-      lessons: state.lessons,
-      questionsPerRound: state.questionsPerRound
-    }
-  };
-  fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload), headers: { "Content-Type": "text/plain;charset=utf-8" } })
-    .catch(err => console.error("Błąd zapisu:", err));
+  const payload = { action: "save", data: { stats: state.stats, calibration: state.calibration, lessons: state.lessons, questionsPerRound: state.questionsPerRound } };
+  fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload), headers: { "Content-Type": "text/plain;charset=utf-8" } }).catch(err => console.error("Błąd zapisu:", err));
 }
 
 function updateDailyStreakForPlayer(profKey) {
@@ -1170,20 +1078,14 @@ function updateDailyStreakForPlayer(profKey) {
   if (!p) return;
   const today = new Date().toISOString().slice(0, 10);
   if (p.lastPlayDate === today) return;
-  if (!p.lastPlayDate) { p.streakDays = 1; } 
+  if (!p.lastPlayDate) p.streakDays = 1;
   else {
-    const last = new Date(p.lastPlayDate);
-    const curr = new Date(today);
-    const diffDays = Math.round((curr - last) / (1000 * 60 * 60 * 24));
-    if (diffDays === 1) p.streakDays = (p.streakDays || 1) + 1;
-    else if (diffDays > 1) p.streakDays = 1;
+    const diffDays = Math.round((new Date(today) - new Date(p.lastPlayDate)) / (1000 * 60 * 60 * 24));
+    p.streakDays = diffDays === 1 ? (p.streakDays || 1) + 1 : (diffDays > 1 ? 1 : p.streakDays);
   }
   p.lastPlayDate = today;
 }
 
-// ------------------------------------------------------------------------
-// EFEKTY AUDIO, INTERAKTYWNY AWATAR I LEKTOR
-// ------------------------------------------------------------------------
 function playEffect(type) {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1264,23 +1166,11 @@ function speakAvatarGreeting() {
   const p = ensurePlayerStructure(state.stats[profKey]);
   const kidName = PROFILE_META[profKey] ? PROFILE_META[profKey].name : "Bohaterze";
   playEffect("success");
-
-  const badgeEl = document.getElementById("activeProfileBadge");
-  if (badgeEl) {
-    badgeEl.classList.add("pop-correct");
-    setTimeout(() => badgeEl.classList.remove("pop-correct"), 600);
-  }
-
   const av = p.avatar || {};
   const equippedCount = [av.head, av.torso, av.legs].filter(Boolean).length;
-  const segments = [];
-
-  if (equippedCount === 0) {
-    segments.push({ lang: "pl", text: `Cześć ${kidName}! Twój bohater nie ma jeszcze ubrania! Zdobywaj gwiazdki i otwieraj skrzynie!` });
-  } else {
-    segments.push({ lang: "pl", text: `Ale super strój ${kidName}!` });
-  }
-
+  const segments = equippedCount === 0
+    ? [{ lang: "pl", text: `Cześć ${kidName}! Twój bohater nie ma jeszcze ubrania! Zdobywaj gwiazdki i otwieraj skrzynie!` }]
+    : [{ lang: "pl", text: `Ale super strój ${kidName}!` }];
   if (av.pet) {
     const petObj = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).find(a => a.id === av.pet);
     if (petObj) {
@@ -1304,71 +1194,16 @@ function startKidVoiceTour() {
   if (typeof closeStickersModal === "function") closeStickersModal();
   if (typeof closeAvatarModal === "function") closeAvatarModal();
   if (state.currentLessonId && typeof showLessonMenu === "function") showLessonMenu();
-
   const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : state.profile === "tata" ? "Tato" : "Chłopaki";
-  const hl = (id, on) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.classList.toggle("tutorial-highlight", on);
-      if (on) el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  };
-
+  const hl = (id, on) => { const el = document.getElementById(id); if (el) { el.classList.toggle("tutorial-highlight", on); if (on) el.scrollIntoView({ behavior: "smooth", block: "center" }); } };
   speakSequence([
-    {
-      lang: "pl",
-      text: `Cześć ${kidName}! Pokażę Ci co gdzie jest! Na środku ekranu masz kolorowe kafelki z lekcjami. Kliknij lekcję, aby zbierać gwiazdki!`,
-      onStart: () => hl("lessonsGridBox", true),
-      onEnd: () => hl("lessonsGridBox", false)
-    },
-    {
-      lang: "pl",
-      text: "Teraz wchodzimy w Odznaki! Pamiętaj: im więcej dni z rzędu grasz i im dokładniej, bez błędów odpowiadasz, tym większą masz szansę na srebrną lub złotą skrzynię oraz lepsze przebrania! Możesz też kliknąć w dowolne osiągnięcie na liście, a powiem Ci, co trzeba zrobić, aby je zdobyć!",
-      onStart: () => {
-        hl("navBadgesBtn", true);
-        if (state.profile !== "duel" && typeof openBadgesModal === "function") {
-          openBadgesModal();
-          setTimeout(() => hl("badgesGrid", true), 200);
-        }
-      },
-      onEnd: () => {
-        hl("badgesGrid", false);
-        hl("navBadgesBtn", false);
-        if (typeof closeBadgesModal === "function") closeBadgesModal();
-      }
-    },
-    {
-      lang: "pl",
-      text: "Obok świeci przycisk Naklejki! Tam zobaczysz swój klaser ze stoma naklejkami.",
-      onStart: () => hl("navStickersBtn", true),
-      onEnd: () => hl("navStickersBtn", false)
-    },
-    {
-      lang: "pl",
-      text: "A teraz wchodzimy w Awatar! Tutaj możesz edytować wygląd swojego bohatera i kupować skrzynie za gwiazdki. Ze skrzyń wypadają lepsze ubrania, zwierzaki oraz owoce i warzywa, którymi na samym dole nakarmisz swojego zwierzaka!",
-      onStart: () => {
-        hl("navAvatarBtn", true);
-        if (state.profile !== "duel" && typeof openAvatarModal === "function") {
-          openAvatarModal();
-          setTimeout(() => {
-            hl("avatarPreviewBox", true);
-            const cont = document.getElementById("avatarItemsContainer");
-            if (cont) setTimeout(() => cont.scrollTo({ top: cont.scrollHeight, behavior: "smooth" }), 2200);
-          }, 200);
-        }
-      },
-      onEnd: () => {
-        hl("avatarPreviewBox", false);
-        hl("navAvatarBtn", false);
-        if (typeof closeAvatarModal === "function") closeAvatarModal();
-      }
-    }
+    { lang: "pl", text: `Cześć ${kidName}! Pokażę Ci co gdzie jest! Na środku ekranu masz kolorowe kafelki z lekcjami. Kliknij lekcję, aby zbierać gwiazdki!`, onStart: () => hl("lessonsGridBox", true), onEnd: () => hl("lessonsGridBox", false) },
+    { lang: "pl", text: "Teraz wchodzimy w Odznaki! Pamiętaj: im więcej dni z rzędu grasz i im dokładniej odpowiadasz, tym większą masz szansę na srebrną lub złotą skrzynię!", onStart: () => { hl("navBadgesBtn", true); if (state.profile !== "duel" && typeof openBadgesModal === "function") openBadgesModal(); }, onEnd: () => { hl("navBadgesBtn", false); if (typeof closeBadgesModal === "function") closeBadgesModal(); } },
+    { lang: "pl", text: "Obok świeci przycisk Naklejki! Tam zobaczysz swój klaser ze stoma naklejkami.", onStart: () => hl("navStickersBtn", true), onEnd: () => hl("navStickersBtn", false) },
+    { lang: "pl", text: "A teraz wchodzimy w Awatar! Tutaj możesz ubierać swojego bohatera, kupować skrzynie za gwiazdki i karmić zwierzaka!", onStart: () => { hl("navAvatarBtn", true); if (state.profile !== "duel" && typeof openAvatarModal === "function") openAvatarModal(); }, onEnd: () => { hl("navAvatarBtn", false); if (typeof closeAvatarModal === "function") closeAvatarModal(); } }
   ]);
 }
 
-// ------------------------------------------------------------------------
-// RENDEROWANIE AWATARA I MASKA UBRAŃ
-// ------------------------------------------------------------------------
 function classifyHeadItem(src) {
   if (!src) return "none";
   const fn = src.split("/").pop().toLowerCase();
@@ -1404,19 +1239,12 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   const headImg = resolveOutfitPath(avatar.head); const torsoImg = resolveOutfitPath(avatar.torso); const legsImg = resolveOutfitPath(avatar.legs);
   const headFb = getFallbackOutfitPath(headImg); const torsoFb = getFallbackOutfitPath(torsoImg); const legsFb = getFallbackOutfitPath(legsImg);
   const headType = classifyHeadItem(headImg); const torsoType = classifyTorsoItem(torsoImg); const legsType = classifyLegsItem(legsImg);
-  
   const hCfg = cal[headType] || cal.cap; const tCfg = cal[torsoType] || cal.shirt; const lCfg = cal[legsType] || cal.jeans;
 
   let baseClip = "none";
-  let showBaseBoy = true;
-
-  if (headType === "helmet") {
-    if (headImg && !(headImg.includes("hot-dog"))) baseClip = "inset(28% 0% 0% 0%)";
-  } else if (headType === "openHelmet") {
-    baseClip = "inset(15% 0% 0% 0%)";
-  } else if (headType === "cap" || headType === "goldCap") {
-    baseClip = "inset(12% 0% 0% 0%)";
-  }
+  if (headType === "helmet") { if (headImg && !(headImg.includes("hot-dog"))) baseClip = "inset(28% 0% 0% 0%)"; }
+  else if (headType === "openHelmet") baseClip = "inset(15% 0% 0% 0%)";
+  else if (headType === "cap" || headType === "goldCap") baseClip = "inset(12% 0% 0% 0%)";
 
   let petHtml = "";
   if (avatar.pet) {
@@ -1434,7 +1262,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 
   return `
     <div class="relative mx-auto select-none pointer-events-none overflow-visible shrink-0" style="width: ${size}px; height: ${size}px; min-width: ${size}px; min-height: ${size}px;">
-      ${showBaseBoy ? `<img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${baseClip};" onerror="this.style.display='none';" />` : ""}
+      <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${baseClip};" onerror="this.style.display='none';" />
       ${legsImg ? `<img src="${legsImg}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
       ${torsoImg ? `<img src="${torsoImg}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
       ${headImg ? `<img src="${headImg}" class="absolute left-1/2 object-fill z-40" style="top: ${hCfg.top}%; width: ${hCfg.width}%; height: ${hCfg.height}%; transform: translateX(-50%) scale(${hCfg.scaleX}, ${hCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${headFb}'!=='${headImg}'){this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
@@ -2169,10 +1997,10 @@ function setWardrobeTierFilter(tier) {
 </script>
 <!-- ======================== KONIEC CZĘŚCI 4 z 6 ======================== -->
 
-<!-- ======================= POCZĄTEK CZĘŚCI 5 z 6 ======================= -->
+<!-- ======================= POCZĄTEK CZĘŚCI 5A ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5 z 6: MENU, SMOK, LEKARZ Z SUWAKAMI I ZAGADKI (WERSJA 12.7)
+   CZĘŚĆ 5A: MENU, ZADANIE DNIA, PODGLĄD IGORA U TATY I NAWIGACJA (WERSJA 12.9)
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -2274,8 +2102,7 @@ function getVisibleLessonItems(items, applyAgeFilter = true) {
   let list = state.profile === "tata" ? [...items] : items.filter(it => !it.testOnly);
 
   if (applyAgeFilter && typeof areNewFeaturesActive === "function" && areNewFeaturesActive()) {
-    const isIgorTurn = state.profile === "igor" || ((state.profile === "duel" || state.isCoopDragonMode) && state.duelTurn === "igor");
-    if (isIgorTurn) {
+    if (isEffectiveIgorMode()) {
       const ageFiltered = list.filter(it => !Array.isArray(it.age) || it.age.includes(4));
       if (ageFiltered.length > 0) list = ageFiltered;
     }
@@ -2308,9 +2135,6 @@ function removeHardWordIfMastered(q) {
   }
 }
 
-// ------------------------------------------------------------------------
-// ZADANIE DNIA OD SÓWKI (DAILY QUEST)
-// ------------------------------------------------------------------------
 function ensureDailyQuestForPlayer(profKey) {
   if (!PROFILE_META[profKey]) return;
   const p = ensurePlayerStructure(state.stats[profKey]);
@@ -2373,7 +2197,8 @@ function updateHeaderUI() {
   } else if (state.profile === "tata") {
     const age = getPlayerAge("tata");
     const bday = isPlayerBirthdayToday("tata") ? " 🎂" : "";
-    badge.innerHTML = `${renderBoyAvatarSvg('tata', 26)} 👨‍💻 TATA (${age} l. • TEST)${bday} • ⭐ ${state.stats.tata.stars} | 🏆 ${state.stats.tata.cups} | 🔥 ${state.stats.tata.streakDays} dni`;
+    const simTag = state.tataPreviewAsIgor ? "👦 Widok: IGOR (4 l.)" : "🧑 Widok: HUBERT (6 l.)";
+    badge.innerHTML = `${renderBoyAvatarSvg('tata', 26)} 👨‍💻 TATA (${age} l.)${bday} • ⭐ ${state.stats.tata.stars} | 🏆 ${state.stats.tata.cups} | <span class="px-2 py-0.5 rounded-lg bg-indigo-600 text-white text-[11px] font-extrabold">${simTag}</span>`;
   } else {
     badge.innerHTML = state.isCoopDragonMode ? `🐉 WSPÓLNA WALKA ZE SMOKIEM` : `⚔️ POJEDYNEK BRACI (16 pytań)`;
   }
@@ -2401,56 +2226,36 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 12.7
+        🌟 Akademia Angielskiego • Wersja 12.9
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div onclick="chooseProfile('igor')" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-400 bg-gradient-to-b from-amber-50 to-amber-100 p-4 shadow-lg flex flex-col items-center justify-between">
           ${renderBoyAvatarSvg('igor', 90)}
-          <div class="mt-1">
-            <h2 class="text-xl font-extrabold text-amber-950">IGOR (${igorAge} l.)</h2>
-            ${igorBday}
-          </div>
-          <div class="text-[11px] font-bold text-amber-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-amber-300 w-full">
-            ⭐ ${state.stats.igor.stars} | 🏆 ${state.stats.igor.cups} | 🔥 ${state.stats.igor.streakDays} dni
-          </div>
+          <div class="mt-1"><h2 class="text-xl font-extrabold text-amber-950">IGOR (${igorAge} l.)</h2>${igorBday}</div>
+          <div class="text-[11px] font-bold text-amber-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-amber-300 w-full">⭐ ${state.stats.igor.stars} | 🏆 ${state.stats.igor.cups} | 🔥 ${state.stats.igor.streakDays} dni</div>
           <span class="w-full py-2.5 bg-amber-500 text-white font-extrabold rounded-2xl shadow text-sm">Graj jako Igor ▶</span>
         </div>
 
         <div onclick="chooseProfile('hubert')" class="kid-card cursor-pointer rounded-3xl border-4 border-sky-400 bg-gradient-to-b from-sky-50 to-sky-100 p-4 shadow-lg flex flex-col items-center justify-between">
           ${renderBoyAvatarSvg('hubert', 90)}
-          <div class="mt-1">
-            <h2 class="text-xl font-extrabold text-sky-950">HUBERT (${hubertAge} l.)</h2>
-            ${hubertBday}
-          </div>
-          <div class="text-[11px] font-bold text-sky-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-sky-300 w-full">
-            ⭐ ${state.stats.hubert.stars} | 🏆 ${state.stats.hubert.cups} | 🔥 ${state.stats.hubert.streakDays} dni
-          </div>
+          <div class="mt-1"><h2 class="text-xl font-extrabold text-sky-950">HUBERT (${hubertAge} l.)</h2>${hubertBday}</div>
+          <div class="text-[11px] font-bold text-sky-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-sky-300 w-full">⭐ ${state.stats.hubert.stars} | 🏆 ${state.stats.hubert.cups} | 🔥 ${state.stats.hubert.streakDays} dni</div>
           <span class="w-full py-2.5 bg-sky-600 text-white font-extrabold rounded-2xl shadow text-sm">Graj jako Hubert ▶</span>
         </div>
 
         <div onclick="chooseProfile('duel')" class="kid-card cursor-pointer rounded-3xl border-4 border-purple-400 bg-gradient-to-b from-purple-50 to-indigo-100 p-4 shadow-lg flex flex-col items-center justify-between">
           <div class="text-5xl my-3 float-anim drop-shadow-md">⚔️🐉</div>
-          <div>
-            <h2 class="text-xl font-extrabold text-purple-950">BRACIA RAZEM</h2>
-            <div class="text-[10px] font-bold text-purple-700">Pojedynek VS lub Walka ze Smokiem!</div>
-          </div>
-          <div class="text-[11px] font-bold text-purple-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-purple-300 w-full">
-            Igor i Hubert na jednym ekranie!
-          </div>
+          <div><h2 class="text-xl font-extrabold text-purple-950">BRACIA RAZEM</h2><div class="text-[10px] font-bold text-purple-700">Pojedynek VS lub Walka ze Smokiem!</div></div>
+          <div class="text-[11px] font-bold text-purple-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-purple-300 w-full">Igor i Hubert na jednym ekranie!</div>
           <span class="w-full py-2.5 bg-purple-600 text-white font-extrabold rounded-2xl shadow text-sm">Wybierz tryb braci ▶</span>
         </div>
 
         <div onclick="openParentPinModal('tata_login')" class="kid-card cursor-pointer rounded-3xl border-4 border-emerald-400 bg-gradient-to-b from-emerald-50 to-teal-100 p-4 shadow-lg flex flex-col items-center justify-between">
           ${renderBoyAvatarSvg('tata', 90)}
-          <div class="mt-1">
-            <h2 class="text-xl font-extrabold text-emerald-950">🔒 TATA (${tataAge} l.)</h2>
-            ${tataBday}
-          </div>
-          <div class="text-[11px] font-bold text-emerald-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-emerald-300 w-full">
-            ⭐ ${state.stats.tata.stars} | 🏆 ${state.stats.tata.cups} | 🔥 ${state.stats.tata.streakDays} dni
-          </div>
+          <div class="mt-1"><h2 class="text-xl font-extrabold text-emerald-950">🔒 TATA (${tataAge} l.)</h2>${tataBday}</div>
+          <div class="text-[11px] font-bold text-emerald-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-emerald-300 w-full">⭐ ${state.stats.tata.stars} | 🏆 ${state.stats.tata.cups} | 🔥 ${state.stats.tata.streakDays} dni</div>
           <span class="w-full py-2.5 bg-emerald-600 text-white font-extrabold rounded-2xl shadow text-sm">Konto Testowe 🔒</span>
         </div>
       </div>
@@ -2504,16 +2309,19 @@ function showLessonMenu() {
 
   let hardWordsBtnHtml = "";
   if (state.profile !== "duel" && areNewFeaturesActive() && hardList.length > 0) {
-    hardWordsBtnHtml = `
-      <button onclick="startHardWordsTraining()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-extrabold text-xs md:text-sm shadow-lg flex items-center gap-2 border-2 border-rose-300">
-        <span>🎯🔥</span> Trudne Słówka (${hardList.length}) • 2x ⭐!
-      </button>
-    `;
+    hardWordsBtnHtml = `<button onclick="startHardWordsTraining()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-extrabold text-xs md:text-sm shadow-lg flex items-center gap-2 border-2 border-rose-300"><span>🎯🔥</span> Trudne Słówka (${hardList.length}) • 2x ⭐!</button>`;
   }
 
   const whatsNewGlow = shouldGlowWhatsNew() ? "tutorial-highlight" : "";
   const whatsNewBtnMenu = (state.profile !== "duel" && areNewFeaturesActive())
     ? `<button id="menuWhatsNewBtn" onclick="openWhatsNewModal(true)" class="kid-card px-4 py-2.5 rounded-2xl bg-rose-100 border-3 border-rose-400 text-rose-900 font-extrabold text-sm flex items-center gap-2 shadow-sm ${whatsNewGlow}"><span>🆕🦉</span> Co nowego w Wersji 12?</button>`
+    : "";
+
+  const tataSimSwitchHtml = state.profile === "tata"
+    ? `<button onclick="toggleTataPreviewAge()" class="kid-card px-4 py-2.5 rounded-2xl ${state.tataPreviewAsIgor ? 'bg-amber-400 text-amber-950 border-amber-600' : 'bg-sky-600 text-white border-sky-800'} border-3 font-extrabold text-xs md:text-sm shadow-md flex items-center gap-2">
+         <span>${state.tataPreviewAsIgor ? '👦 Podgląd: IGOR (4 l.)' : '🧑 Podgląd: HUBERT (6 l.)'}</span>
+         <span class="px-2 py-0.5 rounded-lg bg-white/80 text-slate-900 text-[10px]">Przełącz 🔄</span>
+       </button>`
     : "";
 
   let dailyQuestBanner = "";
@@ -2532,12 +2340,7 @@ function showLessonMenu() {
             </div>
           </div>
           <div>
-            ${dq.claimed
-              ? `<span class="px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-xs border border-emerald-300">Odebrano nagrodę ✓</span>`
-              : isDone
-                ? `<button onclick="claimDailyQuestReward()" class="kid-card px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow animate-bounce">🎁 Odbierz +${dq.rewardStars} ⭐!</button>`
-                : `<span class="px-3 py-1.5 rounded-xl bg-white text-slate-700 font-extrabold text-xs border border-amber-300">Postęp: ${dq.progress}/${dq.target}</span>`
-            }
+            ${dq.claimed ? `<span class="px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-xs border border-emerald-300">Odebrano nagrodę ✓</span>` : isDone ? `<button onclick="claimDailyQuestReward()" class="kid-card px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow animate-bounce">🎁 Odbierz +${dq.rewardStars} ⭐!</button>` : `<span class="px-3 py-1.5 rounded-xl bg-white text-slate-700 font-extrabold text-xs border border-amber-300">Postęp: ${dq.progress}/${dq.target}</span>`}
           </div>
         </div>
       `;
@@ -2546,16 +2349,13 @@ function showLessonMenu() {
 
   let topActionHtml = "";
   if (state.profile === "duel") {
-    const dragonBtn = areNewFeaturesActive()
-      ? `<button id="btnCoopDragonMenu" onclick="startCoopDragonBattle()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-sm shadow-lg border-2 border-emerald-300">🐉🛡️ Wspólna Walka ze Smokiem (Kooperacja!)</button>`
-      : "";
+    const dragonBtn = areNewFeaturesActive() ? `<button id="btnCoopDragonMenu" onclick="startCoopDragonBattle()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-sm shadow-lg border-2 border-emerald-300">🐉🛡️ Wspólna Walka ze Smokiem (Kooperacja!)</button>` : "";
     topActionHtml = `<div class="flex flex-wrap gap-2">${dragonBtn}<button onclick="startDuelAllWords()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-extrabold text-sm shadow-lg">⚔️🎲 Pojedynek VS: Wszystkie Słówka</button></div>`;
   } else if (state.profile === "hubert" || state.profile === "tata") {
-    const dragonTestBtn = state.profile === "tata"
-      ? `<button id="btnCoopDragonMenu" onclick="startCoopDragonBattle()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-xs shadow-lg">🐉 Walka ze Smokiem</button>`
-      : "";
-    const examLabel = state.profile === "tata" ? "🎓👑 Sprawdzian" : "🎓👑 Sprawdzian Huberta";
-    topActionHtml = `<div class="flex flex-wrap gap-2 items-center">${hardWordsBtnHtml}${dragonTestBtn}<button onclick="startGrandExam()" class="kid-card px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex flex-col"><span class="text-sm text-center">${examLabel}</span><span class="text-[10px] font-bold text-center text-amber-100">10 pytań + 5 x Wymowa!</span></button></div>`;
+    const dragonTestBtn = state.profile === "tata" ? `<button id="btnCoopDragonMenu" onclick="startCoopDragonBattle()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-xs shadow-lg">🐉 Walka ze Smokiem</button>` : "";
+    const examLabel = state.profile === "tata" ? (state.tataPreviewAsIgor ? "🎓👑 Sprawdzian (Igor)" : "🎓👑 Sprawdzian (Hubert)") : "🎓👑 Sprawdzian Huberta";
+    const examSub = (state.profile === "tata" && state.tataPreviewAsIgor) ? "15 pytań obrazkowych!" : "10 pytań + 5 x Wymowa!";
+    topActionHtml = `<div class="flex flex-wrap gap-2 items-center">${hardWordsBtnHtml}${dragonTestBtn}<button onclick="startGrandExam()" class="kid-card px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex flex-col"><span class="text-sm text-center">${examLabel}</span><span class="text-[10px] font-bold text-center text-amber-100">${examSub}</span></button></div>`;
   } else {
     topActionHtml = `<div class="flex flex-wrap gap-2 items-center">${hardWordsBtnHtml}<button onclick="startGrandExam()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex items-center gap-2">🎓👑 Wielki Sprawdzian (Wygraj Skrzynię!)</button></div>`;
   }
@@ -2566,11 +2366,10 @@ function showLessonMenu() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-xl border-4 border-sky-200 p-4 md:p-6">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
-        <div class="flex flex-wrap gap-2">
-          <button onclick="startKidVoiceTour()" class="kid-card px-4 py-2.5 rounded-2xl bg-amber-100 border-3 border-amber-400 text-amber-950 font-extrabold text-sm flex items-center gap-2 shadow-sm">
-            <span class="text-xl">🦉🔊</span> Posłuchaj Sówki
-          </button>
+        <div class="flex flex-wrap gap-2 items-center">
+          <button onclick="startKidVoiceTour()" class="kid-card px-4 py-2.5 rounded-2xl bg-amber-100 border-3 border-amber-400 text-amber-950 font-extrabold text-sm flex items-center gap-2 shadow-sm"><span class="text-xl">🦉🔊</span> Posłuchaj Sówki</button>
           ${whatsNewBtnMenu}
+          ${tataSimSwitchHtml}
         </div>
         ${topActionHtml}
       </div>
@@ -2617,13 +2416,11 @@ function startHardWordsTraining() {
   const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
   const hardList = (state.stats[profKey] && Array.isArray(state.stats[profKey].hardWords)) ? state.stats[profKey].hardWords : [];
   if (hardList.length === 0) return showLessonMenu();
-
   state.currentLessonId = "hard_words_training";
   state.currentSubMode = "listen_pick";
   state.isExamMode = false; state.isHardWordsMode = true; state.isCoopDragonMode = false;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
-
   const shuffled = shuffleArray(hardList);
   const totalQ = Math.min(state.questionsPerRound, Math.max(shuffled.length, 5));
   state.roundQuestions = [];
@@ -2640,18 +2437,10 @@ function startCoopDragonBattle() {
   state.duelTurn = "igor";
   state.duelReadyWaiting = true;
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
-  state.dragonBattle = {
-    dragonHp: 10, maxDragonHp: 10,
-    teamHp: 4, maxTeamHp: 4,
-    statusText: "🐉 Smok szykuje ognisty atak! Odpowiedzcie poprawnie, aby zablokować ogień tarczą 🛡️ i zadać cios ⚔️!",
-    animClass: ""
-  };
-
+  state.dragonBattle = { dragonHp: 10, maxDragonHp: 10, teamHp: 4, maxTeamHp: 4, statusText: "🐉 Smok szykuje ognisty atak! Odpowiedzcie poprawnie, aby zablokować ogień tarczą 🛡️ i zadać cios ⚔️!", animClass: "" };
   let all = [];
   state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
-    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
-      getVisibleLessonItems(l.items, false).forEach(it => all.push(it));
-    }
+    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") getVisibleLessonItems(l.items, false).forEach(it => all.push(it));
   });
   const shuffled = shuffleArray(all);
   state.roundQuestions = [];
@@ -2664,10 +2453,8 @@ function startLesson(lessonId, subMode = null) {
   cancelAllSpeechAndTimers();
   state.currentLessonId = lessonId;
   state.isExamMode = false; state.isHardWordsMode = false; state.isCoopDragonMode = false;
-  window._letterTargetWord = "";
-  window._letterRoundIdx = -1;
-  state.letterBuilt = "";
-  state.letterPool = [];
+  window._letterTargetWord = ""; window._letterRoundIdx = -1;
+  state.letterBuilt = ""; state.letterPool = [];
 
   upgradeBodyLessonForHubert(state.lessons);
   const lesson = state.lessons.find(l => l.id === lessonId);
@@ -2685,9 +2472,7 @@ function startLesson(lessonId, subMode = null) {
   if (state.profile === "duel" && subMode === "mic_game") subMode = "listen_pick";
 
   state.currentSubMode = subMode;
-  state.shopCart = [];
-  state.riddleHintShown = false;
-  state.riddleHintStep = 0;
+  state.shopCart = []; state.riddleHintShown = false; state.riddleHintStep = 0;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   state.duelScores = { igor: 0, hubert: 0 }; state.duelTurn = "igor"; state.duelReadyWaiting = state.profile === "duel";
 
@@ -2724,9 +2509,7 @@ function startDuelAllWords() {
 
   let all = [];
   state.lessons.filter(l => !l.testOnly).forEach(l => {
-    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
-      getVisibleLessonItems(l.items, false).forEach(it => all.push(it));
-    }
+    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") getVisibleLessonItems(l.items, false).forEach(it => all.push(it));
   });
   const shuffled = shuffleArray(all);
   state.roundQuestions = [];
@@ -2743,9 +2526,7 @@ function startGrandExam() {
 
   let allListen = [];
   state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
-    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
-      getVisibleLessonItems(l.items, true).forEach(it => allListen.push(it));
-    }
+    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") getVisibleLessonItems(l.items, true).forEach(it => allListen.push(it));
   });
   let allMic = [];
   const pStudio = state.lessons.find(l => l.id === "pronunciation_studio");
@@ -2755,24 +2536,23 @@ function startGrandExam() {
   const shuffledListen = shuffleArray(allListen);
   const shuffledMic = shuffleArray(allMic);
 
-  if (state.profile === "hubert" || state.profile === "tata") {
-    for (let i = 0; i < 10; i++) {
-      let q = Object.assign({}, shuffledListen[i % shuffledListen.length]);
-      q._examModeType = "listen_pick"; state.roundQuestions.push(q);
-    }
-    for (let i = 0; i < 5; i++) {
-      let q = Object.assign({}, shuffledMic[i % shuffledMic.length]);
-      q._examModeType = "mic_game"; state.roundQuestions.push(q);
-    }
+  if (!isEffectiveIgorMode()) {
+    for (let i = 0; i < 10; i++) { let q = Object.assign({}, shuffledListen[i % shuffledListen.length]); q._examModeType = "listen_pick"; state.roundQuestions.push(q); }
+    for (let i = 0; i < 5; i++) { let q = Object.assign({}, shuffledMic[i % shuffledMic.length]); q._examModeType = "mic_game"; state.roundQuestions.push(q); }
     state.roundQuestions = shuffleArray(state.roundQuestions);
   } else {
-    for (let i = 0; i < 15; i++) {
-      let q = Object.assign({}, shuffledListen[i % shuffledListen.length]);
-      q._examModeType = "listen_pick"; state.roundQuestions.push(q);
-    }
+    for (let i = 0; i < 15; i++) { let q = Object.assign({}, shuffledListen[i % shuffledListen.length]); q._examModeType = "listen_pick"; state.roundQuestions.push(q); }
   }
   renderCurrentQuestion();
 }
+</script>
+<!-- ======================== KONIEC CZĘŚCI 5A ======================= -->
+
+<!-- ======================= POCZĄTEK CZĘŚCI 5B ======================= -->
+<script>
+/* ============================================================================
+   CZĘŚĆ 5B: PASEK GRY, LEKARZ Z SUWAKAMI, ZAGADKI I QUIZ (WERSJA 12.9)
+   ============================================================================ */
 
 function renderTopGameBar(lesson) {
   const totalQ = state.roundQuestions.length;
@@ -2858,6 +2638,10 @@ function renderTopGameBar(lesson) {
     dotsHtml += `<div class="w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${bg}">${badgeTxt}</div>`;
   }
 
+  const tataSwitchBar = state.profile === "tata"
+    ? `<button onclick="toggleTataPreviewAge()" class="px-2.5 py-1 rounded-xl font-extrabold text-xs border-2 ${state.tataPreviewAsIgor ? 'bg-amber-400 text-amber-950 border-amber-600' : 'bg-sky-600 text-white border-sky-800'}">${state.tataPreviewAsIgor ? '👦 Widok: IGOR (4 l.) 🔄' : '🧑 Widok: HUBERT (6 l.) 🔄'}</button>`
+    : "";
+
   const duelBar = (state.profile === "duel" && !state.isCoopDragonMode) ? `<div class="mb-2 p-2.5 rounded-2xl bg-gradient-to-r from-amber-100 via-purple-100 to-sky-100 border-2 border-purple-400 flex justify-between items-center font-extrabold text-[10px] md:text-xs"><div>👦 IGOR: ${state.duelScores.igor} pkt ⚡ VS ⚡ 🧑 HUBERT: ${state.duelScores.hubert} pkt</div><div class="px-3 py-1 rounded-xl ${state.duelTurn === 'igor' ? 'bg-amber-500' : 'bg-sky-600'} text-white">Teraz: ${state.duelTurn === 'igor' ? 'IGOR' : 'HUBERT'}</div></div>` : "";
   const examBar = state.isExamMode ? `<div class="mb-2 p-2 rounded-2xl bg-orange-100 border-2 border-orange-400 text-orange-950 font-extrabold text-center text-xs shadow-sm uppercase">🎓 Wielki Sprawdzian (Pytanie ${state.roundIndex+1}/15)</div>` : "";
   const hardBar = state.isHardWordsMode ? `<div class="mb-2 p-2 rounded-2xl bg-rose-100 border-2 border-rose-400 text-rose-950 font-extrabold text-center text-xs shadow-sm uppercase">🎯 Trening Trudnych Słówek • Za odpowiedź bez błędu: +2 ⭐!</div>` : "";
@@ -2865,7 +2649,7 @@ function renderTopGameBar(lesson) {
     ${dragonHud} ${duelBar} ${examBar} ${hardBar}
     <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-sky-200 flex flex-col gap-2 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="flex flex-wrap gap-1.5">${subModesHtml}</div>
+        <div class="flex flex-wrap gap-1.5 items-center">${subModesHtml}${tataSwitchBar}</div>
         <button onclick="advanceNextQuestion()" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Pomiń ⏭️</button>
       </div>
       <div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100">
@@ -2931,9 +2715,6 @@ function renderCurrentQuestion() {
   renderUniversalVisualQuiz(lesson);
 }
 
-// ------------------------------------------------------------------------
-// KOLOROWE PRZEDMIOTY (3 TE SAME OWOCE/WARZYWA W RÓŻNYCH KOLORACH + 3 INNE)
-// ------------------------------------------------------------------------
 function renderColorMixGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const choices = buildColorMixChoicesForQuestion(q);
@@ -2969,7 +2750,7 @@ function renderColorMixGame(lesson) {
 }
 
 // ------------------------------------------------------------------------
-// GABINET MAŁEGO LEKARZA: SUWAKI KALIBRACJI STREF (ZAPIS W CHMURZE LAPTOP == TELEFON)
+// GABINET MAŁEGO LEKARZA: SUWAKI KALIBRACJI STREF
 // ------------------------------------------------------------------------
 const DEFAULT_DOCTOR_CALIB = {
   Head:    { label: "👦 Głowa / Włosy (Head)",     en: "Head",  pl: "Głowa",  paired: false, top: 7.0,  left: 50.0, w: 30.0, h: 9.0,  z: 30 },
@@ -3022,7 +2803,7 @@ function saveDoctorCalibration(cal) {
 }
 
 function getDoctorZonesForActivePlayer() {
-  const isAdvanced = state.profile === "hubert" || state.profile === "tata";
+  const isAdvanced = !isEffectiveIgorMode();
   const cal = getDoctorCalibration();
   const keys = isAdvanced
     ? ["Head", "Eyes", "Ears", "Nose", "Mouth", "Neck", "Tummy", "Arm", "Hand", "Leg", "Knee", "Foot"]
@@ -3109,10 +2890,7 @@ function renderDoctorCalibSlidersHtml() {
   `;
 }
 
-function toggleDocCalibPanel() {
-  window._docCalibOpen = !window._docCalibOpen;
-  refreshDoctorZonesAndSliders();
-}
+function toggleDocCalibPanel() { window._docCalibOpen = !window._docCalibOpen; refreshDoctorZonesAndSliders(); }
 
 function refreshDoctorZonesAndSliders() {
   const zCont = document.getElementById("doctorZonesLayer");
@@ -3126,10 +2904,8 @@ function changeDocCalibVal(partKey, prop, val) {
   if (!cal[partKey]) return;
   cal[partKey][prop] = parseFloat(val);
   saveDoctorCalibration(cal);
-
   const zCont = document.getElementById("doctorZonesLayer");
   if (zCont) zCont.innerHTML = renderDoctorZonesInnerHtml();
-
   if (prop === "top") { const el = document.getElementById("lblDocTop"); if (el) el.textContent = val + "%"; }
   if (prop === "dx" || prop === "left") { const el = document.getElementById("lblDocPos"); if (el) el.textContent = val + "%"; }
   if (prop === "w") { const el = document.getElementById("lblDocW"); if (el) el.textContent = val + "%"; }
@@ -3146,7 +2922,7 @@ function resetDocCalibDefaults() {
 function renderDoctorGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const phrase = q.hurtPhrase || `Ouch! My ${q.en.toLowerCase()} hurts!`;
-  const isAdvanced = state.profile === "hubert" || state.profile === "tata";
+  const isAdvanced = !isEffectiveIgorMode();
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
 
@@ -3166,36 +2942,22 @@ function renderDoctorGame(lesson) {
           <div class="text-xs font-bold text-slate-600">Przeciągnij plasterek 🩹 na właściwą część ciała na postaci (lub kliknij w nią palcem)!</div>
         </div>
       </div>
-
       <div id="feedbackBanner" class="min-h-[32px] font-bold text-sm md:text-base mb-2 flex items-center justify-center"></div>
-
       <div class="flex flex-col md:flex-row items-center justify-center gap-6 my-1">
         <div id="doctorPatientBox" class="relative select-none bg-gradient-to-b from-sky-50 to-rose-50 rounded-3xl border-4 border-rose-300 shadow-inner overflow-hidden shrink-0" style="width: 280px; height: 340px; min-width: 280px; min-height: 340px;">
           <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-fill pointer-events-none z-10" />
-          <div id="doctorZonesLayer" class="absolute inset-0 w-full h-full z-20">
-            ${renderDoctorZonesInnerHtml()}
-          </div>
+          <div id="doctorZonesLayer" class="absolute inset-0 w-full h-full z-20">${renderDoctorZonesInnerHtml()}</div>
         </div>
-
         <div class="flex flex-col items-center justify-center">
           <div class="flex flex-col items-center justify-center p-5 rounded-3xl bg-rose-50 border-3 border-rose-300 shadow-md w-52">
             <div class="text-xs font-extrabold text-rose-900 uppercase mb-2">🧰 Apteczka Lekarza</div>
-            <div id="draggableBandAid"
-                 draggable="true"
-                 ondragstart="if(event.dataTransfer) event.dataTransfer.setData('text/plain','bandaid');"
-                 ontouchstart="startBandAidTouch(event)"
-                 ontouchmove="moveBandAidTouch(event)"
-                 ontouchend="endBandAidTouch(event)"
-                 class="cursor-grab active:cursor-grabbing w-28 h-28 rounded-3xl bg-white border-4 border-rose-400 shadow-lg flex flex-col items-center justify-center hover:scale-110 transition-transform select-none"
-                 style="touch-action: none;">
+            <div id="draggableBandAid" draggable="true" ondragstart="if(event.dataTransfer) event.dataTransfer.setData('text/plain','bandaid');" ontouchstart="startBandAidTouch(event)" ontouchmove="moveBandAidTouch(event)" ontouchend="endBandAidTouch(event)" class="cursor-grab active:cursor-grabbing w-28 h-28 rounded-3xl bg-white border-4 border-rose-400 shadow-lg flex flex-col items-center justify-center hover:scale-110 transition-transform select-none" style="touch-action: none;">
               <span class="text-6xl">🩹</span>
               <span class="text-[11px] font-extrabold text-rose-800 mt-1">Chwyć plaster!</span>
             </div>
             <p class="text-[11px] font-bold text-slate-600 mt-3 leading-snug">Przeciągnij plasterek na bolącą część ciała lub dotknij jej bezpośrednio na chłopcu!</p>
           </div>
-          <button onclick="toggleDocCalibPanel()" class="mt-3 px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-xs border border-indigo-300">
-            🔧 Dopasuj ramki części ciała (Suwaki)
-          </button>
+          <button onclick="toggleDocCalibPanel()" class="mt-3 px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-xs border border-indigo-300">🔧 Dopasuj ramki części ciała (Suwaki)</button>
         </div>
       </div>
       <div id="doctorCalibSlidersBox">${renderDoctorCalibSlidersHtml()}</div>
@@ -3215,9 +2977,7 @@ function startBandAidTouch(e) {
     ghost.textContent = "🩹";
     document.body.appendChild(ghost);
   }
-  ghost.style.left = touch.clientX + "px";
-  ghost.style.top = touch.clientY + "px";
-  ghost.classList.remove("hidden");
+  ghost.style.left = touch.clientX + "px"; ghost.style.top = touch.clientY + "px"; ghost.classList.remove("hidden");
 }
 
 function moveBandAidTouch(e) {
@@ -3225,8 +2985,7 @@ function moveBandAidTouch(e) {
   if (!ghost || ghost.classList.contains("hidden")) return;
   e.preventDefault();
   const touch = e.touches[0];
-  ghost.style.left = touch.clientX + "px";
-  ghost.style.top = touch.clientY + "px";
+  ghost.style.left = touch.clientX + "px"; ghost.style.top = touch.clientY + "px";
 }
 
 function endBandAidTouch(e) {
@@ -3237,76 +2996,52 @@ function endBandAidTouch(e) {
   const el = document.elementFromPoint(touch.clientX, touch.clientY);
   if (!el) return;
   const zoneEl = el.closest(".doc-drop-zone");
-  if (zoneEl && zoneEl.id) {
-    const zoneId = zoneEl.id.replace("docZone_", "");
-    applyBandAidToZone(zoneId);
-  }
+  if (zoneEl && zoneEl.id) applyBandAidToZone(zoneEl.id.replace("docZone_", ""));
 }
 
 function applyBandAidToZone(zoneId) {
   if (state.answeredCurrent) return;
   const q = state.roundQuestions[state.roundIndex];
-  const activeZones = getDoctorZonesForActivePlayer();
-  const zone = activeZones.find(z => z.id === zoneId);
+  const zone = getDoctorZonesForActivePlayer().find(z => z.id === zoneId);
   if (!zone) return;
-
   const zoneEl = document.getElementById(`docZone_${zoneId}`);
   const patientBox = document.getElementById("doctorPatientBox");
   const fb = document.getElementById("feedbackBanner");
 
-  const isMatch = zone.en.toLowerCase() === q.en.toLowerCase() ||
-                  (q.en.toLowerCase() === "leg" && zone.en.toLowerCase() === "knee");
-
+  const isMatch = zone.en.toLowerCase() === q.en.toLowerCase() || (q.en.toLowerCase() === "leg" && zone.en.toLowerCase() === "knee");
   if (isMatch) {
     state.answeredCurrent = true;
     playEffect("success");
-    if (zoneEl) {
-      zoneEl.className = "absolute -translate-x-1/2 flex items-center justify-center z-50 pop-correct";
-      zoneEl.innerHTML = `<span class="text-3xl drop-shadow-lg">🩹</span>`;
-    }
+    if (zoneEl) { zoneEl.className = "absolute -translate-x-1/2 flex items-center justify-center z-50 pop-correct"; zoneEl.innerHTML = `<span class="text-3xl drop-shadow-lg">🩹</span>`; }
     const dragBtn = document.getElementById("draggableBandAid");
     if (dragBtn) dragBtn.innerHTML = `<span class="text-4xl">✅</span><span class="text-[10px] font-extrabold text-emerald-700">Przyklejony!</span>`;
     if (fb) fb.innerHTML = `<span class="text-emerald-600 font-extrabold">🩹🌟 Brawo! Plasterek przyklejony na: ${q.pl} (${q.en})! Pacjent wyleczony!</span>`;
     awardCorrectAnswer();
     speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Super! Plasterek przyklejony! To jest ${q.pl}!` }], () => advanceNextQuestion());
   } else {
-    state.roundMistakes++;
-    state.currentQuestionMistakes++;
+    state.roundMistakes++; state.currentQuestionMistakes++;
     playEffect("wrong");
-    if (patientBox) {
-      patientBox.classList.add("shake-wrong");
-      setTimeout(() => patientBox.classList.remove("shake-wrong"), 550);
-    }
+    if (patientBox) { patientBox.classList.add("shake-wrong"); setTimeout(() => patientBox.classList.remove("shake-wrong"), 550); }
     recordHardWordForActivePlayer(q);
     if (fb) fb.innerHTML = `<span class="text-rose-600">❌ To jest ${zone.pl} (${zone.en})! Posłuchaj pacjenta i przyklej plaster w dobre miejsce!</span>`;
     speakSequence([{ lang: "pl", text: `Oj nie! To jest ${zone.pl}. Pacjent prosi o plaster na:` }, { lang: "en", text: q.en }]);
   }
 }
 
-// ------------------------------------------------------------------------
-// ZAGADKI DETEKTYWA SÓWKI (DWUSTOPNIOWA PODPOWIEDŹ GŁOSOWA: 1. LITERA, 2. OPIS PL)
-// ------------------------------------------------------------------------
 function handleRiddleHintClick() {
   const q = state.roundQuestions[state.roundIndex];
   if (!q) return;
   const firstLetter = (q.en || "?")[0].toUpperCase();
   const hintBox = document.getElementById("riddleHintBox");
   const hintBtn = document.getElementById("riddleHintBtn");
-
   if (!state.riddleHintStep || state.riddleHintStep === 0) {
     state.riddleHintStep = 1;
-    if (hintBox) {
-      hintBox.classList.remove("hidden");
-      hintBox.innerHTML = `💡 Podpowiedź 1: Szukane słowo po angielsku zaczyna się na literę <strong>"${firstLetter}"</strong>!`;
-    }
+    if (hintBox) { hintBox.classList.remove("hidden"); hintBox.innerHTML = `💡 Podpowiedź 1: Szukane słowo po angielsku zaczyna się na literę <strong>"${firstLetter}"</strong>!`; }
     if (hintBtn) hintBtn.innerHTML = `💡 Druga podpowiedź (po polsku)`;
     speakSequence([{ lang: "pl", text: `Podpowiedź! Szukane słowo zaczyna się na literę: ${firstLetter}!` }]);
   } else {
     state.riddleHintStep = 2;
-    if (hintBox) {
-      hintBox.classList.remove("hidden");
-      hintBox.innerHTML = `💡 Litera: <strong>"${firstLetter}"</strong> &nbsp;•&nbsp; Podpowiedź po polsku: <strong>"${q.cluePl || ''}"</strong>`;
-    }
+    if (hintBox) { hintBox.classList.remove("hidden"); hintBox.innerHTML = `💡 Litera: <strong>"${firstLetter}"</strong> &nbsp;•&nbsp; Podpowiedź po polsku: <strong>"${q.cluePl || ''}"</strong>`; }
     speakSequence([{ lang: "pl", text: `Druga podpowiedź po polsku: ${q.cluePl || ''}` }]);
   }
 }
@@ -3351,10 +3086,7 @@ function renderShopCartGame(lesson) {
   const products = getVisibleLessonItems(lesson.items, true).filter(i => i.isProduct);
   const choices = shuffleArray([q, ...shuffleArray(products.filter(it => it.en !== q.en)).slice(0, 2)]);
   window._currentChoices = choices;
-
-  const cartIcons = (state.shopCart && state.shopCart.length > 0)
-    ? state.shopCart.map(ic => `<span class="text-2xl pop-correct">${ic}</span>`).join(" ")
-    : `<span class="text-xs text-amber-700">Koszyk jest jeszcze pusty...</span>`;
+  const cartIcons = (state.shopCart && state.shopCart.length > 0) ? state.shopCart.map(ic => `<span class="text-2xl pop-correct">${ic}</span>`).join(" ") : `<span class="text-xs text-amber-700">Koszyk jest jeszcze pusty...</span>`;
 
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
@@ -3385,18 +3117,15 @@ function renderShopCartGame(lesson) {
 
 function renderUniversalVisualQuiz(lesson) {
   const q = state.roundQuestions[state.roundIndex];
-  const isAdvanced = state.profile === "hubert" || state.profile === "tata" || ((state.profile === "duel" || state.isCoopDragonMode) && state.duelTurn === "hubert");
+  const isAdvanced = !isEffectiveIgorMode();
   const numChoices = isAdvanced ? 6 : 3;
 
   let allPool = [];
   state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
-    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
-      getVisibleLessonItems(l.items, true).forEach(it => allPool.push(it));
-    }
+    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") getVisibleLessonItems(l.items, true).forEach(it => allPool.push(it));
   });
   const visLessonItems = getVisibleLessonItems(lesson.items, true);
   let src = visLessonItems.length >= numChoices ? visLessonItems : allPool;
-
   const choices = shuffleArray([q, ...shuffleArray(src.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);
   window._currentChoices = choices;
 
@@ -3432,10 +3161,7 @@ function checkUniversalAnswer(idx, isShopCart = false) {
 
   if (chosen.en === q.en) {
     state.answeredCurrent = true; playEffect("success"); card.classList.add("pop-correct");
-    if (isShopCart) {
-      if (!Array.isArray(state.shopCart)) state.shopCart = [];
-      state.shopCart.push(chosen.icon || "🥐");
-    }
+    if (isShopCart) { if (!Array.isArray(state.shopCart)) state.shopCart = []; state.shopCart.push(chosen.icon || "🥐"); }
     lbl.textContent = `✅ ${chosen.pl}`;
     if (state.isCoopDragonMode) {
       state.dragonBattle.dragonHp = Math.max(0, state.dragonBattle.dragonHp - 1);
@@ -3473,13 +3199,8 @@ function awardCorrectAnswer() {
   state.roundScore++;
   const q = state.roundQuestions[state.roundIndex];
   const starBonus = (state.isHardWordsMode && state.currentQuestionMistakes === 0) ? 2 : 1;
-
-  if (state.currentQuestionMistakes === 0) {
-    state.roundResults.push("correct");
-    if (state.isHardWordsMode) removeHardWordIfMastered(q);
-  } else {
-    state.roundResults.push("wrong");
-  }
+  if (state.currentQuestionMistakes === 0) { state.roundResults.push("correct"); if (state.isHardWordsMode) removeHardWordIfMastered(q); }
+  else state.roundResults.push("wrong");
 
   if (state.profile === "igor") { state.stats.igor.stars += starBonus; advanceDailyQuestProgress("igor", "stars", starBonus); }
   else if (state.profile === "hubert") { state.stats.hubert.stars += starBonus; advanceDailyQuestProgress("hubert", "stars", starBonus); }
@@ -3494,15 +3215,12 @@ function awardCorrectAnswer() {
 
 function advanceNextQuestion() {
   cancelAllSpeechAndTimers();
-  window._letterTargetWord = "";
-  window._letterRoundIdx = -1;
+  window._letterTargetWord = ""; window._letterRoundIdx = -1;
   if (!state.answeredCurrent) {
     state.roundResults.push("wrong"); state.roundMistakes++;
     if (state.isCoopDragonMode) state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
   }
-  if (state.isCoopDragonMode && (state.dragonBattle.dragonHp <= 0 || state.dragonBattle.teamHp <= 0)) {
-    return renderEndRoundScreen();
-  }
+  if (state.isCoopDragonMode && (state.dragonBattle.dragonHp <= 0 || state.dragonBattle.teamHp <= 0)) return renderEndRoundScreen();
   if (state.profile === "duel" || state.isCoopDragonMode) {
     state.duelTurn = state.duelTurn === "igor" ? "hubert" : "igor";
     state.duelReadyWaiting = true;
@@ -3528,27 +3246,10 @@ function renderEndRoundScreen() {
       state.rewardQueue.push({ profKey: "hubert", achievement: { name: "Pogromca Smoka (Hubert)" }, chestType });
       saveCloudData();
       setTimeout(processNextRewardInQueue, 400);
-      mc.innerHTML = `
-        <div class="bg-white rounded-3xl shadow-2xl border-4 border-emerald-400 p-6 text-center max-w-xl mx-auto">
-          <div class="text-6xl mb-2">🐉🏳️🏆</div>
-          <h2 class="text-3xl font-extrabold text-emerald-900 mb-2">SMOK POKONANY!</h2>
-          <p class="text-slate-600 font-bold mb-4">Wspólnymi siłami pokonaliście Groźnego Smoka! Zostało Wam ${state.dragonBattle.teamHp} ❤️! Obaj otrzymujecie Skrzynie!</p>
-          <button onclick="showLessonMenu()" class="w-full px-6 py-3 mt-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg text-lg">🏠 Wróć do Menu</button>
-        </div>
-      `;
+      mc.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl border-4 border-emerald-400 p-6 text-center max-w-xl mx-auto"><div class="text-6xl mb-2">🐉🏳️🏆</div><h2 class="text-3xl font-extrabold text-emerald-900 mb-2">SMOK POKONANY!</h2><p class="text-slate-600 font-bold mb-4">Wspólnymi siłami pokonaliście Groźnego Smoka! Zostało Wam ${state.dragonBattle.teamHp} ❤️! Obaj otrzymujecie Skrzynie!</p><button onclick="showLessonMenu()" class="w-full px-6 py-3 mt-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg text-lg">🏠 Wróć do Menu</button></div>`;
     } else {
       playEffect("wrong");
-      mc.innerHTML = `
-        <div class="bg-white rounded-3xl shadow-2xl border-4 border-rose-500 p-6 text-center max-w-xl mx-auto">
-          <div class="text-6xl mb-2">🐉🔥💥</div>
-          <h2 class="text-3xl font-extrabold text-rose-900 mb-2">Smok wygrał walkę!</h2>
-          <p class="text-slate-600 font-bold mb-4">Straciliście wszystkie serduszka! Smokowi zostało jeszcze ${state.dragonBattle.dragonHp} HP. Spróbujcie jeszcze raz!</p>
-          <div class="flex flex-col gap-2">
-            <button onclick="startCoopDragonBattle()" class="w-full px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold shadow-lg text-lg">🔄⚔️ Rewanż ze Smokiem!</button>
-            <button onclick="showLessonMenu()" class="w-full px-6 py-3 rounded-2xl bg-slate-200 text-slate-800 font-bold text-base">🏠 Wróć do Menu</button>
-          </div>
-        </div>
-      `;
+      mc.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl border-4 border-rose-500 p-6 text-center max-w-xl mx-auto"><div class="text-6xl mb-2">🐉🔥💥</div><h2 class="text-3xl font-extrabold text-rose-900 mb-2">Smok wygrał walkę!</h2><p class="text-slate-600 font-bold mb-4">Straciliście wszystkie serduszka! Smokowi zostało jeszcze ${state.dragonBattle.dragonHp} HP. Spróbujcie jeszcze raz!</p><div class="flex flex-col gap-2"><button onclick="startCoopDragonBattle()" class="w-full px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold shadow-lg text-lg">🔄⚔️ Rewanż ze Smokiem!</button><button onclick="showLessonMenu()" class="w-full px-6 py-3 rounded-2xl bg-slate-200 text-slate-800 font-bold text-base">🏠 Wróć do Menu</button></div></div>`;
       speakSequence([{ lang: "pl", text: "O nie! Smok okazał się zbyt silny i wygrał walkę! Kliknijcie rewanż, aby spróbować jeszcze raz!" }]);
     }
     return;
@@ -3563,10 +3264,7 @@ function renderEndRoundScreen() {
   } else {
     p.cups++;
     advanceDailyQuestProgress(profKey, "rounds", 1);
-    if (state.roundMistakes === 0) {
-      p.perfectRounds++;
-      advanceDailyQuestProgress(profKey, "perfect", 1);
-    }
+    if (state.roundMistakes === 0) { p.perfectRounds++; advanceDailyQuestProgress(profKey, "perfect", 1); }
     if (state.isExamMode) p.examsDone++;
     if (state.currentLessonId && state.currentLessonId !== "grand_exam" && state.currentLessonId !== "hard_words_training" && state.currentLessonId !== "memory_game") {
       p.lessonCounts[state.currentLessonId] = (p.lessonCounts[state.currentLessonId] || 0) + 1;
@@ -3584,37 +3282,29 @@ function renderEndRoundScreen() {
     ? `<div class="my-3 p-4 rounded-2xl bg-purple-50 border-2 border-purple-300 font-extrabold text-lg">${state.duelScores.igor > state.duelScores.hubert ? '🏆 Zwycięża IGOR!' : state.duelScores.hubert > state.duelScores.igor ? '🏆 Zwycięża HUBERT!' : '🤝 Zasłużony REMIS!'}<div class="text-sm mt-1">👦 Igor: ${state.duelScores.igor}/8 pkt &nbsp;|&nbsp; 🧑 Hubert: ${state.duelScores.hubert}/8 pkt</div></div>`
     : `<p class="text-slate-600 mb-4">Wynik: <strong>${state.roundScore}/${state.roundQuestions.length || state.memoryMatchedPairs}</strong> (Błędy: ${state.roundMistakes})</p>`;
 
-  mc.innerHTML = `
-    <div class="bg-white rounded-3xl shadow-2xl border-4 border-amber-400 p-6 text-center max-w-xl mx-auto">
-      <div class="text-6xl mb-2">🏆🎉</div>
-      <h2 class="text-3xl font-extrabold mb-2">Koniec Rundy!</h2>
-      ${duelInfo}
-      <div class="flex flex-col gap-2 mt-2">
-        <button onclick="showLessonMenu()" class="w-full px-6 py-3 mt-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold shadow-lg text-lg">🏠 Wróć do Lekcji</button>
-      </div>
-    </div>
-  `;
+  mc.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl border-4 border-amber-400 p-6 text-center max-w-xl mx-auto"><div class="text-6xl mb-2">🏆🎉</div><h2 class="text-3xl font-extrabold mb-2">Koniec Rundy!</h2>${duelInfo}<div class="flex flex-col gap-2 mt-2"><button onclick="showLessonMenu()" class="w-full px-6 py-3 mt-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold shadow-lg text-lg">🏠 Wróć do Lekcji</button></div></div>`;
 }
 </script>
-<!-- ======================== KONIEC CZĘŚCI 5 z 6 ======================== -->
+<!-- ======================== KONIEC CZĘŚCI 5B ======================= -->
   
-<!-- ======================= POCZĄTEK CZĘŚCI 6 z 6 ======================= -->
+<!-- ======================= POCZĄTEK CZĘŚCI 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 6 z 6: UKŁADANKA LITERKOWA (BEZ PODPOWIEDZI SŁOWA), MEMORY, WYMOWA I PANEL RODZICA (WERSJA 12.7)
+   CZĘŚĆ 6: LITERKI, MEMORY, WYMOWA, PRZYIMKI I PANEL RODZICA (WERSJA 12.9)
    ============================================================================ */
 
 // ------------------------------------------------------------------------
-// UKŁADANKA LITERKOWA (HUBERT: CAŁE SŁOWO, IGOR: PIERWSZA LITERA - BEZ PODGLĄDU SŁOWA)
+// UKŁADANKA LITERKOWA (HUBERT: CAŁE SŁOWO, IGOR: PIERWSZA LITERA)
 // ------------------------------------------------------------------------
 function renderLettersGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const rawWord = (q.en || "CAT").trim().toUpperCase();
-  const isIgor = state.profile === "igor";
+  const isIgor = isEffectiveIgorMode();
 
-  if (!window._letterTargetWord || window._letterRoundIdx !== state.roundIndex) {
+  if (!window._letterTargetWord || window._letterRoundIdx !== state.roundIndex || window._letterModeIgor !== isIgor) {
     window._letterTargetWord = rawWord;
     window._letterRoundIdx = state.roundIndex;
+    window._letterModeIgor = isIgor;
     if (isIgor) {
       state.letterBuilt = "";
       const firstChar = rawWord[0];
@@ -3692,7 +3382,7 @@ function pickLetterTile(poolIdx) {
   if (state.answeredCurrent) return;
   const q = state.roundQuestions[state.roundIndex];
   const rawWord = window._letterTargetWord || q.en.trim().toUpperCase();
-  const isIgor = state.profile === "igor";
+  const isIgor = isEffectiveIgorMode();
   const tile = state.letterPool[poolIdx];
   if (!tile || tile.used) return;
 
@@ -3735,14 +3425,14 @@ function pickLetterTile(poolIdx) {
 }
 
 // ------------------------------------------------------------------------
-// GRA MEMORY (IGOR: OBRAZEK-OBRAZEK, HUBERT/TATA: SŁOWO-OBRAZEK)
+// GRA MEMORY (IGOR: OBRAZEK-OBRAZEK, HUBERT: SŁOWO-OBRAZEK)
 // ------------------------------------------------------------------------
 function startMemoryGame() {
   cancelAllSpeechAndTimers();
   state.currentLessonId = "memory_game";
   state.isExamMode = false; state.isHardWordsMode = false; state.isCoopDragonMode = false;
   
-  const isAdvanced = state.profile === "hubert" || state.profile === "tata";
+  const isAdvanced = !isEffectiveIgorMode();
   const numPairs = isAdvanced ? 8 : 6;
   
   let pool = [];
@@ -3766,7 +3456,7 @@ function startMemoryGame() {
 }
 
 function renderMemoryGame() {
-  const isAdvanced = state.profile === "hubert" || state.profile === "tata";
+  const isAdvanced = !isEffectiveIgorMode();
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
 
@@ -3835,7 +3525,7 @@ function flipMemoryCard(idx) {
 // ------------------------------------------------------------------------
 function renderMicGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
-  const isAdvanced = state.profile === "hubert" || state.profile === "tata" || (state.profile === "duel" && state.duelTurn === "hubert");
+  const isAdvanced = !isEffectiveIgorMode();
   const isTranslation = isAdvanced && (state.roundIndex % 2 === 1);
   window._micTranslationMode = isTranslation;
 
@@ -3852,7 +3542,6 @@ function renderMicGame(lesson) {
       <div class="text-6xl md:text-7xl my-3 float-anim drop-shadow-sm">${q.icon || '⭐'}</div>
       <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1 tracking-wide">${displayTitle}</h2>
       <p class="text-sm font-bold text-slate-500 mb-4">${subTitle}</p>
-      
       <div id="micStatusBox" class="p-4 rounded-3xl bg-slate-50 border-2 border-slate-200 font-bold text-sm text-slate-700 mb-5 flex flex-col items-center justify-center gap-2">
         <div>1. Kliknij 🔊 Posłuchaj &nbsp;➔&nbsp; 2. Kliknij 🎤 Mów!</div>
         <div id="eqVisualizer" class="hidden items-end gap-1 h-10 my-1">
@@ -3868,7 +3557,6 @@ function renderMicGame(lesson) {
       </div>
     </div>
   `;
-  
   if (isTranslation) speakSequence([{ lang: "pl", text: `Powiedz głośno po angielsku: ${q.pl}!` }]);
   else speakSequence([{ lang: "pl", text: "Posłuchaj i powtórz:" }, { lang: "en", text: q.en }]);
 }
@@ -3876,12 +3564,10 @@ function renderMicGame(lesson) {
 function startSpeechCheck() {
   if (state.answeredCurrent) return;
   cancelAllSpeechAndTimers(); playEffect("beep");
-  
   const q = state.roundQuestions[state.roundIndex];
   const box = document.getElementById("micStatusBox");
   const eq = document.getElementById("eqVisualizer");
   if (eq) eq.classList.remove("hidden");
-  
   if (box) {
     box.className = "p-4 rounded-3xl bg-emerald-100 border-4 border-emerald-500 font-extrabold text-base text-emerald-950 mb-5 flex flex-col items-center justify-center gap-2 text-center";
     const helperTxt = window._micTranslationMode ? `Tłumaczysz: "${q.pl}"` : `Oczekiwane: "${q.en}"`;
@@ -3889,14 +3575,11 @@ function startSpeechCheck() {
   }
 
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let handled = false;
-  let finalHeard = "";
-
+  let handled = false; let finalHeard = "";
   if (!SpeechRec) {
     if (box) box.innerHTML = "❌ Przeglądarka nie wspiera mikrofonu. Kliknij 🔒 Zalicz (Tata).";
     return fallbackMicTimer(box);
   }
-
   try {
     const rec = new SpeechRec();
     rec.lang = "en-US"; rec.interimResults = true; rec.continuous = true;
@@ -3906,13 +3589,8 @@ function startSpeechCheck() {
       for (let i = e.resultIndex; i < e.results.length; i++) currentTranscript += e.results[i][0].transcript.toLowerCase();
       finalHeard = currentTranscript.trim();
       const target = q.en.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-      let isCorrect = false;
-      if (finalHeard.includes(target)) isCorrect = true;
-      else if (target.length > 3 && finalHeard.includes(target.slice(0, 4))) isCorrect = true;
-      if (isCorrect) {
-        handled = true; try { rec.stop(); } catch(err){}
-        approveMicAnswer(`Zrozumiałem: "${finalHeard}"!`);
-      }
+      let isCorrect = finalHeard.includes(target) || (target.length > 3 && finalHeard.includes(target.slice(0, 4)));
+      if (isCorrect) { handled = true; try { rec.stop(); } catch(err){} approveMicAnswer(`Zrozumiałem: "${finalHeard}"!`); }
     };
     rec.onend = () => {
       if (handled) return; handled = true;
@@ -3925,20 +3603,13 @@ function startSpeechCheck() {
     rec.onerror = () => { if (handled) return; handled = true; if (box) box.innerHTML = `❌ Błąd mikrofonu. Kliknij Mów jeszcze raz lub Zalicz (Tata).`; fallbackMicTimer(box); };
     rec.start();
     setTimeout(() => { if (!handled) { handled = true; try { rec.stop(); } catch(e){} fallbackMicTimer(box); } }, 8000);
-  } catch (e) {
-    if (box) box.innerHTML = `❌ Błąd uruchamiania mikrofonu.`; fallbackMicTimer(box);
-  }
+  } catch (e) { if (box) box.innerHTML = `❌ Błąd uruchamiania mikrofonu.`; fallbackMicTimer(box); }
 }
 
 function fallbackMicTimer(box) {
   setTimeout(() => { if (!state.answeredCurrent && box) box.innerHTML += `<div class="mt-2 text-xs text-rose-600 font-bold">Spróbuj ponownie lub poproś Tatę!</div>`; }, 2000);
 }
-
-function requestParentMicApproval() {
-  if (state.answeredCurrent) return;
-  openParentPinModal("mic_approve");
-}
-
+function requestParentMicApproval() { if (!state.answeredCurrent) openParentPinModal("mic_approve"); }
 function approveMicAnswer(msg) {
   if (state.answeredCurrent) return;
   state.answeredCurrent = true;
@@ -3954,7 +3625,7 @@ function approveMicAnswer(msg) {
 }
 
 // ------------------------------------------------------------------------
-// LEKCJA 1: PRZYIMKI (IN, ON, UNDER)
+// LEKCJA 1: PRZYIMKI (IN, ON, UNDER) + FISZKI
 // ------------------------------------------------------------------------
 function startPrepositionExplain(lesson) {
   const mc = document.getElementById("mainContainer");
@@ -3964,18 +3635,9 @@ function startPrepositionExplain(lesson) {
     <div class="bg-white rounded-3xl shadow-xl border-4 border-sky-300 p-4 md:p-6 text-center max-w-2xl mx-auto w-full">
       <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-4 tracking-wide">In, On, Under!</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div id="exp_in" class="kid-card p-4 rounded-2xl bg-amber-50 border-2 border-amber-200">
-          <div class="text-5xl mb-2 float-anim relative"><span class="absolute z-20 text-3xl left-4 bottom-2">🐱</span>📦</div>
-          <div class="font-extrabold text-xl">In</div><div class="text-sm font-bold text-slate-600">W (w środku)</div>
-        </div>
-        <div id="exp_on" class="kid-card p-4 rounded-2xl bg-sky-50 border-2 border-sky-200">
-          <div class="text-5xl mb-2 float-anim relative"><span class="absolute z-20 text-3xl left-4 -top-3">🐱</span>📦</div>
-          <div class="font-extrabold text-xl">On</div><div class="text-sm font-bold text-slate-600">Na (na górze)</div>
-        </div>
-        <div id="exp_un" class="kid-card p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200">
-          <div class="text-5xl mb-2 float-anim relative"><span class="absolute z-20 text-3xl left-4 -bottom-3">🐱</span>📦</div>
-          <div class="font-extrabold text-xl">Under</div><div class="text-sm font-bold text-slate-600">Pod (pod spodem)</div>
-        </div>
+        <div id="exp_in" class="kid-card p-4 rounded-2xl bg-amber-50 border-2 border-amber-200"><div class="text-5xl mb-2 float-anim relative"><span class="absolute z-20 text-3xl left-4 bottom-2">🐱</span>📦</div><div class="font-extrabold text-xl">In</div><div class="text-sm font-bold text-slate-600">W (w środku)</div></div>
+        <div id="exp_on" class="kid-card p-4 rounded-2xl bg-sky-50 border-2 border-sky-200"><div class="text-5xl mb-2 float-anim relative"><span class="absolute z-20 text-3xl left-4 -top-3">🐱</span>📦</div><div class="font-extrabold text-xl">On</div><div class="text-sm font-bold text-slate-600">Na (na górze)</div></div>
+        <div id="exp_un" class="kid-card p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200"><div class="text-5xl mb-2 float-anim relative"><span class="absolute z-20 text-3xl left-4 -bottom-3">🐱</span>📦</div><div class="font-extrabold text-xl">Under</div><div class="text-sm font-bold text-slate-600">Pod (pod spodem)</div></div>
       </div>
       <div class="mt-5 border-t border-slate-100 pt-4 flex gap-2 justify-center">
         <button onclick="startLesson('prepositions','prep_choose_word')" class="px-5 py-2.5 rounded-2xl bg-sky-500 text-white font-bold">Start: Słówka</button>
@@ -3994,24 +3656,17 @@ function startPrepositionExplain(lesson) {
 function renderPrepChooseWord(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const choices = ["In", "On", "Under"];
-  let emojiHtml = q.prep === "In"
-    ? `<span class="absolute z-20 text-3xl md:text-5xl left-6 bottom-4 md:bottom-8">${q.animal}</span>`
-    : q.prep === "On"
-    ? `<span class="absolute z-20 text-3xl md:text-5xl left-6 -top-4 md:-top-8">${q.animal}</span>`
-    : `<span class="absolute z-20 text-3xl md:text-5xl left-6 -bottom-5 md:-bottom-10">${q.animal}</span>`;
+  let emojiHtml = q.prep === "In" ? `<span class="absolute z-20 text-3xl md:text-5xl left-6 bottom-4 md:bottom-8">${q.animal}</span>` : q.prep === "On" ? `<span class="absolute z-20 text-3xl md:text-5xl left-6 -top-4 md:-top-8">${q.animal}</span>` : `<span class="absolute z-20 text-3xl md:text-5xl left-6 -bottom-5 md:-bottom-10">${q.animal}</span>`;
   const bObj = { box: "📦", bag: "🎒", table: "🪑", chair: "🪑", basket: "🧺", bed: "🛏️", tree: "🌳" };
-  const baseEm = bObj[q.container] || "📦";
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
     <div class="bg-white rounded-3xl shadow-xl border-4 border-sky-300 p-4 md:p-6 text-center">
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2"></div>
-      <div class="relative text-7xl md:text-9xl mb-8 float-anim mt-4 mx-auto w-32 md:w-48 flex items-center justify-center">${baseEm} ${emojiHtml}</div>
+      <div class="relative text-7xl md:text-9xl mb-8 float-anim mt-4 mx-auto w-32 md:w-48 flex items-center justify-center">${bObj[q.container] || "📦"} ${emojiHtml}</div>
       <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 mb-6">Wybierz słowo:</h2>
-      <div class="flex justify-center gap-3">
-        ${choices.map(c => `<button id="pBtn_${c}" onclick="checkPrepWord('${c}')" class="kid-card px-6 py-4 rounded-2xl border-4 border-slate-200 bg-slate-50 hover:bg-sky-50 font-extrabold text-2xl shadow w-32 uppercase tracking-wider">${c}</button>`).join("")}
-      </div>
+      <div class="flex justify-center gap-3">${choices.map(c => `<button id="pBtn_${c}" onclick="checkPrepWord('${c}')" class="kid-card px-6 py-4 rounded-2xl border-4 border-slate-200 bg-slate-50 hover:bg-sky-50 font-extrabold text-2xl shadow w-32 uppercase tracking-wider">${c}</button>`).join("")}</div>
     </div>
   `;
   speakSequence([{ lang: "pl", text: `gdzie jest ${q.plDesc.split(' ')[0].toLowerCase()}? in, on czy under?` }]);
@@ -4028,13 +3683,8 @@ function checkPrepWord(chosen) {
   } else {
     state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); btn.classList.add("shake-wrong");
     recordHardWordForActivePlayer(q);
-    if (state.profile === "duel") {
-      state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! To było ${q.prep}!</span>`;
-      speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion());
-    } else {
-      fb.innerHTML = `<span class="text-rose-600">❌ Nie, spróbuj jeszcze raz!</span>`;
-      speakSequence([{ lang: "pl", text: "nie to, pomyśl jeszcze raz!" }]);
-    }
+    if (state.profile === "duel") { state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! To było ${q.prep}!</span>`; speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion()); }
+    else { fb.innerHTML = `<span class="text-rose-600">❌ Nie, spróbuj jeszcze raz!</span>`; speakSequence([{ lang: "pl", text: "nie to, pomyśl jeszcze raz!" }]); }
   }
 }
 
@@ -4043,7 +3693,6 @@ function renderPrepChoosePic(lesson) {
   const choices = shuffleArray(["In", "On", "Under"]);
   window._currentChoices = choices;
   const bObj = { box: "📦", bag: "🎒", table: "🪑", chair: "🪑", basket: "🧺", bed: "🛏️", tree: "🌳" };
-  const baseEm = bObj[q.container] || "📦";
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
   mc.innerHTML = `
@@ -4056,10 +3705,8 @@ function renderPrepChoosePic(lesson) {
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2"></div>
       <div class="grid grid-cols-3 gap-3">
         ${choices.map((c, idx) => {
-          let html = c === "In" ? `<span class="absolute z-20 text-3xl left-2 bottom-1 md:left-4 md:bottom-2">${q.animal}</span>`
-                   : c === "On" ? `<span class="absolute z-20 text-3xl left-2 -top-4 md:left-4 md:-top-5">${q.animal}</span>`
-                   : `<span class="absolute z-20 text-3xl left-2 -bottom-5 md:left-4 md:-bottom-6">${q.animal}</span>`;
-          return `<div id="pCard_${idx}" onclick="checkPrepPic(${idx})" class="kid-card cursor-pointer rounded-2xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 py-6 px-2 shadow flex items-center justify-center relative"><div class="text-6xl md:text-7xl relative mx-auto w-16 md:w-20 float-anim">${baseEm}${html}</div></div>`;
+          let html = c === "In" ? `<span class="absolute z-20 text-3xl left-2 bottom-1 md:left-4 md:bottom-2">${q.animal}</span>` : c === "On" ? `<span class="absolute z-20 text-3xl left-2 -top-4 md:left-4 md:-top-5">${q.animal}</span>` : `<span class="absolute z-20 text-3xl left-2 -bottom-5 md:left-4 md:-bottom-6">${q.animal}</span>`;
+          return `<div id="pCard_${idx}" onclick="checkPrepPic(${idx})" class="kid-card cursor-pointer rounded-2xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 py-6 px-2 shadow flex items-center justify-center relative"><div class="text-6xl md:text-7xl relative mx-auto w-16 md:w-20 float-anim">${bObj[q.container] || "📦"}${html}</div></div>`;
         }).join("")}
       </div>
     </div>
@@ -4079,19 +3726,11 @@ function checkPrepPic(idx) {
   } else {
     state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); card.classList.add("shake-wrong");
     recordHardWordForActivePlayer(q);
-    if (state.profile === "duel") {
-      state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! Powinno być ${q.prep}!</span>`;
-      speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion());
-    } else {
-      fb.innerHTML = `<span class="text-rose-600">❌ Nie ten obrazek!</span>`;
-      speakSequence([{ lang: "pl", text: "nie! pomyśl jeszcze raz!" }]);
-    }
+    if (state.profile === "duel") { state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! Powinno być ${q.prep}!</span>`; speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion()); }
+    else { fb.innerHTML = `<span class="text-rose-600">❌ Nie ten obrazek!</span>`; speakSequence([{ lang: "pl", text: "nie! pomyśl jeszcze raz!" }]); }
   }
 }
 
-// ------------------------------------------------------------------------
-// TRYB FISZEK
-// ------------------------------------------------------------------------
 function startFlashcards(lessonId) {
   cancelAllSpeechAndTimers();
   const lesson = state.lessons.find(l => l.id === lessonId);
@@ -4126,450 +3765,6 @@ function renderFlashcard(lesson) {
   `;
   speakSequence([{ lang: "en", text: item.en }]);
 }
-function nextFlashcard() {
-  state.flashcardIndex++;
-  renderFlashcard(state.lessons.find(l => l.id === state.currentLessonId));
-}
-
-// ------------------------------------------------------------------------
-// PIN, KONTO TESTOWE TATY, KOPIA JSON I PANEL RODZICA
-// ------------------------------------------------------------------------
-function initPinKeyboard() {
-  const grid = document.getElementById("pinKeyboardGrid");
-  if (!grid) return;
-  grid.innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, "C", 0, "OK"].map(k => `
-    <button onclick="handlePinKey('${k}')" class="kid-card h-14 rounded-2xl bg-slate-100 border-2 border-slate-300 font-extrabold text-xl text-slate-800 hover:bg-slate-200 active:bg-slate-300 shadow-sm">${k}</button>
-  `).join("");
-}
-
-function handlePinKey(k) {
-  const inp = document.getElementById("pinInputField");
-  const err = document.getElementById("pinErrorMsg");
-  if (!inp) return;
-  err.textContent = "";
-  if (k === "C") inp.value = "";
-  else if (k === "OK") verifyParentPin();
-  else { if (inp.value.length < 4) inp.value += k; if (inp.value.length === 4) verifyParentPin(); }
-}
-
-function openParentPinModal(target = "dashboard") {
-  cancelAllSpeechAndTimers();
-  window._pinModalTarget = target;
-  const title = document.getElementById("pinModalTitle");
-  const desc = document.getElementById("pinModalDesc");
-  if (title && desc) {
-    if (target === "mic_approve") {
-      title.textContent = "Zatwierdź Wymowę";
-      desc.textContent = "Tato, wpisz PIN, aby uznać słowo za zaliczone:";
-    } else if (target === "tata_login") {
-      title.textContent = "🔒 Profil: TATA (Konto Testowe)";
-      desc.textContent = "Wpisz 4-cyfrowy kod PIN, aby wejść na profil Taty:";
-    } else {
-      title.textContent = "Panel Rodzica";
-      desc.textContent = "Wpisz 4-cyfrowy kod PIN:";
-    }
-  }
-  const inp = document.getElementById("pinInputField");
-  if (inp) inp.value = "";
-  const err = document.getElementById("pinErrorMsg");
-  if (err) err.textContent = "";
-  initPinKeyboard();
-  const m = document.getElementById("parentPinModal");
-  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-}
-
-function verifyParentPin() {
-  const inp = document.getElementById("pinInputField");
-  if (!inp) return;
-  if (inp.value === PARENT_PIN) {
-    closeParentPinModal();
-    if (window._pinModalTarget === "mic_approve") approveMicAnswer("Tata potwierdza!");
-    else if (window._pinModalTarget === "tata_login") chooseProfile("tata");
-    else openParentDashboard();
-  } else {
-    playEffect("wrong");
-    const err = document.getElementById("pinErrorMsg");
-    if (err) err.textContent = "❌ Błędny PIN! Spróbuj ponownie.";
-    inp.value = "";
-  }
-}
-function closeParentPinModal() {
-  const m = document.getElementById("parentPinModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
-}
-
-function renderParentTestCenter() {
-  const statusEl = document.getElementById("parentStatusMsg");
-  if (!statusEl) return;
-  let box = document.getElementById("parentTestCenterBox");
-  if (!box) {
-    box = document.createElement("div");
-    box.id = "parentTestCenterBox";
-    box.className = "mb-5 p-4 rounded-3xl bg-teal-50/95 border-2 border-teal-400 shadow-sm";
-    statusEl.parentNode.insertBefore(box, statusEl.nextSibling);
-  }
-
-  const testLessons = state.lessons.filter(l => l.testOnly);
-  const testWords = [];
-  state.lessons.forEach(l => {
-    if (!l.testOnly && Array.isArray(l.items)) {
-      l.items.forEach((it, idx) => {
-        if (it.testOnly) testWords.push({ lessonId: l.id, lessonTitle: l.title, wordIdx: idx, en: it.en, pl: it.pl, icon: it.icon || "📝" });
-      });
-    }
-  });
-
-  const totalPending = testLessons.length + testWords.length;
-  const v12ActiveForKids = Boolean(state.featuresPublishedForKids);
-
-  const v12StatusBox = `
-    <div class="p-3 rounded-2xl bg-white border-2 ${v12ActiveForKids ? 'border-emerald-400' : 'border-amber-400'} mb-3 flex flex-wrap items-center justify-between gap-2">
-      <div class="text-xs">
-        <div class="font-extrabold text-slate-900">🚀 Nowości Wersji 12.1 (Smok 🐉, Karmienie 🍎, Doktor z Plastrem 🩹, Kolory 🎨, Zagadki 🕵️‍♂️, Literki 🧩, Co nowego 🆕):</div>
-        <div class="font-bold ${v12ActiveForKids ? 'text-emerald-700' : 'text-amber-700'} mt-0.5">
-          Status: ${v12ActiveForKids ? '✅ Wdrożone i widoczne u Igora oraz Huberta' : '🧪 Tryb testowy (widoczne TYLKO na profilu TATA)'}
-        </div>
-      </div>
-      <button onclick="parentToggleV11FeaturesForKids()" class="kid-card px-3.5 py-2 rounded-xl font-extrabold text-xs text-white shadow ${v12ActiveForKids ? 'bg-slate-600 hover:bg-slate-700' : 'bg-emerald-600 hover:bg-emerald-700'}">
-        ${v12ActiveForKids ? '🔒 Cofnij tylko do testów Taty' : '✅ Wdróż funkcje V12.1 dla Chłopców'}
-      </button>
-    </div>
-  `;
-
-  let pendingListHtml = "";
-  if (totalPending === 0) {
-    pendingListHtml = `<div class="text-xs font-bold text-teal-800 bg-white/80 p-3 rounded-2xl border border-teal-200">✓ Brak oczekujących lekcji lub słówek testowych. Każde nowe słówko lub lekcja dodana niżej trafi najpierw na profil <strong>TATA</strong>!</div>`;
-  } else {
-    pendingListHtml = `
-      <div class="space-y-1.5 mb-3 max-h-40 overflow-y-auto pr-1">
-        ${testLessons.map(l => `
-          <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-teal-300 text-xs font-bold">
-            <span>📚 Nowa lekcja: <strong>${l.title}</strong> (${l.items.length} słówek)</span>
-            <button onclick="parentDeleteTestLesson('${l.id}')" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[10px]">🗑️ Usuń</button>
-          </div>
-        `).join("")}
-        ${testWords.map(w => `
-          <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-teal-300 text-xs font-bold">
-            <span>${w.icon} Nowe słówko: <strong>${w.en}</strong> (${w.pl}) w „${w.lessonTitle}”</span>
-            <button onclick="parentDeleteTestWord('${w.lessonId}', ${w.wordIdx})" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[10px]">🗑️ Usuń</button>
-          </div>
-        `).join("")}
-      </div>
-      <button onclick="parentPublishAllTestItems()" class="kid-card w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-extrabold rounded-xl text-xs shadow">
-        ✅ Wdróż przetestowane lekcje i słówka (${totalPending}) na profile Igora i Huberta
-      </button>
-    `;
-  }
-
-  box.innerHTML = `
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 12.7)</h3>
-      <span class="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-950 font-extrabold text-xs">Słówka/Lekcje w teście: ${totalPending}</span>
-    </div>
-    ${v12StatusBox}
-    ${pendingListHtml}
-    <div class="mt-3 pt-3 border-t border-teal-200 flex flex-wrap gap-2">
-      <button onclick="unlockAllForTataOnly()" class="kid-card py-2 px-3 bg-emerald-700 text-white font-bold rounded-xl text-xs">🔓 Odblokuj 131 ubrań, 50 zwierzaków i Spiżarnię TYLKO u Taty</button>
-      <button onclick="parentGiveTestChest('tata','gold')" class="kid-card py-2 px-3 bg-amber-400 text-amber-950 font-bold rounded-xl text-xs">👑 Złota Skrzynia (Tata)</button>
-      <button onclick="parentResetWhatsNewGlow()" class="kid-card py-2 px-3 bg-rose-100 text-rose-900 border border-rose-300 font-bold rounded-xl text-xs">🔄 Zresetuj świecenie "Co nowego?"</button>
-    </div>
-  `;
-}
-
-function parentResetWhatsNewGlow() {
-  if (!confirm("Czy na pewno zresetować status przycisku 'Co nowego?', aby ponownie zaświecił się na profilach po zalogowaniu?")) return;
-  ["igor", "hubert", "tata"].forEach(k => {
-    if (state.stats[k]) state.stats[k].seenVersion = "";
-  });
-  saveCloudData();
-  if (typeof updateWhatsNewButtonGlow === "function") updateWhatsNewButtonGlow();
-  showParentMsg("✓ Zresetowano świecenie przycisku 'Co nowego?' dla wszystkich profili!");
-  alert("✓ Wykonano! Przycisk '🆕 Co nowego?' ponownie zaświeci się na każdym profilu.");
-}
-
-function parentToggleV11FeaturesForKids() {
-  const nextState = !state.featuresPublishedForKids;
-  const msg = nextState
-    ? "Czy na pewno wdrożyć wszystkie nowości Wersji 12.1 (Walka ze Smokiem, Karmienie Zwierzaków, Mały Lekarz z Plastrem, Kolorowe Przedmioty, Zagadki, Literki, Zadanie Dnia, Co nowego) na profile Igora i Huberta?"
-    : "Czy na pewno ukryć nowe funkcje Wersji 12.1 u chłopców i pozostawić je tylko na koncie testowym TATA?";
-  if (!confirm(msg)) return;
-  state.featuresPublishedForKids = nextState;
-  saveCloudData();
-  renderParentTestCenter();
-  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
-  showParentMsg(nextState ? "✓ Wdrożono nowe funkcje Wersji 12.1 dla Igora i Huberta!" : "✓ Ukryto funkcje Wersji 12.1 (dostępne tylko u Taty).");
-  alert(nextState ? "✓ Wykonano! Nowe funkcje Wersji 12.1 są już aktywne u chłopców." : "✓ Wykonano! Funkcje Wersji 12.1 są teraz widoczne tylko na profilu TATA.");
-}
-
-function parentPublishAllTestItems() {
-  if (!confirm("Czy na pewno wdrożyć wszystkie przetestowane lekcje i słówka na profile Igora i Huberta?")) return;
-  let count = 0;
-  state.lessons.forEach(l => {
-    if (l.testOnly) { delete l.testOnly; count++; }
-    if (Array.isArray(l.items)) {
-      l.items.forEach(it => { if (it.testOnly) { delete it.testOnly; count++; } });
-    }
-  });
-  saveCloudData();
-  renderParentTestCenter();
-  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
-  showParentMsg(`✓ Wdrożono ${count} nowości na profile Igora i Huberta!`);
-  alert(`✓ Wykonano! Wdrożono ${count} nowości na profile chłopców.`);
-}
-
-function parentDeleteTestLesson(lessonId) {
-  if (!confirm("Czy na pewno usunąć tę testową lekcję?")) return;
-  state.lessons = state.lessons.filter(l => l.id !== lessonId);
-  saveCloudData(); renderParentTestCenter();
-  showParentMsg("✓ Usunięto testową lekcję.");
-  alert("✓ Wykonano! Testowa lekcja została usunięta.");
-}
-
-function parentDeleteTestWord(lessonId, wordIdx) {
-  if (!confirm("Czy na pewno usunąć to testowe słówko?")) return;
-  const l = state.lessons.find(x => x.id === lessonId);
-  if (l && l.items[wordIdx]) l.items.splice(wordIdx, 1);
-  saveCloudData(); renderParentTestCenter();
-  showParentMsg("✓ Usunięto testowe słówko.");
-  alert("✓ Wykonano! Testowe słówko zostało usunięte.");
-}
-
-function unlockAllForTataOnly() {
-  if (!confirm("Czy na pewno odblokować wszystkie 131 ubrań, 50 zwierzaków oraz owoce i warzywa w Spiżarni na koncie testowym TATA?")) return;
-  state.stats.tata = ensurePlayerStructure(state.stats.tata);
-  state.stats.tata.unlockedItems = getAll131OutfitsFlat().map(o => o.src);
-  state.stats.tata.memoryAnimals = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(a => a.id);
-  if (typeof PET_FOOD_POOL !== "undefined") {
-    PET_FOOD_POOL.forEach(f => { state.stats.tata.petFood[f.id] = 3; });
-  }
-  saveCloudData();
-  showParentMsg("✓ Odblokowano wszystko (wraz ze Spiżarnią) na profilu TATA!");
-  alert("✓ Wykonano! Wszystkie 131 ubrań, 50 zwierzaków i zapas owoców w Spiżarni są dostępne na profilu TATA.");
-}
-
-function parentExportBackupJson() {
-  if (!confirm("Czy na pewno pobrać plik kopii zapasowej (.json) ze wszystkimi postępami i lekcjami?")) return;
-  const backupObj = {
-    version: "12.1",
-    exportedAt: new Date().toISOString(),
-    stats: state.stats,
-    calibration: state.calibration,
-    questionsPerRound: state.questionsPerRound,
-    featuresPublishedForKids: state.featuresPublishedForKids,
-    lessons: state.lessons
-  };
-  const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `akademia_kopia_${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showParentMsg("✓ Pobrano plik kopii zapasowej (.json)!");
-  alert("✓ Wykonano! Plik kopii zapasowej został zapisany.");
-}
-
-function parentImportBackupJson(input) {
-  if (!input.files || input.files.length === 0) return;
-  if (!confirm("Czy na pewno wczytać kopię zapasową z pliku (.json)? Obecne postępy zostaną zastąpione danymi z pliku!")) {
-    input.value = ""; return;
-  }
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const parsed = JSON.parse(e.target.result);
-      if (!parsed || !parsed.stats) throw new Error("Nieprawidłowy plik");
-      state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
-      state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
-      state.stats.tata = ensurePlayerStructure(parsed.stats.tata);
-      state.stats.stickers = Array.isArray(parsed.stats.stickers) ? parsed.stats.stickers : [];
-      if (parsed.calibration) state.calibration = mergeCalibrationWithDefaults(parsed.calibration);
-      if (parsed.questionsPerRound) state.questionsPerRound = parseInt(parsed.questionsPerRound) || 8;
-      if (parsed.featuresPublishedForKids !== undefined) state.featuresPublishedForKids = Boolean(parsed.featuresPublishedForKids);
-      if (Array.isArray(parsed.lessons) && parsed.lessons.length) state.lessons = parsed.lessons;
-      upgradeNumbersLessonForIgor(state.lessons);
-      saveCloudData();
-      if (typeof updateHeaderUI === "function") updateHeaderUI();
-      openParentDashboard();
-      showParentMsg("✓ Pomyślnie wczytano kopię zapasową z pliku!");
-      alert("✓ Wykonano! Kopia zapasowa została wczytana i zapisana w chmurze.");
-    } catch (err) {
-      showParentMsg("❌ Błąd wczytywania pliku JSON! Sprawdź poprawność pliku.", true);
-      alert("❌ Błąd: Wybrany plik nie jest prawidłową kopią zapasową.");
-    }
-    input.value = "";
-  };
-  reader.readAsText(file);
-}
-
-function openParentDashboard() {
-  const m = document.getElementById("parentDashboardModal");
-  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-  renderParentTestCenter();
-  const sel = document.getElementById("parentSelectLesson");
-  if (sel) {
-    sel.innerHTML = state.lessons.filter(l => l.type === "vocab" || l.type === "vocab_and_shop").map(l => `<option value="${l.id}">${l.title}${l.testOnly ? ' (🧪 TEST)' : ''}</option>`).join("");
-  }
-  const lenBox = document.getElementById("roundLengthButtons");
-  if (lenBox) {
-    lenBox.innerHTML = [5, 8, 10, 15, 20].map(v => `
-      <button onclick="parentSetQuestionsPerRound(${v})" class="px-3 py-1.5 rounded-xl text-xs font-bold border-2 ${state.questionsPerRound === v ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white text-slate-700 border-slate-300'}">${v}</button>
-    `).join("");
-  }
-}
-function closeParentDashboard() {
-  const m = document.getElementById("parentDashboardModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
-}
-function showParentMsg(txt, isErr = false) {
-  const m = document.getElementById("parentStatusMsg");
-  if (!m) return;
-  m.textContent = txt; m.className = `mb-4 p-3 rounded-2xl border-2 font-bold text-sm text-center ${isErr ? 'bg-rose-100 border-rose-400 text-rose-900' : 'bg-emerald-100 border-emerald-400 text-emerald-900'}`;
-  m.classList.remove("hidden");
-  setTimeout(() => m.classList.add("hidden"), 4000);
-}
-
-function parentSetQuestionsPerRound(v) {
-  if (!confirm(`Czy na pewno zmienić liczbę pytań w rundzie na ${v}?`)) return;
-  state.questionsPerRound = v; saveCloudData(); openParentDashboard();
-  showParentMsg(`✓ Ustawiono liczbę pytań w rundzie na: ${v}`);
-  alert(`✓ Wykonano! Liczba pytań w rundzie wynosi teraz ${v}.`);
-}
-
-function parentAddSingleWord() {
-  const lid = document.getElementById("parentSelectLesson").value;
-  const en = document.getElementById("parentWordEn").value.trim();
-  const pl = document.getElementById("parentWordPl").value.trim();
-  const ph = document.getElementById("parentWordPhonetic").value.trim();
-  const ic = document.getElementById("parentWordIcon").value.trim();
-  const age = document.getElementById("parentWordAge").value;
-
-  if (!en || !pl) return showParentMsg("Wypełnij Angielski i Polski!", true);
-  const lesson = state.lessons.find(l => l.id === lid);
-  if (!lesson) return;
-  if (!confirm(`Czy na pewno dodać nowe słówko "${en}" (${pl}) do lekcji "${lesson.title}" (najpierw w trybie testowym na koncie TATA)?`)) return;
-
-  lesson.items.push({ en, pl, phonetic: ph, icon: ic || "📝", age: age.includes(",") ? [4, 6] : [parseInt(age)], testOnly: true });
-  saveCloudData(); renderParentTestCenter();
-  showParentMsg(`✓ Dodano słówko "${en}" na konto testowe TATA!`);
-  alert(`✓ Wykonano! Słówko "${en}" zostało dodane do testów na profilu TATA.`);
-  document.getElementById("parentWordEn").value = ""; document.getElementById("parentWordPl").value = "";
-  document.getElementById("parentWordPhonetic").value = ""; document.getElementById("parentWordIcon").value = "";
-}
-
-function parentCreateNewLesson() {
-  const t = document.getElementById("newLessonTitle").value.trim();
-  const ic = document.getElementById("newLessonIcon").value.trim();
-  const text = document.getElementById("newLessonLines").value.trim();
-  if (!t || !text) return showParentMsg("Wypełnij tytuł i słówka!", true);
-
-  const lines = text.split("\n").filter(l => l.trim().length > 0);
-  const items = [];
-  lines.forEach(l => {
-    const p = l.split("-").map(x => x.trim());
-    if (p.length >= 2) items.push({ en: p[0], pl: p[1], icon: p[2] || "📝", age: [4, 6] });
-  });
-  if (items.length === 0) return showParentMsg("Nie rozpoznałem słówek. Użyj formatu: En - Pl - Ikona", true);
-  if (!confirm(`Czy na pewno utworzyć nową lekcję "${t}" (${items.length} słówek) najpierw w trybie testowym na profilu TATA?`)) return;
-
-  const nid = "custom_" + Date.now();
-  state.lessons.push({ id: nid, title: t, subtitle: "Nowa lekcja (Rodzic)", icon: ic || "📚", color: "from-sky-400 to-indigo-500", borderColor: "border-sky-400", type: "vocab", testOnly: true, items });
-  saveCloudData(); openParentDashboard();
-  showParentMsg(`✓ Utworzono lekcję testową "${t}" na profilu TATA!`);
-  alert(`✓ Wykonano! Lekcja "${t}" jest gotowa do testów na profilu TATA.`);
-  document.getElementById("newLessonTitle").value = ""; document.getElementById("newLessonIcon").value = ""; document.getElementById("newLessonLines").value = "";
-}
-
-function parentScanWorksheetAI(input) {
-  if (!input.files || input.files.length === 0) return;
-  const key = document.getElementById("parentGeminiKey").value.trim();
-  if (!key) return showParentMsg("Wpisz klucz API Gemini, aby użyć skanera!", true);
-  const age = document.getElementById("parentAiTargetAge").value;
-  if (!confirm("Czy na pewno przesłać zdjęcie do analizy przez Gemini AI?")) { input.value = ""; return; }
-  showParentMsg("Wysyłam do Gemini AI... To zajmie ok. 5-10 sekund.", false);
-
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const base64 = e.target.result.split(',')[1];
-    try {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `Jesteś asystentem edukacyjnym. Przeanalizuj to zdjęcie podręcznika/karty pracy z angielskiego. Wyodrębnij maksymalnie 15 najważniejszych słówek. Target: chłopcy ${age}. Zwróć wynik TYLKO jako czysty tekst w formacie: SłowoPoAngielsku - TłumaczeniePoPolsku - JednoEmoji (np. Apple - Jabłko - 🍎). Żadnego innego tekstu.` }, { inline_data: { mime_type: file.type, data: base64 } }] }]
-        })
-      });
-      const data = await resp.json();
-      const raw = data.candidates[0].content.parts[0].text;
-      document.getElementById("newLessonLines").value = raw.trim();
-      const title = document.getElementById("newLessonTitle");
-      if (!title.value) title.value = "Lekcja z karty (" + new Date().toLocaleDateString() + ")";
-      showParentMsg("✓ Sukces! Słówka zostały rozpoznane i wstawione do pola.");
-      alert("✓ Wykonano! Słówka ze zdjęcia zostały odczytane. Kliknij 'Utwórz lekcję', aby zapisać je do testów.");
-    } catch (err) {
-      showParentMsg("Błąd połączenia z AI. Sprawdź klucz i internet.", true);
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-function parentGiveTestChest(profKey, tier) {
-  const kidName = profKey === "hubert" ? "Huberta" : profKey === "tata" ? "Taty" : "Igora";
-  const tierName = tier === "gold" ? "Złotą" : tier === "silver" ? "Srebrną" : "Brązową";
-  if (!confirm(`Czy na pewno przyznać ${tierName} skrzynię dla gracza: ${kidName}?`)) return;
-  closeParentDashboard();
-  renderChestOpeningInsidePopup(profKey, tier, `🛠️ Testowa Skrzynia (${tierName} - ${kidName})`);
-}
-
-function unlockAllOutfitsForTesting() {
-  if (!confirm("Czy na pewno odblokować wszystkie 131 przebrań i 50 zwierzaków u WSZYSTKICH graczy (Igor, Hubert, Tata)?")) return;
-  ["igor", "hubert", "tata"].forEach(p => {
-    state.stats[p] = ensurePlayerStructure(state.stats[p]);
-    state.stats[p].unlockedItems = getAll131OutfitsFlat().map(o => o.src);
-    state.stats[p].memoryAnimals = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(a => a.id);
-  });
-  saveCloudData();
-  showParentMsg("✓ Odblokowano 131 przebrań i 50 zwierzaków u wszystkich graczy!");
-  alert("✓ Wykonano! Odblokowano wszystkie przebrania i zwierzaki.");
-}
-
-function lockAllOutfitsAfterTesting() {
-  if (!confirm("Czy na pewno zablokować wszystkie ubrania oraz zwierzaki i przywrócić gołego awatara u wszystkich graczy?")) return;
-  ["igor", "hubert", "tata"].forEach(p => {
-    state.stats[p] = ensurePlayerStructure(state.stats[p]);
-    state.stats[p].unlockedItems = [];
-    state.stats[p].memoryAnimals = [];
-    state.stats[p].avatar = { head: "", torso: "", legs: "", pet: "" };
-  });
-  saveCloudData();
-  showParentMsg("✓ Zablokowano ubrania i zwierzaki (awatary są teraz bez przebrań).");
-  alert("✓ Wykonano! Ubrania zostały zablokowane, a awatary są nieubrane.");
-}
-
-function resetEverythingAll() {
-  if (confirm("⚠️ OSTRZEŻENIE: Czy na pewno usunąć WSZYSTKIE postępy, gwiazdki, puchary i naklejki obu chłopców oraz Taty?")) {
-    if (confirm("Czy jesteś w 100% pewien? Tej operacji nie można cofnąć!")) {
-      state.stats = {
-        igor: createDefaultPlayerStats(),
-        hubert: createDefaultPlayerStats(),
-        tata: createDefaultPlayerStats(),
-        stickers: []
-      };
-      saveCloudData();
-      alert("✓ Wykonano! Cała gra została zresetowana do stanu początkowego.");
-      location.reload();
-    }
-  }
-}
-
-function openGuideModal() { const m = document.getElementById("guideModal"); if (m) { m.classList.remove("hidden"); m.classList.add("flex"); } }
-function closeGuideModal() { const m = document.getElementById("guideModal"); if (m) { m.classList.add("hidden"); m.classList.remove("flex"); } }
-
-window.addEventListener("DOMContentLoaded", () => {
-  loadCloudData();
-});
+function nextFlashcard() { state.flashcardIndex++; renderFlashcard(state.lessons.find(l => l.id === state.currentLessonId)); }
 </script>
-</body>
-</html>
-<!-- ======================== KONIEC CZĘŚCI 6 z 6 ======================== -->
+<!-- ======================== KONIEC CZĘŚCI 6 ======================== -->

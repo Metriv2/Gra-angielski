@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Akademia Angielskiego: Igor i Hubert - Wersja 12.7</title>
+  <title>Akademia Angielskiego: Igor i Hubert - Wersja 13.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -70,7 +70,8 @@
           <span>👤</span> Zmień profil
         </button>
         <div id="activeProfileBadge" onclick="speakAvatarGreeting()" class="cursor-pointer kid-card px-3.5 py-1.5 rounded-2xl font-bold text-xs md:text-sm bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-center gap-2 shadow-sm" title="Kliknij awatara!"></div>
-        <span class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 12.7</span>
+        <span class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 13.1
+        </span>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
@@ -171,7 +172,7 @@
   <div id="guideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-3xl max-w-4xl w-full p-6 border-4 border-sky-400 shadow-2xl text-left max-h-[92vh] overflow-y-auto">
       <div class="flex justify-between items-center pb-3 border-b mb-4">
-        <h2 class="text-2xl font-extrabold text-sky-900">📘 Instrukcja Gry (Wersja 12.7)</h2>
+        <h2 class="text-2xl font-extrabold text-sky-900">📘 Instrukcja Gry (Wersja 13.1)</h2>
         <button onclick="closeGuideModal()" class="text-2xl bg-slate-100 w-10 h-10 rounded-full font-bold">✖</button>
       </div>
       <div class="text-sm space-y-3 text-slate-700">Wszystkie moduły posiadają własną instrukcję głosową. Używaj przycisku "Posłuchaj Sówki" oraz przycisku "🆕 Co nowego?".</div>
@@ -284,7 +285,7 @@
 <!-- ======================= POCZĄTEK CZĘŚCI 2 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 2 z 6: BAZA NAKLEJEK, UBRAŃ, ZWIERZĄT, JEDZENIA I LEKCJI (WERSJA 12.7)
+   CZĘŚĆ 2 z 6: BAZA NAKLEJEK, UBRAŃ, ZWIERZĄT, JEDZENIA I LEKCJI (WERSJA 13.1)
    ============================================================================ */
 
 const CURRENT_GAME_VERSION = "12";
@@ -541,7 +542,7 @@ const FULL_LESSONS_DATABASE = [
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO, CHMURA, PODGLĄD IGORA (WERSJA 12.9)
+   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO, CHMURA, PODGLĄD IGORA (WERSJA 13.1)
    ============================================================================ */
 
 const PROFILE_META = {
@@ -1276,7 +1277,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE (NAGRODA + ZAWSZE JEDZENIE) I GARDEROBA (WERSJA 13.0)
+   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE I GARDEROBA (ODBLOKOWANE NA GÓRZE) (WERSJA 13.1)
    ============================================================================ */
 
 function getActiveProfileKey() {
@@ -1385,9 +1386,6 @@ function checkAndUnlockAchievements(profKey) {
   }
 }
 
-// ------------------------------------------------------------------------
-// SYSTEM SKRZYŃ: GŁÓWNA NAGRODA (UBRANIE/ZWIERZAK/NAKLEJKA) + ZAWSZE JEDZENIE (1-5 SZT.)
-// ------------------------------------------------------------------------
 function buyChestWithStars(tier, cost) {
   const profKey = getActiveProfileKey();
   const p = ensurePlayerStructure(state.stats[profKey]);
@@ -1505,7 +1503,6 @@ function openChestReal(profKey, tier) {
     speechSegments.push({ lang: "pl", text: "Brawo! Masz już całą kolekcję, więc otrzymujesz dwadzieścia pięć złotych gwiazdek!" });
   }
 
-  // ZAWSZE DODATKOWO WYPADA JEDZENIE DLA ZWIERZAKA (1-5 SZT.)
   let bonusFoodHtml = "";
   if (foodPool.length > 0) {
     const food = foodPool[Math.floor(Math.random() * foodPool.length)];
@@ -1552,9 +1549,6 @@ function closeRewardPopup() {
   }
 }
 
-// ------------------------------------------------------------------------
-// NAKLEJKI, ODZNAKI I GARDEROBA
-// ------------------------------------------------------------------------
 function openStickersModal() { if (!state.profile || state.profile === "duel") return; state.selectedStickerCat = "all"; renderStickers(); const m = document.getElementById("stickersModal"); if (m) { m.classList.remove("hidden"); m.classList.add("flex"); } }
 function closeStickersModal() { const m = document.getElementById("stickersModal"); if (m) { m.classList.add("hidden"); m.classList.remove("flex"); } }
 function renderStickers() {
@@ -1665,8 +1659,13 @@ function renderAvatarItems() {
   const categories = [{ key: "head", title: "🧢 Nakrycia głowy i Hełmy" }, { key: "torso", title: "👕 Koszulki, Kurtki i Zbroje" }, { key: "legs", title: "👖 Spodnie i Szorty" }];
   const filteredOutfits = state.selectedWardrobeTier === "all" ? all131 : all131.filter(it => it.tier === state.selectedWardrobeTier);
   categories.forEach(cat => {
-    const catItems = filteredOutfits.filter(it => it.slot === cat.key);
-    html += `<div class="mb-4"><h3 class="text-sm font-extrabold text-slate-700 mb-2 border-b pb-1">${cat.title} (${countOwned(catItems)}/${catItems.length})</h3><div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
+    const rawCatItems = filteredOutfits.filter(it => it.slot === cat.key);
+    // Odblokowane ubrania zawsze na samej górze (najnowsze na początku)
+    const unlockedCatItems = rawCatItems.filter(it => p.unlockedItems.includes(it.src)).sort((a, b) => p.unlockedItems.indexOf(b.src) - p.unlockedItems.indexOf(a.src));
+    const lockedCatItems = rawCatItems.filter(it => !p.unlockedItems.includes(it.src));
+    const catItems = [...unlockedCatItems, ...lockedCatItems];
+
+    html += `<div class="mb-4"><h3 class="text-sm font-extrabold text-slate-700 mb-2 border-b pb-1">${cat.title} (${unlockedCatItems.length}/${catItems.length})</h3><div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">`;
     catItems.forEach(item => {
       const isUnlocked = p.unlockedItems.includes(item.src), isEquipped = p.avatar && p.avatar[cat.key] === item.src;
       const tierBadgeColor = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-800" : "bg-amber-700 text-white";
@@ -1678,8 +1677,11 @@ function renderAvatarItems() {
   });
 
   const allPets = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
-  const ownedPetsCount = allPets.filter(a => (p.memoryAnimals || []).includes(a.id)).length;
-  html += `<div id="companionPetsSection" class="mb-4 pt-2"><div class="flex items-center justify-between border-b border-amber-200 pb-1 mb-2"><h3 class="text-sm font-extrabold text-amber-800">🐾 Twój Towarzysz (Zwierzak)</h3><span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">${ownedPetsCount}/${allPets.length}</span></div>`;
+  const unlockedPets = allPets.filter(a => (p.memoryAnimals || []).includes(a.id)).sort((a, b) => p.memoryAnimals.indexOf(b.id) - p.memoryAnimals.indexOf(a.id));
+  const lockedPets = allPets.filter(a => !(p.memoryAnimals || []).includes(a.id));
+  const sortedPets = [...unlockedPets, ...lockedPets];
+
+  html += `<div id="companionPetsSection" class="mb-4 pt-2"><div class="flex items-center justify-between border-b border-amber-200 pb-1 mb-2"><h3 class="text-sm font-extrabold text-amber-800">🐾 Twój Towarzysz (Zwierzak)</h3><span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">${unlockedPets.length}/${allPets.length}</span></div>`;
   if (areNewFeaturesActive()) {
     const foodPool = typeof PET_FOOD_POOL !== "undefined" ? PET_FOOD_POOL : [];
     const ownedFoods = foodPool.filter(f => (p.petFood && p.petFood[f.id]) > 0);
@@ -1688,7 +1690,7 @@ function renderAvatarItems() {
     html += `<div id="petPantrySection" class="mb-3 p-3 rounded-2xl bg-emerald-50/90 border-2 border-emerald-300 shadow-sm"><div class="text-xs font-extrabold text-emerald-950 mb-2">🍎 Spiżarnia Zwierzaka ${activePetObj ? `• Karmisz: ${activePetObj.icon} ${activePetObj.pl} (Poziom ${lvInfo.level} • ${lvInfo.inLevel}/3 🍎)` : `• (Wybierz zwierzaka poniżej!)`}</div>${ownedFoods.length === 0 ? `<div class="text-[11px] font-bold text-slate-500 bg-white/80 p-2.5 rounded-xl border border-emerald-200">Koszyk w spiżarni jest pusty! Otwieraj skrzynie z nagrodami, aby wylosować owoce i warzywa (po 1–5 sztuk)!</div>` : `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">${ownedFoods.map(f => `<button onclick="feedCompanionPet('${f.id}')" class="kid-card cursor-pointer p-2 rounded-xl bg-white hover:bg-emerald-100 border-2 border-emerald-300 flex flex-col items-center shadow-sm"><div class="text-2xl">${f.icon}</div><div class="text-[10px] font-extrabold text-slate-800 mt-0.5">${f.pl}</div><span class="mt-0.5 px-2 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[9px]">Ilość: ${p.petFood[f.id]}x</span></button>`).join("")}</div>`}</div>`;
   }
   html += `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2"><div onclick="equipAvatarItem('pet', '')" class="cursor-pointer rounded-2xl border-3 ${!p.avatar.pet ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-center text-center shadow-sm h-full min-h-[75px]"><div class="text-xl opacity-50 mb-1">❌</div><div class="text-[9px] font-bold text-slate-600">Schowaj</div></div>`;
-  allPets.forEach(an => {
+  sortedPets.forEach(an => {
     const isUnlocked = (p.memoryAnimals || []).includes(an.id), isEquipped = p.avatar && p.avatar.pet === an.id, lv = getPetLevelInfo((p.petXp && p.petXp[an.id]) || 0);
     html += isUnlocked
       ? `<div onclick="equipAvatarItem('pet', '${an.id}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-center text-center shadow-sm h-full min-h-[75px]"><div class="text-3xl float-anim mb-1">${an.icon}</div><div class="text-[10px] font-extrabold text-slate-800 leading-tight">${an.pl}</div><div class="text-[8px] font-bold text-amber-700">${lv.fed > 0 ? `❤️ Lv.${lv.level} (${lv.inLevel}/3)` : an.en}</div>${isEquipped ? `<div class="text-[8px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Towarzyszy ✓</div>` : ``}</div>`
@@ -1717,7 +1719,7 @@ function setWardrobeTierFilter(tier) { state.selectedWardrobeTier = tier; render
 <!-- ======================= POCZĄTEK CZĘŚCI 5A ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5A: MENU, LEKCJA PANKEJKI, ZADANIE DNIA GŁOSOWE I PODGLĄD TATY (WERSJA 13.0)
+   CZĘŚĆ 5A: MENU, PANKEJKI (NOWE IKONY), KLIKALNY AWATAR W MENU (WERSJA 13.1)
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -1815,7 +1817,21 @@ upgradeBodyLessonForHubert(FULL_LESSONS_DATABASE);
 
 function ensurePancakesLessonExists(lessonsArr) {
   if (!Array.isArray(lessonsArr)) return;
-  if (lessonsArr.some(l => l.id === "pancakes_cooking")) return;
+  const newItems = [
+    { en: "Pancakes", pl: "Pankejksy", phonetic: "penkejks", icon: "🥞", age: [4, 6] },
+    { en: "Flour",    pl: "Mąka",      phonetic: "flałer",   icon: "🛍️", age: [4, 6] },
+    { en: "Egg",      pl: "Jajko",     phonetic: "eg",       icon: "🥚", age: [4, 6] },
+    { en: "Yoghurt",  pl: "Jogurt",    phonetic: "jogert",   icon: "🥤", age: [4, 6] },
+    { en: "Honey",    pl: "Miód",      phonetic: "hani",     icon: "🍯", age: [4, 6] },
+    { en: "Oil",      pl: "Olej",      phonetic: "ojl",      icon: "🧴", age: [4, 6] },
+    { en: "Mix",      pl: "Mieszać",   phonetic: "miks",     icon: "🥣", age: [4, 6] },
+    { en: "Add",      pl: "Dodać",     phonetic: "ad",       icon: "➕", age: [4, 6] }
+  ];
+  const existing = lessonsArr.find(l => l.id === "pancakes_cooking");
+  if (existing) {
+    existing.items = newItems;
+    return;
+  }
   lessonsArr.push({
     id: "pancakes_cooking",
     title: "10. Pieczenie Pankejków (Pancakes)",
@@ -1825,16 +1841,7 @@ function ensurePancakesLessonExists(lessonsArr) {
     borderColor: "border-amber-400",
     type: "vocab_and_pancakes",
     testOnly: true,
-    items: [
-      { en: "Pancakes", pl: "Pankejksy", phonetic: "penkejks", icon: "🥞", age: [4, 6] },
-      { en: "Flour",    pl: "Mąka",      phonetic: "flałer",   icon: "🌾", age: [4, 6] },
-      { en: "Egg",      pl: "Jajko",     phonetic: "eg",       icon: "🥚", age: [4, 6] },
-      { en: "Yoghurt",  pl: "Jogurt",    phonetic: "jogert",   icon: "🥛", age: [4, 6] },
-      { en: "Honey",    pl: "Miód",      phonetic: "hani",     icon: "🍯", age: [4, 6] },
-      { en: "Oil",      pl: "Olej",      phonetic: "ojl",      icon: "🫗", age: [4, 6] },
-      { en: "Mix",      pl: "Mieszać",   phonetic: "miks",     icon: "🥣", age: [4, 6] },
-      { en: "Add",      pl: "Dodać",     phonetic: "ad",       icon: "➕", age: [4, 6] }
-    ]
+    items: newItems
   });
 }
 ensurePancakesLessonExists(FULL_LESSONS_DATABASE);
@@ -1881,9 +1888,6 @@ function removeHardWordIfMastered(q) {
   }
 }
 
-// ------------------------------------------------------------------------
-// ZADANIE DNIA OD SÓWKI (Z PEŁNYM CZYTANIEM GŁOSOWYM DLA DZIECI)
-// ------------------------------------------------------------------------
 function ensureDailyQuestForPlayer(profKey) {
   if (!PROFILE_META[profKey]) return;
   const p = ensurePlayerStructure(state.stats[profKey]);
@@ -1906,7 +1910,6 @@ function speakDailyQuestInstruction() {
   ensureDailyQuestForPlayer(profKey);
   const dq = state.stats[profKey].dailyQuest;
   if (!dq) return;
-
   const isDone = dq.progress >= dq.target;
   if (dq.claimed) {
     speakSequence([{ lang: "pl", text: "Dzisiejsze zadanie dnia zostało już wykonane i nagroda została odebrana! Wróć jutro po kolejne zadanie!" }]);
@@ -1952,6 +1955,11 @@ function updateHeaderUI() {
   if (typeof updateWhatsNewButtonGlow === "function") updateWhatsNewButtonGlow();
   if (!badge || !state.profile) return;
 
+  if (state.profile !== "duel") {
+    badge.onclick = () => { if (typeof openAvatarModal === "function") openAvatarModal(); };
+    badge.title = "Kliknij awatar, aby otworzyć Garderobę!";
+  }
+
   if (state.profile === "igor") {
     const age = getPlayerAge("igor");
     const bday = isPlayerBirthdayToday("igor") ? " 🎂" : "";
@@ -1992,7 +2000,7 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 13.0
+        🌟 Akademia Angielskiego • Wersja 13.1
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
@@ -2184,6 +2192,7 @@ function startHardWordsTraining() {
   const hardList = (state.stats[profKey] && Array.isArray(state.stats[profKey].hardWords)) ? state.stats[profKey].hardWords : [];
   if (hardList.length === 0) return showLessonMenu();
   state.currentLessonId = "hard_words_training";
+  state.lastPlayedLessonId = "hard_words_training";
   state.currentSubMode = "listen_pick";
   state.isExamMode = false; state.isHardWordsMode = true; state.isCoopDragonMode = false;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
@@ -2198,6 +2207,7 @@ function startHardWordsTraining() {
 function startCoopDragonBattle() {
   cancelAllSpeechAndTimers();
   state.currentLessonId = "dragon_coop";
+  state.lastPlayedLessonId = "dragon_coop";
   state.currentSubMode = "listen_pick";
   state.isExamMode = false; state.isHardWordsMode = false; state.isCoopDragonMode = true;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
@@ -2219,6 +2229,7 @@ function startCoopDragonBattle() {
 function startLesson(lessonId, subMode = null) {
   cancelAllSpeechAndTimers();
   state.currentLessonId = lessonId;
+  state.lastPlayedLessonId = lessonId;
   state.isExamMode = false; state.isHardWordsMode = false; state.isCoopDragonMode = false;
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
   state.letterBuilt = ""; state.letterPool = [];
@@ -2240,6 +2251,7 @@ function startLesson(lessonId, subMode = null) {
   if (state.profile === "duel" && subMode === "mic_game") subMode = "listen_pick";
 
   state.currentSubMode = subMode;
+  state.lastPlayedSubMode = subMode;
   state.shopCart = []; state.riddleHintShown = false; state.riddleHintStep = 0;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   state.duelScores = { igor: 0, hubert: 0 }; state.duelTurn = "igor"; state.duelReadyWaiting = state.profile === "duel";
@@ -2273,7 +2285,7 @@ function startLesson(lessonId, subMode = null) {
 
 function startDuelAllWords() {
   cancelAllSpeechAndTimers();
-  state.profile = "duel"; state.currentLessonId = "duel_all"; state.currentSubMode = "listen_pick";
+  state.profile = "duel"; state.currentLessonId = "duel_all"; state.lastPlayedLessonId = "duel_all"; state.currentSubMode = "listen_pick";
   state.isExamMode = false; state.isHardWordsMode = false; state.isCoopDragonMode = false;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0;
   state.roundResults = []; state.currentQuestionMistakes = 0; state.duelScores = { igor: 0, hubert: 0 };
@@ -2292,7 +2304,7 @@ function startDuelAllWords() {
 
 function startGrandExam() {
   cancelAllSpeechAndTimers();
-  state.currentLessonId = "grand_exam"; state.currentSubMode = "listen_pick";
+  state.currentLessonId = "grand_exam"; state.lastPlayedLessonId = "grand_exam"; state.currentSubMode = "listen_pick";
   state.isExamMode = true; state.isHardWordsMode = false; state.isCoopDragonMode = false;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
@@ -2324,7 +2336,7 @@ function startGrandExam() {
 <!-- ======================= POCZĄTEK CZĘŚCI 5B ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5B: PASEK GRY, LEKARZ Z SUWAKAMI, ZAGADKI I QUIZ (WERSJA 12.9)
+   CZĘŚĆ 5B: PASEK GRY, LEKARZ Z SUWAKAMI, ZAGADKI I KONIEC RUNDY (WERSJA 13.1)
    ============================================================================ */
 
 function renderTopGameBar(lesson) {
@@ -2605,15 +2617,12 @@ function renderDoctorZonesInnerHtml() {
       ? "border-sky-600 bg-sky-300/50 ring-2 ring-sky-500"
       : (z.en === "Knee" ? "border-amber-500/85 hover:bg-rose-300/40" : "border-rose-500/75 hover:bg-rose-300/40");
     return `
-      <div id="docZone_${z.id}"
-           data-en="${z.en}" data-pl="${z.pl}"
-           onclick="applyBandAidToZone('${z.id}')"
+      <div id="docZone_${z.id}" data-en="${z.en}" data-pl="${z.pl}" onclick="applyBandAidToZone('${z.id}')"
            ondragover="event.preventDefault(); this.classList.add('ring-2','ring-rose-500','bg-rose-300/50');"
            ondragleave="this.classList.remove('ring-2','ring-rose-500','bg-rose-300/50');"
            ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-rose-500','bg-rose-300/50'); applyBandAidToZone('${z.id}');"
            class="doc-drop-zone absolute -translate-x-1/2 cursor-pointer rounded-lg border-2 border-dashed ${borderCls} transition-colors flex items-center justify-center"
-           style="top:${z.top}%; left:${z.left}%; width:${z.w}%; height:${z.h}%; z-index:${isCalibSelected ? 45 : (z.z || 30)};"
-           title="${z.pl}">
+           style="top:${z.top}%; left:${z.left}%; width:${z.w}%; height:${z.h}%; z-index:${isCalibSelected ? 45 : (z.z || 30)};" title="${z.pl}">
         ${isCalibSelected ? `<span class="text-[9px] font-extrabold bg-sky-700 text-white px-1 rounded shadow pointer-events-none">${z.pl}</span>` : ""}
       </div>
     `;
@@ -2625,71 +2634,38 @@ function renderDoctorCalibSlidersHtml() {
   const cal = getDoctorCalibration();
   const activeKey = window._docCalibKey || "Head";
   const cfg = cal[activeKey] || cal.Head;
-
   return `
     <div class="w-full max-w-md mx-auto mt-3 p-3 bg-indigo-50/90 rounded-2xl border-2 border-indigo-300 text-left text-xs space-y-2 shadow-sm">
       <div class="font-extrabold text-indigo-950">🔧 Wybierz część ciała do dopasowania:</div>
       <select onchange="window._docCalibKey=this.value; refreshDoctorZonesAndSliders();" class="w-full p-1.5 rounded-xl border border-indigo-300 font-bold text-xs bg-white">
         ${Object.keys(cal).map(k => `<option value="${k}" ${k === activeKey ? "selected" : ""}>${cal[k].label}</option>`).join("")}
       </select>
-      <div>
-        <div class="flex justify-between font-bold"><span>⬆️⬇️ Pozycja Góra/Dół (top):</span><span id="lblDocTop">${cfg.top}%</span></div>
-        <input type="range" min="0" max="94" step="0.5" value="${cfg.top}" oninput="changeDocCalibVal('${activeKey}','top',this.value)" class="w-full accent-indigo-600" />
-      </div>
-      ${cfg.paired ? `
-        <div>
-          <div class="flex justify-between font-bold"><span>↔️ Rozstaw na boki od środka (dx):</span><span id="lblDocPos">${cfg.dx}%</span></div>
-          <input type="range" min="2" max="35" step="0.5" value="${cfg.dx}" oninput="changeDocCalibVal('${activeKey}','dx',this.value)" class="w-full accent-indigo-600" />
-        </div>
-      ` : `
-        <div>
-          <div class="flex justify-between font-bold"><span>⬅️➡️ Pozycja Lewo/Prawo (left):</span><span id="lblDocPos">${cfg.left}%</span></div>
-          <input type="range" min="20" max="80" step="0.5" value="${cfg.left}" oninput="changeDocCalibVal('${activeKey}','left',this.value)" class="w-full accent-indigo-600" />
-        </div>
-      `}
-      <div>
-        <div class="flex justify-between font-bold"><span>↔️ Szerokość ramki (w):</span><span id="lblDocW">${cfg.w}%</span></div>
-        <input type="range" min="3" max="45" step="0.5" value="${cfg.w}" oninput="changeDocCalibVal('${activeKey}','w',this.value)" class="w-full accent-indigo-600" />
-      </div>
-      <div>
-        <div class="flex justify-between font-bold"><span>↕️ Wysokość ramki (h):</span><span id="lblDocH">${cfg.h}%</span></div>
-        <input type="range" min="2" max="35" step="0.5" value="${cfg.h}" oninput="changeDocCalibVal('${activeKey}','h',this.value)" class="w-full accent-indigo-600" />
-      </div>
-      <div class="pt-1 flex justify-between items-center">
-        <button onclick="resetDocCalibDefaults()" class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold rounded-lg text-[10px]">Resetuj domyślne</button>
-        <span class="text-[10px] text-emerald-700 font-extrabold">✓ Zapisano w chmurze (Laptop = Telefon)</span>
-      </div>
+      <div><div class="flex justify-between font-bold"><span>⬆️⬇️ Pozycja Góra/Dół (top):</span><span id="lblDocTop">${cfg.top}%</span></div><input type="range" min="0" max="94" step="0.5" value="${cfg.top}" oninput="changeDocCalibVal('${activeKey}','top',this.value)" class="w-full accent-indigo-600" /></div>
+      ${cfg.paired ? `<div><div class="flex justify-between font-bold"><span>↔️ Rozstaw na boki od środka (dx):</span><span id="lblDocPos">${cfg.dx}%</span></div><input type="range" min="2" max="35" step="0.5" value="${cfg.dx}" oninput="changeDocCalibVal('${activeKey}','dx',this.value)" class="w-full accent-indigo-600" /></div>` : `<div><div class="flex justify-between font-bold"><span>⬅️➡️ Pozycja Lewo/Prawo (left):</span><span id="lblDocPos">${cfg.left}%</span></div><input type="range" min="20" max="80" step="0.5" value="${cfg.left}" oninput="changeDocCalibVal('${activeKey}','left',this.value)" class="w-full accent-indigo-600" /></div>`}
+      <div><div class="flex justify-between font-bold"><span>↔️ Szerokość ramki (w):</span><span id="lblDocW">${cfg.w}%</span></div><input type="range" min="3" max="45" step="0.5" value="${cfg.w}" oninput="changeDocCalibVal('${activeKey}','w',this.value)" class="w-full accent-indigo-600" /></div>
+      <div><div class="flex justify-between font-bold"><span>↕️ Wysokość ramki (h):</span><span id="lblDocH">${cfg.h}%</span></div><input type="range" min="2" max="35" step="0.5" value="${cfg.h}" oninput="changeDocCalibVal('${activeKey}','h',this.value)" class="w-full accent-indigo-600" /></div>
+      <div class="pt-1 flex justify-between items-center"><button onclick="resetDocCalibDefaults()" class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold rounded-lg text-[10px]">Resetuj domyślne</button><span class="text-[10px] text-emerald-700 font-extrabold">✓ Zapisano w chmurze (Laptop = Telefon)</span></div>
     </div>
   `;
 }
 
 function toggleDocCalibPanel() { window._docCalibOpen = !window._docCalibOpen; refreshDoctorZonesAndSliders(); }
-
 function refreshDoctorZonesAndSliders() {
-  const zCont = document.getElementById("doctorZonesLayer");
-  if (zCont) zCont.innerHTML = renderDoctorZonesInnerHtml();
-  const sCont = document.getElementById("doctorCalibSlidersBox");
-  if (sCont) sCont.innerHTML = renderDoctorCalibSlidersHtml();
+  const zCont = document.getElementById("doctorZonesLayer"); if (zCont) zCont.innerHTML = renderDoctorZonesInnerHtml();
+  const sCont = document.getElementById("doctorCalibSlidersBox"); if (sCont) sCont.innerHTML = renderDoctorCalibSlidersHtml();
 }
-
 function changeDocCalibVal(partKey, prop, val) {
-  const cal = getDoctorCalibration();
-  if (!cal[partKey]) return;
-  cal[partKey][prop] = parseFloat(val);
-  saveDoctorCalibration(cal);
-  const zCont = document.getElementById("doctorZonesLayer");
-  if (zCont) zCont.innerHTML = renderDoctorZonesInnerHtml();
+  const cal = getDoctorCalibration(); if (!cal[partKey]) return;
+  cal[partKey][prop] = parseFloat(val); saveDoctorCalibration(cal);
+  const zCont = document.getElementById("doctorZonesLayer"); if (zCont) zCont.innerHTML = renderDoctorZonesInnerHtml();
   if (prop === "top") { const el = document.getElementById("lblDocTop"); if (el) el.textContent = val + "%"; }
   if (prop === "dx" || prop === "left") { const el = document.getElementById("lblDocPos"); if (el) el.textContent = val + "%"; }
   if (prop === "w") { const el = document.getElementById("lblDocW"); if (el) el.textContent = val + "%"; }
   if (prop === "h") { const el = document.getElementById("lblDocH"); if (el) el.textContent = val + "%"; }
 }
-
 function resetDocCalibDefaults() {
   if (!confirm("Czy na pewno przywrócić domyślne pozycje ramek części ciała?")) return;
-  localStorage.removeItem("akademia_doc_calib_v1");
-  saveDoctorCalibration(DEFAULT_DOCTOR_CALIB);
-  refreshDoctorZonesAndSliders();
+  localStorage.removeItem("akademia_doc_calib_v1"); saveDoctorCalibration(DEFAULT_DOCTOR_CALIB); refreshDoctorZonesAndSliders();
 }
 
 function renderDoctorGame(lesson) {
@@ -2704,9 +2680,7 @@ function renderDoctorGame(lesson) {
     <div class="bg-white rounded-3xl shadow-xl border-4 border-rose-400 p-4 md:p-6 text-center max-w-4xl mx-auto w-full">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
         <span class="text-xs font-extrabold text-rose-700 uppercase">🩺 Gabinet Małego Lekarza</span>
-        <span class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-900 font-bold text-xs border border-rose-300">
-          ${isAdvanced ? '🧑 Tryb Huberta: 12 części ciała (z szyją, brzuchem, dłońmi i kolanami)' : '👦 Tryb Igora: 8 podstawowych części ciała'}
-        </span>
+        <span class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-900 font-bold text-xs border border-rose-300">${isAdvanced ? '🧑 Tryb Huberta: 12 części ciała' : '👦 Tryb Igora: 8 części ciała'}</span>
       </div>
       <div class="flex items-center justify-between bg-rose-50 p-3 rounded-2xl border-2 border-rose-200 mb-2">
         <button onclick="speakSequence([{lang:'en',text:'${phrase.replace(/'/g,"\\'")}'}])" class="kid-card w-12 h-12 rounded-2xl bg-rose-500 text-white text-2xl shadow flex items-center justify-center">🔊</button>
@@ -2744,31 +2718,23 @@ function startBandAidTouch(e) {
   const touch = e.touches[0];
   let ghost = document.getElementById("bandAidTouchGhost");
   if (!ghost) {
-    ghost = document.createElement("div");
-    ghost.id = "bandAidTouchGhost";
+    ghost = document.createElement("div"); ghost.id = "bandAidTouchGhost";
     ghost.className = "fixed pointer-events-none z-50 text-5xl drop-shadow-2xl -translate-x-1/2 -translate-y-1/2";
-    ghost.textContent = "🩹";
-    document.body.appendChild(ghost);
+    ghost.textContent = "🩹"; document.body.appendChild(ghost);
   }
   ghost.style.left = touch.clientX + "px"; ghost.style.top = touch.clientY + "px"; ghost.classList.remove("hidden");
 }
-
 function moveBandAidTouch(e) {
   const ghost = document.getElementById("bandAidTouchGhost");
   if (!ghost || ghost.classList.contains("hidden")) return;
-  e.preventDefault();
-  const touch = e.touches[0];
+  e.preventDefault(); const touch = e.touches[0];
   ghost.style.left = touch.clientX + "px"; ghost.style.top = touch.clientY + "px";
 }
-
 function endBandAidTouch(e) {
-  const ghost = document.getElementById("bandAidTouchGhost");
-  if (ghost) ghost.classList.add("hidden");
+  const ghost = document.getElementById("bandAidTouchGhost"); if (ghost) ghost.classList.add("hidden");
   if (state.answeredCurrent || !e.changedTouches || !e.changedTouches.length) return;
-  const touch = e.changedTouches[0];
-  const el = document.elementFromPoint(touch.clientX, touch.clientY);
-  if (!el) return;
-  const zoneEl = el.closest(".doc-drop-zone");
+  const touch = e.changedTouches[0]; const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  if (!el) return; const zoneEl = el.closest(".doc-drop-zone");
   if (zoneEl && zoneEl.id) applyBandAidToZone(zoneEl.id.replace("docZone_", ""));
 }
 
@@ -2777,14 +2743,11 @@ function applyBandAidToZone(zoneId) {
   const q = state.roundQuestions[state.roundIndex];
   const zone = getDoctorZonesForActivePlayer().find(z => z.id === zoneId);
   if (!zone) return;
-  const zoneEl = document.getElementById(`docZone_${zoneId}`);
-  const patientBox = document.getElementById("doctorPatientBox");
-  const fb = document.getElementById("feedbackBanner");
+  const zoneEl = document.getElementById(`docZone_${zoneId}`), patientBox = document.getElementById("doctorPatientBox"), fb = document.getElementById("feedbackBanner");
 
   const isMatch = zone.en.toLowerCase() === q.en.toLowerCase() || (q.en.toLowerCase() === "leg" && zone.en.toLowerCase() === "knee");
   if (isMatch) {
-    state.answeredCurrent = true;
-    playEffect("success");
+    state.answeredCurrent = true; playEffect("success");
     if (zoneEl) { zoneEl.className = "absolute -translate-x-1/2 flex items-center justify-center z-50 pop-correct"; zoneEl.innerHTML = `<span class="text-3xl drop-shadow-lg">🩹</span>`; }
     const dragBtn = document.getElementById("draggableBandAid");
     if (dragBtn) dragBtn.innerHTML = `<span class="text-4xl">✅</span><span class="text-[10px] font-extrabold text-emerald-700">Przyklejony!</span>`;
@@ -2792,8 +2755,7 @@ function applyBandAidToZone(zoneId) {
     awardCorrectAnswer();
     speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Super! Plasterek przyklejony! To jest ${q.pl}!` }], () => advanceNextQuestion());
   } else {
-    state.roundMistakes++; state.currentQuestionMistakes++;
-    playEffect("wrong");
+    state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong");
     if (patientBox) { patientBox.classList.add("shake-wrong"); setTimeout(() => patientBox.classList.remove("shake-wrong"), 550); }
     recordHardWordForActivePlayer(q);
     if (fb) fb.innerHTML = `<span class="text-rose-600">❌ To jest ${zone.pl} (${zone.en})! Posłuchaj pacjenta i przyklej plaster w dobre miejsce!</span>`;
@@ -2802,11 +2764,9 @@ function applyBandAidToZone(zoneId) {
 }
 
 function handleRiddleHintClick() {
-  const q = state.roundQuestions[state.roundIndex];
-  if (!q) return;
+  const q = state.roundQuestions[state.roundIndex]; if (!q) return;
   const firstLetter = (q.en || "?")[0].toUpperCase();
-  const hintBox = document.getElementById("riddleHintBox");
-  const hintBtn = document.getElementById("riddleHintBtn");
+  const hintBox = document.getElementById("riddleHintBox"), hintBtn = document.getElementById("riddleHintBtn");
   if (!state.riddleHintStep || state.riddleHintStep === 0) {
     state.riddleHintStep = 1;
     if (hintBox) { hintBox.classList.remove("hidden"); hintBox.innerHTML = `💡 Podpowiedź 1: Szukane słowo po angielsku zaczyna się na literę <strong>"${firstLetter}"</strong>!`; }
@@ -2823,11 +2783,9 @@ function renderRiddlesGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const pool = typeof RIDDLES_POOL !== "undefined" ? RIDDLES_POOL : lesson.items;
   const choices = shuffleArray([q, ...shuffleArray(pool.filter(it => it.en !== q.en)).slice(0, 2)]);
-  window._currentChoices = choices;
-  state.riddleHintStep = 0;
+  window._currentChoices = choices; state.riddleHintStep = 0;
 
-  const mc = document.getElementById("mainContainer");
-  if (!mc) return;
+  const mc = document.getElementById("mainContainer"); if (!mc) return;
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
     <div class="bg-white rounded-3xl shadow-xl border-4 border-amber-400 p-4 md:p-6 text-center">
@@ -2842,12 +2800,7 @@ function renderRiddlesGame(lesson) {
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        ${choices.map((it, idx) => `
-          <div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-amber-400 p-4 shadow flex flex-col items-center justify-between">
-            <div class="text-6xl md:text-7xl my-2 float-anim">${it.icon || '🐾'}</div>
-            <div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border font-bold text-slate-700 text-sm shadow-sm uppercase">To ja!</div>
-          </div>
-        `).join("")}
+        ${choices.map((it, idx) => `<div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-amber-400 p-4 shadow flex flex-col items-center justify-between"><div class="text-6xl md:text-7xl my-2 float-anim">${it.icon || '🐾'}</div><div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border font-bold text-slate-700 text-sm shadow-sm uppercase">To ja!</div></div>`).join("")}
       </div>
     </div>
   `;
@@ -2860,9 +2813,7 @@ function renderShopCartGame(lesson) {
   const choices = shuffleArray([q, ...shuffleArray(products.filter(it => it.en !== q.en)).slice(0, 2)]);
   window._currentChoices = choices;
   const cartIcons = (state.shopCart && state.shopCart.length > 0) ? state.shopCart.map(ic => `<span class="text-2xl pop-correct">${ic}</span>`).join(" ") : `<span class="text-xs text-amber-700">Koszyk jest jeszcze pusty...</span>`;
-
-  const mc = document.getElementById("mainContainer");
-  if (!mc) return;
+  const mc = document.getElementById("mainContainer"); if (!mc) return;
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
     <div class="bg-white rounded-3xl shadow-xl border-4 border-amber-400 p-4 md:p-6 text-center">
@@ -2876,12 +2827,7 @@ function renderShopCartGame(lesson) {
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        ${choices.map((it, idx) => `
-          <div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, true)" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-200 bg-amber-50/40 hover:border-amber-500 p-4 shadow flex flex-col items-center justify-between">
-            <div class="text-6xl md:text-7xl my-2 float-anim drop-shadow-sm">${it.icon || '🥐'}</div>
-            <div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border border-amber-300 font-bold text-amber-950 text-sm shadow-sm uppercase">🛒 Do koszyka</div>
-          </div>
-        `).join("")}
+        ${choices.map((it, idx) => `<div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, true)" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-200 bg-amber-50/40 hover:border-amber-500 p-4 shadow flex flex-col items-center justify-between"><div class="text-6xl md:text-7xl my-2 float-anim drop-shadow-sm">${it.icon || '🥐'}</div><div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border border-amber-300 font-bold text-amber-950 text-sm shadow-sm uppercase">🛒 Do koszyka</div></div>`).join("")}
       </div>
     </div>
   `;
@@ -2892,7 +2838,6 @@ function renderUniversalVisualQuiz(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const isAdvanced = !isEffectiveIgorMode();
   const numChoices = isAdvanced ? 6 : 3;
-
   let allPool = [];
   state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
     if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") getVisibleLessonItems(l.items, true).forEach(it => allPool.push(it));
@@ -2901,10 +2846,7 @@ function renderUniversalVisualQuiz(lesson) {
   let src = visLessonItems.length >= numChoices ? visLessonItems : allPool;
   const choices = shuffleArray([q, ...shuffleArray(src.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);
   window._currentChoices = choices;
-
-  const mc = document.getElementById("mainContainer");
-  if (!mc) return;
-
+  const mc = document.getElementById("mainContainer"); if (!mc) return;
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
     <div class="bg-white rounded-3xl shadow-xl border-4 border-sky-300 p-4 md:p-6 text-center">
@@ -2915,12 +2857,7 @@ function renderUniversalVisualQuiz(lesson) {
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-        ${choices.map((it, idx) => `
-          <div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 p-4 shadow flex flex-col items-center justify-between">
-            <div class="text-6xl md:text-7xl my-2 float-anim drop-shadow-sm">${it.icon || '⭐'}</div>
-            <div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border font-bold text-slate-700 text-sm shadow-sm uppercase tracking-wide">Wybierz</div>
-          </div>
-        `).join("")}
+        ${choices.map((it, idx) => `<div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 p-4 shadow flex flex-col items-center justify-between"><div class="text-6xl md:text-7xl my-2 float-anim drop-shadow-sm">${it.icon || '⭐'}</div><div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border font-bold text-slate-700 text-sm shadow-sm uppercase tracking-wide">Wybierz</div></div>`).join("")}
       </div>
     </div>
   `;
@@ -3002,8 +2939,32 @@ function advanceNextQuestion() {
   renderCurrentQuestion();
 }
 
+function playAgainCurrentLesson() {
+  const lid = state.lastPlayedLessonId || state.currentLessonId;
+  const sub = state.lastPlayedSubMode || state.currentSubMode;
+  if (lid === "memory_game" && typeof startMemoryGame === "function") return startMemoryGame();
+  if (lid === "grand_exam") return startGrandExam();
+  if (lid === "hard_words_training") return startHardWordsTraining();
+  if (lid === "duel_all") return startDuelAllWords();
+  if (lid === "dragon_coop") return startCoopDragonBattle();
+  if (lid) return startLesson(lid, sub);
+  showLessonMenu();
+}
+
+function startNextSequentialLesson() {
+  const visible = state.lessons.filter(l => !l.testOnly || state.profile === "tata");
+  const curId = state.lastPlayedLessonId || state.currentLessonId;
+  const idx = visible.findIndex(l => l.id === curId);
+  const nextLesson = idx >= 0 ? visible[(idx + 1) % visible.length] : visible[0];
+  if (nextLesson) return startLesson(nextLesson.id);
+  showLessonMenu();
+}
+
 function renderEndRoundScreen() {
   cancelAllSpeechAndTimers();
+  const finishedLessonId = state.currentLessonId || state.lastPlayedLessonId;
+  if (finishedLessonId) state.lastPlayedLessonId = finishedLessonId;
+
   const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
   const p = state.stats[profKey];
   const mc = document.getElementById("mainContainer");
@@ -3019,11 +2980,11 @@ function renderEndRoundScreen() {
       state.rewardQueue.push({ profKey: "hubert", achievement: { name: "Pogromca Smoka (Hubert)" }, chestType });
       saveCloudData();
       setTimeout(processNextRewardInQueue, 400);
-      mc.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl border-4 border-emerald-400 p-6 text-center max-w-xl mx-auto"><div class="text-6xl mb-2">🐉🏳️🏆</div><h2 class="text-3xl font-extrabold text-emerald-900 mb-2">SMOK POKONANY!</h2><p class="text-slate-600 font-bold mb-4">Wspólnymi siłami pokonaliście Groźnego Smoka! Zostało Wam ${state.dragonBattle.teamHp} ❤️! Obaj otrzymujecie Skrzynie!</p><button onclick="showLessonMenu()" class="w-full px-6 py-3 mt-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg text-lg">🏠 Wróć do Menu</button></div>`;
+      mc.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl border-4 border-emerald-400 p-6 text-center max-w-xl mx-auto"><div class="text-6xl mb-2">🐉🏳️🏆</div><h2 class="text-3xl font-extrabold text-emerald-900 mb-2">SMOK POKONANY!</h2><p class="text-slate-600 font-bold mb-4">Wspólnymi siłami pokonaliście Groźnego Smoka! Zostało Wam ${state.dragonBattle.teamHp} ❤️! Obaj otrzymujecie Skrzynie!</p><div class="flex flex-col gap-2"><button onclick="startCoopDragonBattle()" class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg text-base">🔄 Zagraj jeszcze raz</button><button onclick="showLessonMenu()" class="w-full py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-base">🏠 Wróć do Menu</button></div></div>`;
     } else {
       playEffect("wrong");
-      mc.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl border-4 border-rose-500 p-6 text-center max-w-xl mx-auto"><div class="text-6xl mb-2">🐉🔥💥</div><h2 class="text-3xl font-extrabold text-rose-900 mb-2">Smok wygrał walkę!</h2><p class="text-slate-600 font-bold mb-4">Straciliście wszystkie serduszka! Smokowi zostało jeszcze ${state.dragonBattle.dragonHp} HP. Spróbujcie jeszcze raz!</p><div class="flex flex-col gap-2"><button onclick="startCoopDragonBattle()" class="w-full px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold shadow-lg text-lg">🔄⚔️ Rewanż ze Smokiem!</button><button onclick="showLessonMenu()" class="w-full px-6 py-3 rounded-2xl bg-slate-200 text-slate-800 font-bold text-base">🏠 Wróć do Menu</button></div></div>`;
-      speakSequence([{ lang: "pl", text: "O nie! Smok okazał się zbyt silny i wygrał walkę! Kliknijcie rewanż, aby spróbować jeszcze raz!" }]);
+      mc.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl border-4 border-rose-500 p-6 text-center max-w-xl mx-auto"><div class="text-6xl mb-2">🐉🔥💥</div><h2 class="text-3xl font-extrabold text-rose-900 mb-2">Smok wygrał walkę!</h2><p class="text-slate-600 font-bold mb-4">Straciliście wszystkie serduszka! Smokowi zostało jeszcze ${state.dragonBattle.dragonHp} HP. Spróbujcie jeszcze raz!</p><div class="flex flex-col gap-2"><button onclick="startCoopDragonBattle()" class="w-full px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold shadow-lg text-lg">🔄⚔️ Zagraj jeszcze raz!</button><button onclick="showLessonMenu()" class="w-full px-6 py-3 rounded-2xl bg-slate-200 text-slate-800 font-bold text-base">🏠 Wróć do Menu</button></div></div>`;
+      speakSequence([{ lang: "pl", text: "O nie! Smok okazał się zbyt silny i wygrał walkę! Kliknijcie zagraj jeszcze raz!" }]);
     }
     return;
   }
@@ -3039,8 +3000,8 @@ function renderEndRoundScreen() {
     advanceDailyQuestProgress(profKey, "rounds", 1);
     if (state.roundMistakes === 0) { p.perfectRounds++; advanceDailyQuestProgress(profKey, "perfect", 1); }
     if (state.isExamMode) p.examsDone++;
-    if (state.currentLessonId && state.currentLessonId !== "grand_exam" && state.currentLessonId !== "hard_words_training" && state.currentLessonId !== "memory_game") {
-      p.lessonCounts[state.currentLessonId] = (p.lessonCounts[state.currentLessonId] || 0) + 1;
+    if (finishedLessonId && finishedLessonId !== "grand_exam" && finishedLessonId !== "hard_words_training") {
+      p.lessonCounts[finishedLessonId] = (p.lessonCounts[finishedLessonId] || 0) + 1;
     }
     checkAndUnlockAchievements(profKey);
   }
@@ -3051,11 +3012,29 @@ function renderEndRoundScreen() {
     if (typeof renderChestOpeningInsidePopup === "function") renderChestOpeningInsidePopup(profKey, chest, `🎓 Nagroda za Sprawdzian (Błędów: ${state.roundMistakes})`);
   }
 
+  const isMemory = finishedLessonId === "memory_game";
   const duelInfo = state.profile === "duel"
     ? `<div class="my-3 p-4 rounded-2xl bg-purple-50 border-2 border-purple-300 font-extrabold text-lg">${state.duelScores.igor > state.duelScores.hubert ? '🏆 Zwycięża IGOR!' : state.duelScores.hubert > state.duelScores.igor ? '🏆 Zwycięża HUBERT!' : '🤝 Zasłużony REMIS!'}<div class="text-sm mt-1">👦 Igor: ${state.duelScores.igor}/8 pkt &nbsp;|&nbsp; 🧑 Hubert: ${state.duelScores.hubert}/8 pkt</div></div>`
-    : `<p class="text-slate-600 mb-4">Wynik: <strong>${state.roundScore}/${state.roundQuestions.length || state.memoryMatchedPairs}</strong> (Błędy: ${state.roundMistakes})</p>`;
+    : (isMemory
+        ? `<p class="text-slate-700 font-bold mb-4">Brawo! Znaleziono wszystkie pary (${state.memoryMatchedPairs}/${state.memoryMatchedPairs})! 🎉</p>`
+        : `<p class="text-slate-600 mb-4">Wynik: <strong>${state.roundScore}/${state.roundQuestions.length}</strong> (Błędy: ${state.roundMistakes})</p>`);
 
-  mc.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl border-4 border-amber-400 p-6 text-center max-w-xl mx-auto"><div class="text-6xl mb-2">🏆🎉</div><h2 class="text-3xl font-extrabold mb-2">Koniec Rundy!</h2>${duelInfo}<div class="flex flex-col gap-2 mt-2"><button onclick="showLessonMenu()" class="w-full px-6 py-3 mt-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold shadow-lg text-lg">🏠 Wróć do Lekcji</button></div></div>`;
+  const nextLessonBtnHtml = state.profile !== "duel" && !state.isExamMode
+    ? `<button onclick="startNextSequentialLesson()" class="kid-card w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold shadow-lg text-base">⏭️ Następna lekcja</button>`
+    : "";
+
+  mc.innerHTML = `
+    <div class="bg-white rounded-3xl shadow-2xl border-4 border-amber-400 p-6 text-center max-w-xl mx-auto">
+      <div class="text-6xl mb-2">🏆🎉</div>
+      <h2 class="text-3xl font-extrabold mb-2">Koniec Rundy!</h2>
+      ${duelInfo}
+      <div class="flex flex-col gap-2.5 mt-3">
+        <button onclick="playAgainCurrentLesson()" class="kid-card w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold shadow-lg text-base">🔄 Zagraj jeszcze raz</button>
+        ${nextLessonBtnHtml}
+        <button onclick="showLessonMenu()" class="kid-card w-full py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold shadow text-base">🏠 Wróć do Lekcji</button>
+      </div>
+    </div>
+  `;
 }
 </script>
 <!-- ======================== KONIEC CZĘŚCI 5B ======================= -->
@@ -3063,7 +3042,7 @@ function renderEndRoundScreen() {
 <!-- ======================= POCZĄTEK CZĘŚCI 5C ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5C: KUCHNIA PANKEJKÓW (PIEKARNIA + MISKA + OWOCE + ZWIERZAK) (WERSJA 13.0)
+   CZĘŚĆ 5C: KUCHNIA PANKEJKÓW (NOWE IKONY + PRZYCISK NASTĘPNA LEKCJA) (WERSJA 13.1)
    ============================================================================ */
 
 const _origRenderTopGameBarV12 = typeof renderTopGameBar === "function" ? renderTopGameBar : null;
@@ -3105,15 +3084,12 @@ renderTopGameBar = function(lesson) {
   return _origRenderTopGameBarV12 ? _origRenderTopGameBarV12(lesson) : "";
 };
 
-// ------------------------------------------------------------------------
-// SCENARIUSZ: OD PIEKARNI PRZEZ KUCHNIĘ DO KARMIENIA ZWIERZAKA
-// ------------------------------------------------------------------------
 const PANCAKE_BASE_INGREDIENTS = [
-  { id: "flour",   en: "Flour",   pl: "Mąka",   icon: "🌾" },
+  { id: "flour",   en: "Flour",   pl: "Mąka",   icon: "🛍️" },
   { id: "egg",     en: "Egg",     pl: "Jajko",  icon: "🥚" },
-  { id: "yoghurt", en: "Yoghurt", pl: "Jogurt", icon: "🥛" },
+  { id: "yoghurt", en: "Yoghurt", pl: "Jogurt", icon: "🥤" },
   { id: "honey",   en: "Honey",   pl: "Miód",   icon: "🍯" },
-  { id: "oil",     en: "Oil",     pl: "Olej",   icon: "🫗" }
+  { id: "oil",     en: "Oil",     pl: "Olej",   icon: "🧴" }
 ];
 
 const PANCAKE_TOPPING_FRUITS = [
@@ -3128,9 +3104,11 @@ const PANCAKE_TOPPING_FRUITS = [
 function startPancakeCookingGame(lesson) {
   cancelAllSpeechAndTimers();
   state.currentLessonId = "pancakes_cooking";
+  state.lastPlayedLessonId = "pancakes_cooking";
   state.currentSubMode = "pancake_cooking_game";
+  state.lastPlayedSubMode = "pancake_cooking_game";
   state.pancakeState = {
-    stage: "bakery_shop", // bakery_shop -> bowl_add -> bowl_mix -> fry_pan -> decorate_fruits -> feed_pet
+    stage: "bakery_shop",
     shopIdx: 0,
     boughtItems: [],
     addIdx: 0,
@@ -3205,7 +3183,7 @@ function renderPancakeCookingStage(lesson) {
     return;
   }
 
-  // ETAP 2: WRZUCANIE WSZYSTKICH 5 SKŁADNIKÓW Z KARTKI DO MISKI ("ADD ...")
+  // ETAP 2: WRZUCANIE WSZYSTKICH 5 SKŁADNIKÓW DO MISKI ("ADD ...")
   if (ps.stage === "bowl_add") {
     const targetIng = PANCAKE_BASE_INGREDIENTS[ps.addIdx];
     const cmdEn = `Add ${targetIng.en.toLowerCase()}!`;
@@ -3224,12 +3202,10 @@ function renderPancakeCookingStage(lesson) {
 
         <div id="pancakeFeedback" class="min-h-[30px] font-extrabold text-sm mb-2"></div>
 
-        <!-- Miska ze składnikami -->
         <div class="w-44 h-28 mx-auto mb-4 rounded-b-full bg-gradient-to-b from-amber-100 to-amber-300 border-4 border-amber-500 shadow-inner flex flex-wrap items-center justify-center gap-1 p-2">
           ${ps.addedItems.length ? ps.addedItems.map(ic => `<span class="text-3xl pop-correct">${ic}</span>`).join("") : `<span class="text-xs font-bold text-amber-800">🥣 Pusta miska</span>`}
         </div>
 
-        <!-- Wszystkie 5 składników z kartki dostępne dla obu chłopców -->
         <div class="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
           ${PANCAKE_BASE_INGREDIENTS.map(ing => {
             const alreadyIn = ps.addedItems.includes(ing.icon);
@@ -3283,7 +3259,7 @@ function renderPancakeCookingStage(lesson) {
     return;
   }
 
-  // ETAP 4: DEKOROWANIE OWOCAMI (IGOR: KLIKANIE + OPCJONALNY MIKROFON, HUBERT: GŁOSOWO)
+  // ETAP 4: DEKOROWANIE OWOCAMI
   if (ps.stage === "decorate_fruits") {
     const toppingsHtml = ps.addedToppings.length
       ? ps.addedToppings.map(ic => `<span class="text-3xl pop-correct">${ic}</span>`).join(" ")
@@ -3294,7 +3270,6 @@ function renderPancakeCookingStage(lesson) {
       <div class="bg-white rounded-3xl shadow-xl border-4 border-pink-400 p-4 md:p-6 text-center max-w-3xl mx-auto">
         <div class="text-xs font-extrabold text-pink-700 uppercase mb-1">🍓🍌 Etap 4/5: Dekorujemy Pankejksy! (${isIgor ? "Tryb Igora: kliknij owoc lub powiedz" : "Tryb Huberta: powiedz po angielsku jaki owoc dodać!"})</div>
         
-        <!-- Talerz z usmażonymi pankejkami -->
         <div class="my-3 p-4 rounded-3xl bg-gradient-to-b from-amber-50 to-orange-50 border-3 border-amber-300 max-w-md mx-auto shadow-inner">
           <div class="flex justify-center gap-1 min-h-[38px] mb-1">${toppingsHtml}</div>
           <div class="text-7xl drop-shadow-md">🥞</div>
@@ -3381,30 +3356,17 @@ function renderPancakeCookingStage(lesson) {
   }
 }
 
-function psSkipToKitchen() {
-  state.pancakeState.stage = "bowl_add";
-  renderPancakeCookingStage();
-}
+function psSkipToKitchen() { state.pancakeState.stage = "bowl_add"; renderPancakeCookingStage(); }
 
 function pickPancakeShopItem(idx) {
-  const ps = state.pancakeState;
-  const targetIng = PANCAKE_BASE_INGREDIENTS[ps.shopIdx];
-  const chosen = window._pancakeShopChoices[idx];
-  const fb = document.getElementById("pancakeFeedback");
-
+  const ps = state.pancakeState, targetIng = PANCAKE_BASE_INGREDIENTS[ps.shopIdx], chosen = window._pancakeShopChoices[idx], fb = document.getElementById("pancakeFeedback");
   if (chosen.id === targetIng.id) {
-    playEffect("success");
-    ps.boughtItems.push(chosen.icon);
+    playEffect("success"); ps.boughtItems.push(chosen.icon);
     if (fb) fb.innerHTML = `<span class="text-emerald-600">✅ Thank you! Masz: ${chosen.pl} (${chosen.en})!</span>`;
     ps.shopIdx++;
     if (ps.shopIdx >= PANCAKE_BASE_INGREDIENTS.length) {
-      speakSequence([{ lang: "en", text: "Thank you! Goodbye!" }, { lang: "pl", text: "Wszystkie składniki kupione! Idziemy do kuchni!" }], () => {
-        ps.stage = "bowl_add";
-        renderPancakeCookingStage();
-      });
-    } else {
-      speakSequence([{ lang: "en", text: "Thank you!" }], () => renderPancakeCookingStage());
-    }
+      speakSequence([{ lang: "en", text: "Thank you! Goodbye!" }, { lang: "pl", text: "Wszystkie składniki kupione! Idziemy do kuchni!" }], () => { ps.stage = "bowl_add"; renderPancakeCookingStage(); });
+    } else speakSequence([{ lang: "en", text: "Thank you!" }], () => renderPancakeCookingStage());
   } else {
     playEffect("wrong");
     if (fb) fb.innerHTML = `<span class="text-rose-600">❌ To jest ${chosen.pl} (${chosen.en}). Poprosiliśmy o: ${targetIng.en}!</span>`;
@@ -3413,25 +3375,14 @@ function pickPancakeShopItem(idx) {
 }
 
 function addIngredientToBowl(ingId) {
-  const ps = state.pancakeState;
-  const targetIng = PANCAKE_BASE_INGREDIENTS[ps.addIdx];
-  const chosen = PANCAKE_BASE_INGREDIENTS.find(i => i.id === ingId);
-  const fb = document.getElementById("pancakeFeedback");
+  const ps = state.pancakeState, targetIng = PANCAKE_BASE_INGREDIENTS[ps.addIdx], chosen = PANCAKE_BASE_INGREDIENTS.find(i => i.id === ingId), fb = document.getElementById("pancakeFeedback");
   if (!chosen || !targetIng) return;
-
   if (chosen.id === targetIng.id) {
-    playEffect("success");
-    ps.addedItems.push(chosen.icon);
-    ps.addIdx++;
+    playEffect("success"); ps.addedItems.push(chosen.icon); ps.addIdx++;
     if (ps.addIdx >= PANCAKE_BASE_INGREDIENTS.length) {
       if (fb) fb.innerHTML = `<span class="text-emerald-600">✅ Wszystkie składniki w misce!</span>`;
-      speakSequence([{ lang: "pl", text: "Super! Wszystkie składniki są już w misce! Teraz czas na mieszanie!" }], () => {
-        ps.stage = "bowl_mix";
-        renderPancakeCookingStage();
-      });
-    } else {
-      renderPancakeCookingStage();
-    }
+      speakSequence([{ lang: "pl", text: "Super! Wszystkie składniki są już w misce! Teraz czas na mieszanie!" }], () => { ps.stage = "bowl_mix"; renderPancakeCookingStage(); });
+    } else renderPancakeCookingStage();
   } else {
     playEffect("wrong");
     if (fb) fb.innerHTML = `<span class="text-rose-600">❌ Najpierw dodaj: ${targetIng.en} (${targetIng.pl})!</span>`;
@@ -3440,97 +3391,53 @@ function addIngredientToBowl(ingId) {
 }
 
 function clickMixBowl() {
-  const ps = state.pancakeState;
-  ps.mixClicks++;
-  playEffect("beep");
-  if (ps.mixClicks >= 3) {
-    playEffect("success");
-    speakSequence([{ lang: "en", text: "Mix, mix, mix!" }], () => renderPancakeCookingStage());
-  } else {
-    renderPancakeCookingStage();
-  }
+  const ps = state.pancakeState; ps.mixClicks++; playEffect("beep");
+  if (ps.mixClicks >= 3) { playEffect("success"); speakSequence([{ lang: "en", text: "Mix, mix, mix!" }], () => renderPancakeCookingStage()); }
+  else renderPancakeCookingStage();
 }
 
-function fryPancakesOnPan() {
-  playEffect("fanfare");
-  state.pancakeState.stage = "decorate_fruits";
-  renderPancakeCookingStage();
-}
+function fryPancakesOnPan() { playEffect("fanfare"); state.pancakeState.stage = "decorate_fruits"; renderPancakeCookingStage(); }
 
 function igorClickFruitTopping(fruitId) {
-  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId);
-  if (!f) return;
-  state.pancakeState.addedToppings.push(f.icon);
-  playEffect("success");
-  renderPancakeCookingStage();
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId); if (!f) return;
+  state.pancakeState.addedToppings.push(f.icon); playEffect("success"); renderPancakeCookingStage();
   speakSequence([{ lang: "en", text: `Add ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Dodano: ${f.pl}!` }]);
 }
 
-function selectFruitForHubertVoice(fruitId) {
-  state.pancakeState.selectedFruitForVoice = fruitId;
-  playEffect("beep");
-  renderPancakeCookingStage();
-}
-
-function speakSelectedFruitHint() {
-  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === state.pancakeState.selectedFruitForVoice);
-  if (!f) return;
-  speakSequence([{ lang: "pl", text: "Powiedz:" }, { lang: "en", text: f.en }]);
-}
-
+function selectFruitForHubertVoice(fruitId) { state.pancakeState.selectedFruitForVoice = fruitId; playEffect("beep"); renderPancakeCookingStage(); }
+function speakSelectedFruitHint() { const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === state.pancakeState.selectedFruitForVoice); if (f) speakSequence([{ lang: "pl", text: "Powiedz:" }, { lang: "en", text: f.en }]); }
 function parentApprovePancakeFruit() {
-  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === state.pancakeState.selectedFruitForVoice);
-  if (!f) return;
-  state.pancakeState.addedToppings.push(f.icon);
-  playEffect("success");
-  renderPancakeCookingStage();
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === state.pancakeState.selectedFruitForVoice); if (!f) return;
+  state.pancakeState.addedToppings.push(f.icon); playEffect("success"); renderPancakeCookingStage();
   speakSequence([{ lang: "en", text: `Yummy ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Tata zalicza! Dodano: ${f.pl}!` }]);
 }
 
 function voiceAddFruitTopping(fruitId) {
-  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId);
-  if (!f) return;
-  cancelAllSpeechAndTimers();
-  playEffect("beep");
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId); if (!f) return;
+  cancelAllSpeechAndTimers(); playEffect("beep");
   const stBox = document.getElementById("pancakeFruitStatus");
   if (stBox) stBox.innerHTML = `🎙️ MÓW TERAZ PO ANGIELSKU: <strong>"${f.en}"</strong> (lub "Add ${f.en.toLowerCase()}")!`;
-
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRec) {
-    if (stBox) stBox.innerHTML = `❌ Brak obsługi mikrofonu w przeglądarce. Kliknij 🔒 Zalicz (Tata).`;
-    return;
-  }
+  if (!SpeechRec) { if (stBox) stBox.innerHTML = `❌ Brak obsługi mikrofonu w przeglądarce. Kliknij 🔒 Zalicz (Tata).`; return; }
   let handled = false;
   try {
-    const rec = new SpeechRec();
-    rec.lang = "en-US"; rec.interimResults = true;
+    const rec = new SpeechRec(); rec.lang = "en-US"; rec.interimResults = true;
     rec.onresult = (e) => {
       if (handled) return;
-      let heard = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) heard += e.results[i][0].transcript.toLowerCase();
+      let heard = ""; for (let i = e.resultIndex; i < e.results.length; i++) heard += e.results[i][0].transcript.toLowerCase();
       const target = f.en.toLowerCase();
       if (heard.includes(target) || (target.length > 4 && heard.includes(target.slice(0, 4)))) {
-        handled = true;
-        try { rec.stop(); } catch (err) {}
-        state.pancakeState.addedToppings.push(f.icon);
-        playEffect("success");
-        renderPancakeCookingStage();
+        handled = true; try { rec.stop(); } catch (err) {}
+        state.pancakeState.addedToppings.push(f.icon); playEffect("success"); renderPancakeCookingStage();
         speakSequence([{ lang: "en", text: `Add ${target}!` }, { lang: "pl", text: `Brawo! Pięknie powiedziane! Dodano: ${f.pl}!` }]);
       }
     };
-    rec.onend = () => {
-      if (!handled && stBox) stBox.innerHTML = `🎧 Nie usłyszałem "${f.en}". Spróbuj jeszcze raz lub kliknij 🔒 Zalicz (Tata)!`;
-    };
-    rec.start();
-    setTimeout(() => { if (!handled) { handled = true; try { rec.stop(); } catch (err) {} } }, 6000);
+    rec.onend = () => { if (!handled && stBox) stBox.innerHTML = `🎧 Nie usłyszałem "${f.en}". Spróbuj jeszcze raz lub kliknij 🔒 Zalicz (Tata)!`; };
+    rec.start(); setTimeout(() => { if (!handled) { handled = true; try { rec.stop(); } catch (err) {} } }, 6000);
   } catch (err) {}
 }
 
-function goToFeedPetWithPancakes() {
-  playEffect("beep");
-  state.pancakeState.stage = "feed_pet";
-  renderPancakeCookingStage();
-}
+function goToFeedPetWithPancakes() { playEffect("beep"); state.pancakeState.stage = "feed_pet"; renderPancakeCookingStage(); }
 
 function servePancakesToPet() {
   const profKey = getActiveProfileKey();
@@ -3544,6 +3451,8 @@ function servePancakesToPet() {
   p.cups = (p.cups || 0) + 1;
   p.lessonCounts["pancakes_cooking"] = (p.lessonCounts["pancakes_cooking"] || 0) + 1;
   state.stats[profKey] = p;
+  state.lastPlayedLessonId = "pancakes_cooking";
+  state.lastPlayedSubMode = "pancake_cooking_game";
   advanceDailyQuestProgress(profKey, "stars", 5);
   advanceDailyQuestProgress(profKey, "rounds", 1);
   if (petId) advanceDailyQuestProgress(profKey, "feed_pet", 1);
@@ -3559,9 +3468,10 @@ function servePancakesToPet() {
         <div class="text-6xl mb-2">🥞🎉🏆</div>
         <h2 class="text-3xl font-extrabold text-amber-950 mb-2">Yummy! Thank you! Goodbye!</h2>
         <p class="text-slate-700 font-bold mb-4">Pankejksy zjedzone ze smakiem! Zdobywasz <strong>+5 ⭐</strong> oraz Puchar Mistrza Kuchni${petId ? " + punkt przyjaźni dla Twojego zwierzaka" : ""}!</p>
-        <div class="flex flex-col gap-2">
-          <button onclick="startPancakeCookingGame()" class="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-base shadow">🔄 Usmaż kolejną porcję!</button>
-          <button onclick="showLessonMenu()" class="w-full py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-base shadow">🏠 Wróć do Lekcji</button>
+        <div class="flex flex-col gap-2.5">
+          <button onclick="startPancakeCookingGame()" class="kid-card w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-base shadow">🔄 Zagraj jeszcze raz</button>
+          <button onclick="startNextSequentialLesson()" class="kid-card w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-base shadow">⏭️ Następna lekcja</button>
+          <button onclick="showLessonMenu()" class="kid-card w-full py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-base shadow">🏠 Wróć do Lekcji</button>
         </div>
       </div>
     `;
@@ -3577,7 +3487,7 @@ function servePancakesToPet() {
 <!-- ======================= POCZĄTEK CZĘŚCI 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 6: LITERKI (Z WIDOCZNĄ RESZTĄ SŁOWA U IGORA), MEMORY, WYMOWA (WERSJA 13.0)
+   CZĘŚĆ 6: LITERKI (Z WIDOCZNĄ RESZTĄ SŁOWA U IGORA), MEMORY, WYMOWA (WERSJA 13.1)
    ============================================================================ */
 
 // ------------------------------------------------------------------------
@@ -4059,7 +3969,7 @@ function nextFlashcard() { state.flashcardIndex++; renderFlashcard(state.lessons
 <!-- ======================= POCZĄTEK CZĘŚCI 7 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 7: PIN, CENTRUM TESTOWE TATY, KOPIA JSON I PANEL RODZICA (WERSJA 12.9)
+   CZĘŚĆ 7: PIN, CENTRUM TESTOWE TATY, KOPIA JSON I PANEL RODZICA (WERSJA 13.1)
    ============================================================================ */
 
 function initPinKeyboard() {
@@ -4195,7 +4105,7 @@ function renderParentTestCenter() {
 
   box.innerHTML = `
     <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 12.9)</h3>
+      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 13.1)</h3>
       <span class="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-950 font-extrabold text-xs">Słówka/Lekcje w teście: ${totalPending}</span>
     </div>
     ${v12StatusBox}

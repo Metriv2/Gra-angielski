@@ -1818,14 +1818,11 @@ upgradeBodyLessonForHubert(FULL_LESSONS_DATABASE);
 function ensurePancakesLessonExists(lessonsArr) {
   if (!Array.isArray(lessonsArr)) return;
   const newItems = [
-    { en: "Pancakes", pl: "Pankejksy", phonetic: "penkejks", icon: "🥞", age: [4, 6] },
-    { en: "Flour",    pl: "Mąka",      phonetic: "flałer",   icon: "🌾", age: [4, 6] },
-    { en: "Egg",      pl: "Jajko",     phonetic: "eg",       icon: "🥚", age: [4, 6] },
-    { en: "Yoghurt",  pl: "Jogurt",    phonetic: "jogert",   icon: "🥛", age: [4, 6] },
-    { en: "Honey",    pl: "Miód",      phonetic: "hani",     icon: "🍯", age: [4, 6] },
-    { en: "Oil",      pl: "Olej",      phonetic: "ojl",      icon: "🫗", age: [4, 6] },
-    { en: "Mix",      pl: "Mieszać",   phonetic: "miks",     icon: "🥣", age: [4, 6] },
-    { en: "Add",      pl: "Dodać",     phonetic: "ad",       icon: "➕", age: [4, 6] }
+    { en: "Flour",   pl: "Mąka",   phonetic: "flałer", icon: getCustomPancakeSvg("flour", 64),   age: [4, 6] },
+{ en: "Egg",     pl: "Jajko",  phonetic: "eg",     icon: "🥚",                             age: [4, 6] },
+{ en: "Yoghurt", pl: "Jogurt", phonetic: "jogert", icon: getCustomPancakeSvg("yoghurt", 64), age: [4, 6] },
+{ en: "Honey",   pl: "Miód",   phonetic: "hani",   icon: "🍯",                             age: [4, 6] },
+{ en: "Oil",     pl: "Olej",   phonetic: "ojl",    icon: getCustomPancakeSvg("oil", 64),     age: [4, 6] },
   ];
   const existing = lessonsArr.find(l => l.id === "pancakes_cooking");
   if (existing) {
@@ -3042,8 +3039,53 @@ function renderEndRoundScreen() {
 <!-- ======================= POCZĄTEK CZĘŚCI 5C ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5C: KUCHNIA PANKEJKÓW (NOWE IKONY + PRZYCISK NASTĘPNA LEKCJA) (WERSJA 13.1)
+   CZĘŚĆ 5C: KUCHNIA PANKEJKÓW (WŁASNE GRAFIKI SVG: MĄKA, JOGURT NATURALNY, OLEJ)
    ============================================================================ */
+
+function getCustomPancakeSvg(type, sizePx = 58) {
+  if (type === "flour") {
+    return `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 64 64" class="inline-block drop-shadow-sm">
+      <rect x="14" y="10" width="36" height="48" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="2.5"/>
+      <polygon points="14,10 19,4 45,4 50,10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+      <rect x="14" y="24" width="36" height="14" fill="#38bdf8"/>
+      <text x="32" y="34" font-family="sans-serif" font-size="8.5" font-weight="900" fill="#ffffff" text-anchor="middle">FLOUR</text>
+      <circle cx="32" cy="48" r="4" fill="#fde047"/>
+    </svg>`;
+  }
+  if (type === "yoghurt") {
+    return `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 64 64" class="inline-block drop-shadow-sm">
+      <polygon points="15,18 49,18 44,54 20,54" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5" stroke-linejoin="round"/>
+      <rect x="12" y="13" width="40" height="5" rx="2.5" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5"/>
+      <polygon points="17,29 47,29 45,43 19,43" fill="#e0f2fe"/>
+      <text x="32" y="38.5" font-family="sans-serif" font-size="6.2" font-weight="900" fill="#0369a1" text-anchor="middle">YOGHURT</text>
+    </svg>`;
+  }
+  if (type === "oil") {
+    return `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 64 64" class="inline-block drop-shadow-sm">
+      <rect x="26" y="5" width="12" height="6" rx="2" fill="#eab308" stroke="#a16207" stroke-width="1.5"/>
+      <path d="M27 11 L27 18 L19 26 L19 54 C19 57 21 59 24 59 L40 59 C43 59 45 57 45 54 L45 26 L37 18 L37 11 Z" fill="#fef08a" fill-opacity="0.85" stroke="#ca8a04" stroke-width="2.5"/>
+      <path d="M20 30 L44 30 L44 54 C44 56 42 58 40 58 L24 58 C22 58 20 56 20 54 Z" fill="#facc15"/>
+      <rect x="23" y="36" width="18" height="12" rx="2" fill="#ffffff" stroke="#eab308" stroke-width="1.5"/>
+      <text x="32" y="45" font-family="sans-serif" font-size="7.5" font-weight="900" fill="#a16207" text-anchor="middle">OIL</text>
+    </svg>`;
+  }
+  return "";
+}
+
+// Automatyczna aktualizacja ikon w lekcji (Fiszki, Quiz, Literki)
+(function syncPancakeLessonCustomIcons() {
+  if (typeof state !== "undefined" && Array.isArray(state.lessons)) {
+    const pLesson = state.lessons.find(l => l.id === "pancakes_cooking");
+    if (pLesson && Array.isArray(pLesson.items)) {
+      pLesson.items.forEach(it => {
+        const key = (it.en || "").toLowerCase();
+        if (key === "flour") it.icon = getCustomPancakeSvg("flour", 64);
+        if (key === "yoghurt") it.icon = getCustomPancakeSvg("yoghurt", 64);
+        if (key === "oil") it.icon = getCustomPancakeSvg("oil", 64);
+      });
+    }
+  }
+})();
 
 const _origRenderTopGameBarV12 = typeof renderTopGameBar === "function" ? renderTopGameBar : null;
 
@@ -3085,11 +3127,11 @@ renderTopGameBar = function(lesson) {
 };
 
 const PANCAKE_BASE_INGREDIENTS = [
-  { id: "flour",   en: "Flour",   pl: "Mąka",   icon: "🛍️" },
-  { id: "egg",     en: "Egg",     pl: "Jajko",  icon: "🥚" },
-  { id: "yoghurt", en: "Yoghurt", pl: "Jogurt", icon: "🥤" },
-  { id: "honey",   en: "Honey",   pl: "Miód",   icon: "🍯" },
-  { id: "oil",     en: "Oil",     pl: "Olej",   icon: "🧴" }
+  { id: "flour",   en: "Flour",   pl: "Mąka",   icon: getCustomPancakeSvg("flour", 58),   smallIcon: getCustomPancakeSvg("flour", 28) },
+  { id: "egg",     en: "Egg",     pl: "Jajko",  icon: "🥚",                               smallIcon: "🥚" },
+  { id: "yoghurt", en: "Yoghurt", pl: "Jogurt", icon: getCustomPancakeSvg("yoghurt", 58), smallIcon: getCustomPancakeSvg("yoghurt", 28) },
+  { id: "honey",   en: "Honey",   pl: "Miód",   icon: "🍯",                               smallIcon: "🍯" },
+  { id: "oil",     en: "Oil",     pl: "Olej",   icon: getCustomPancakeSvg("oil", 58),     smallIcon: getCustomPancakeSvg("oil", 28) }
 ];
 
 const PANCAKE_TOPPING_FRUITS = [
@@ -3112,6 +3154,7 @@ function startPancakeCookingGame(lesson) {
     shopIdx: 0,
     boughtItems: [],
     addIdx: 0,
+    addedIds: [],
     addedItems: [],
     mixClicks: 0,
     addedToppings: [],
@@ -3161,7 +3204,7 @@ function renderPancakeCookingStage(lesson) {
 
         <div class="mb-3 p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center gap-2 text-xs font-bold text-slate-700">
           <span>Koszyk na pankejki:</span>
-          ${ps.boughtItems.length ? ps.boughtItems.map(ic => `<span class="text-2xl pop-correct">${ic}</span>`).join("") : `<span class="text-slate-400">pusty</span>`}
+          ${ps.boughtItems.length ? ps.boughtItems.map(ic => `<span class="text-2xl pop-correct inline-flex items-center">${ic}</span>`).join("") : `<span class="text-slate-400">pusty</span>`}
         </div>
 
         <div id="pancakeFeedback" class="min-h-[30px] font-extrabold text-sm mb-2"></div>
@@ -3169,7 +3212,7 @@ function renderPancakeCookingStage(lesson) {
         <div class="grid grid-cols-3 gap-3">
           ${choices.map((it, idx) => `
             <div onclick="pickPancakeShopItem(${idx})" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-200 bg-amber-50/40 hover:border-amber-500 p-4 shadow flex flex-col items-center">
-              <div class="text-6xl my-2 float-anim">${it.icon}</div>
+              <div class="text-6xl my-2 float-anim flex items-center justify-center h-16">${it.icon}</div>
               <div class="w-full py-1.5 px-2 rounded-xl bg-white border border-amber-300 font-extrabold text-xs text-amber-950 uppercase">${it.en}</div>
             </div>
           `).join("")}
@@ -3202,16 +3245,16 @@ function renderPancakeCookingStage(lesson) {
 
         <div id="pancakeFeedback" class="min-h-[30px] font-extrabold text-sm mb-2"></div>
 
-        <div class="w-44 h-28 mx-auto mb-4 rounded-b-full bg-gradient-to-b from-amber-100 to-amber-300 border-4 border-amber-500 shadow-inner flex flex-wrap items-center justify-center gap-1 p-2">
-          ${ps.addedItems.length ? ps.addedItems.map(ic => `<span class="text-3xl pop-correct">${ic}</span>`).join("") : `<span class="text-xs font-bold text-amber-800">🥣 Pusta miska</span>`}
+        <div class="w-48 h-28 mx-auto mb-4 rounded-b-full bg-gradient-to-b from-amber-100 to-amber-300 border-4 border-amber-500 shadow-inner flex flex-wrap items-center justify-center gap-1.5 p-2">
+          ${ps.addedItems.length ? ps.addedItems.map(ic => `<span class="text-2xl pop-correct inline-flex items-center">${ic}</span>`).join("") : `<span class="text-xs font-bold text-amber-800">🥣 Pusta miska</span>`}
         </div>
 
         <div class="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
           ${PANCAKE_BASE_INGREDIENTS.map(ing => {
-            const alreadyIn = ps.addedItems.includes(ing.icon);
+            const alreadyIn = (ps.addedIds || []).includes(ing.id);
             return `
               <button onclick="addIngredientToBowl('${ing.id}')" ${alreadyIn ? "disabled" : ""} class="kid-card rounded-2xl border-3 ${alreadyIn ? 'border-emerald-300 bg-emerald-50 opacity-45 cursor-not-allowed' : 'border-sky-300 bg-white hover:bg-sky-50'} p-3 shadow flex flex-col items-center">
-                <span class="text-4xl mb-1">${ing.icon}</span>
+                <span class="text-4xl mb-1 flex items-center justify-center h-14">${ing.icon}</span>
                 <span class="font-extrabold text-xs text-slate-900">${ing.en}</span>
                 <span class="text-[10px] font-bold text-slate-500">${ing.pl}</span>
               </button>
@@ -3324,7 +3367,7 @@ function renderPancakeCookingStage(lesson) {
     return;
   }
 
-  // ETAP 5: FINAŁ – POCZĘSTUNEK DLA ZWIERZAKA-TOWARZYSZA + ZWROTY Z PIEKARNI
+  // ETAP 5: FINAŁ – POCZĘSTUNEK DLA ZWIERZAKA-TOWARZYSZA
   if (ps.stage === "feed_pet") {
     const profKey = getActiveProfileKey();
     const p = ensurePlayerStructure(state.stats[profKey]);
@@ -3361,7 +3404,7 @@ function psSkipToKitchen() { state.pancakeState.stage = "bowl_add"; renderPancak
 function pickPancakeShopItem(idx) {
   const ps = state.pancakeState, targetIng = PANCAKE_BASE_INGREDIENTS[ps.shopIdx], chosen = window._pancakeShopChoices[idx], fb = document.getElementById("pancakeFeedback");
   if (chosen.id === targetIng.id) {
-    playEffect("success"); ps.boughtItems.push(chosen.icon);
+    playEffect("success"); ps.boughtItems.push(chosen.smallIcon || chosen.icon);
     if (fb) fb.innerHTML = `<span class="text-emerald-600">✅ Thank you! Masz: ${chosen.pl} (${chosen.en})!</span>`;
     ps.shopIdx++;
     if (ps.shopIdx >= PANCAKE_BASE_INGREDIENTS.length) {
@@ -3378,7 +3421,11 @@ function addIngredientToBowl(ingId) {
   const ps = state.pancakeState, targetIng = PANCAKE_BASE_INGREDIENTS[ps.addIdx], chosen = PANCAKE_BASE_INGREDIENTS.find(i => i.id === ingId), fb = document.getElementById("pancakeFeedback");
   if (!chosen || !targetIng) return;
   if (chosen.id === targetIng.id) {
-    playEffect("success"); ps.addedItems.push(chosen.icon); ps.addIdx++;
+    playEffect("success");
+    if (!ps.addedIds) ps.addedIds = [];
+    ps.addedIds.push(chosen.id);
+    ps.addedItems.push(chosen.smallIcon || chosen.icon);
+    ps.addIdx++;
     if (ps.addIdx >= PANCAKE_BASE_INGREDIENTS.length) {
       if (fb) fb.innerHTML = `<span class="text-emerald-600">✅ Wszystkie składniki w misce!</span>`;
       speakSequence([{ lang: "pl", text: "Super! Wszystkie składniki są już w misce! Teraz czas na mieszanie!" }], () => { ps.stage = "bowl_mix"; renderPancakeCookingStage(); });

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Akademia Angielskiego: Igor i Hubert - Wersja 12.6</title>
+  <title>Akademia Angielskiego: Igor i Hubert - Wersja 12.7</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -70,7 +70,7 @@
           <span>👤</span> Zmień profil
         </button>
         <div id="activeProfileBadge" onclick="speakAvatarGreeting()" class="cursor-pointer kid-card px-3.5 py-1.5 rounded-2xl font-bold text-xs md:text-sm bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-center gap-2 shadow-sm" title="Kliknij awatara!"></div>
-        <span class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 12.6</span>
+        <span class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 12.7</span>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
@@ -171,7 +171,7 @@
   <div id="guideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-3xl max-w-4xl w-full p-6 border-4 border-sky-400 shadow-2xl text-left max-h-[92vh] overflow-y-auto">
       <div class="flex justify-between items-center pb-3 border-b mb-4">
-        <h2 class="text-2xl font-extrabold text-sky-900">📘 Instrukcja Gry (Wersja 12.6)</h2>
+        <h2 class="text-2xl font-extrabold text-sky-900">📘 Instrukcja Gry (Wersja 12.7)</h2>
         <button onclick="closeGuideModal()" class="text-2xl bg-slate-100 w-10 h-10 rounded-full font-bold">✖</button>
       </div>
       <div class="text-sm space-y-3 text-slate-700">Wszystkie moduły posiadają własną instrukcję głosową. Używaj przycisku "Posłuchaj Sówki" oraz przycisku "🆕 Co nowego?".</div>
@@ -284,7 +284,7 @@
 <!-- ======================= POCZĄTEK CZĘŚCI 2 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 2 z 6: BAZA NAKLEJEK, UBRAŃ, ZWIERZĄT, JEDZENIA I LEKCJI (WERSJA 12.6)
+   CZĘŚĆ 2 z 6: BAZA NAKLEJEK, UBRAŃ, ZWIERZĄT, JEDZENIA I LEKCJI (WERSJA 12.7)
    ============================================================================ */
 
 const CURRENT_GAME_VERSION = "12";
@@ -541,7 +541,7 @@ const FULL_LESSONS_DATABASE = [
 <!-- ======================= POCZĄTEK CZĘŚCI 3 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO, CHMURA, AUDIO I AWATAR (WERSJA 12.6)
+   CZĘŚĆ 3 z 6: STAN GRY, URODZINY, CO NOWEGO (LIVE TOUR), CHMURA I AWATAR (WERSJA 12.7)
    ============================================================================ */
 
 const PROFILE_META = {
@@ -746,7 +746,7 @@ var state = {
   roundScore: 0, roundMistakes: 0, answeredCurrent: false, flashcardIndex: 0, shopCart: [], riddleHintShown: false,
   letterBuilt: "", letterPool: [],
   duelScores: { igor: 0, hubert: 0 }, duelTurn: "igor", duelReadyWaiting: false,
-  dragonBattle: { dragonHp: 10, maxDragonHp: 10, teamHp: 5, maxTeamHp: 5, statusText: "", animClass: "" },
+  dragonBattle: { dragonHp: 10, maxDragonHp: 10, teamHp: 4, maxTeamHp: 4, statusText: "", animClass: "" },
   selectedStickerCat: "all", selectedBadgeCat: "all", selectedWardrobeTier: "all", rewardQueue: [],
   featuresPublishedForKids: false,
   lessons: JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE)),
@@ -796,7 +796,46 @@ function updateWhatsNewButtonGlow() {
   btn.classList.toggle("tutorial-highlight", shouldGlowWhatsNew());
 }
 
-function openWhatsNewModal() {
+// ------------------------------------------------------------------------
+// PŁYWAJĄCY PASEK PRZEWODNIKA SÓWKI + INTERAKTYWNY POKAZ NOWOŚCI NA ŻYWO
+// ------------------------------------------------------------------------
+function setOwlFloatingGuide(visible, titleText = "", stepText = "") {
+  let bar = document.getElementById("owlTourFloatingBanner");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "owlTourFloatingBanner";
+    bar.className = "fixed bottom-3 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[95%] bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-4 border-amber-500 rounded-3xl p-3.5 shadow-2xl hidden";
+    document.body.appendChild(bar);
+  }
+  if (!visible) {
+    bar.classList.add("hidden");
+    return;
+  }
+  bar.classList.remove("hidden");
+  bar.innerHTML = `
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 text-left">
+        <span class="text-4xl float-anim shrink-0">🦉👉</span>
+        <div>
+          <div class="text-xs font-extrabold uppercase text-amber-900">${titleText}</div>
+          <div class="text-xs md:text-sm font-bold text-slate-900 leading-snug mt-0.5">${stepText}</div>
+        </div>
+      </div>
+      <button onclick="stopWhatsNewLiveTour()" class="shrink-0 px-3.5 py-2 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow">
+        ⏹️ Zakończ pokaz
+      </button>
+    </div>
+  `;
+}
+
+function stopWhatsNewLiveTour() {
+  cancelAllSpeechAndTimers();
+  setOwlFloatingGuide(false);
+  if (typeof closeAvatarModal === "function") closeAvatarModal();
+  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+}
+
+function openWhatsNewModal(autoStartLiveTour = true) {
   cancelAllSpeechAndTimers();
   if (state.profile && state.profile !== "duel") {
     const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
@@ -814,49 +853,159 @@ function openWhatsNewModal() {
   const box = document.getElementById("whatsNewContentBox");
   if (box) {
     const items = [
-      { id: "wn_1", icon: "🐉🛡️", title: "1. Wspólna Walka ze Smokiem (Kooperacja Braci)", desc: "Nowy tryb, w którym Igor i Hubert grają razem w jednej drużynie! Dobra odpowiedź zadaje obrażenia Smokowi i blokuje jego atak tarczą, a pomyłka sprawia, że Smok zieje ogniem i zabiera serduszko! Jeśli pokonacie Smoka, obaj zdobywacie skrzynie!" },
-      { id: "wn_2", icon: "🍎🐾", title: "2. Jedzenie ze Skrzyń i Karmienie Zwierzaków", desc: "Teraz z każdej skrzyni wypadają owoce i warzywa (od 1 do 5 sztuk)! W Garderobie na dole możesz karmić swojego zwierzaka-towarzysza ze Spiżarni i wbijać mu wyższe poziomy przyjaźni!" },
-      { id: "wn_3", icon: "🩺🩹", title: "3. Mały Lekarz i Kolorowe Przedmioty", desc: "W lekcji 4 (Moje Ciało) pojawił się tryb Doktor – przyklejaj plastry tam, gdzie boli pacjenta! W lekcji 6 (Kolory) czeka gra Kolorowe Przedmioty (np. Czerwone jabłko, Zielona żabka)!" },
-      { id: "wn_4", icon: "🕵️‍♂️🧩", title: "4. Zagadki Sówki, Układanka Literkowa i Zadanie Dnia", desc: "W lekcji 5 rozwiążesz Zagadki Detektywa Sówki, w każdej lekcji ułożysz słowa z klocków literkowych, a na górze menu czeka codzienne Zadanie Dnia z nagrodą +30 Gwiazdek!" }
+      { idx: 1, icon: "📅⭐", title: "1. Zadanie Dnia od Sówki (+30 ⭐)", where: "Gdzie: Menu Lekcji ➔ żółty pasek na samej górze nad kafelkami lekcji." },
+      { idx: 2, icon: "🐉🛡️", title: "2. Wspólna Walka ze Smokiem (Kooperacja Braci)", where: "Gdzie: Górny pasek „👤 Zmień profil” ➔ kafelek „BRACIA RAZEM” ➔ „🐉🛡️ Wspólna Walka ze Smokiem”." },
+      { idx: 3, icon: "🍎🐾", title: "3. Jedzenie ze Skrzyń i Karmienie Zwierzaków", where: "Gdzie: Górny pasek „👑 Awatar” ➔ zjedź na dół do sekcji „🍎 Spiżarnia Zwierzaka” i kliknij owoc!" },
+      { idx: 4, icon: "🩺🩹", title: "4. Mały Lekarz (Przyklejanie plastra na chłopca)", where: "Gdzie: Menu Lekcji ➔ „4. Moje Ciało” ➔ na górnym pasku lekcji kliknij „🩺 Mały Lekarz”." },
+      { idx: 5, icon: "🕵️‍♂️🎨🧩", title: "5. Zagadki Sówki, Kolorowe Przedmioty i Literki", where: "Gdzie: W lekcji 5 kliknij „🕵️‍♂️ Zagadki Sówki”, w lekcji 6 „🎨 Kolorowe Przedmioty”, a w każdej lekcji „🧩 Literki”!" }
     ];
     box.innerHTML = items.map(it => `
-      <div id="${it.id}" class="p-3.5 rounded-2xl bg-rose-50/70 border-2 border-rose-200 flex items-start gap-3 transition-all">
-        <div class="text-4xl shrink-0">${it.icon}</div>
-        <div>
-          <h3 class="font-extrabold text-rose-950 text-sm md:text-base">${it.title}</h3>
-          <p class="text-xs text-slate-600 font-bold mt-0.5 leading-relaxed">${it.desc}</p>
+      <div class="p-3.5 rounded-2xl bg-rose-50/70 border-2 border-rose-200 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-start gap-3 flex-1 min-w-[220px]">
+          <div class="text-4xl shrink-0">${it.icon}</div>
+          <div>
+            <h3 class="font-extrabold text-rose-950 text-sm md:text-base">${it.title}</h3>
+            <p class="text-xs text-slate-700 font-bold mt-0.5">${it.where}</p>
+          </div>
         </div>
+        <button onclick="speakWhatsNewTour(${it.idx})" class="kid-card px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold text-xs shadow shrink-0">
+          👁️ Pokaż gdzie kliknąć!
+        </button>
       </div>
     `).join("");
   }
 
-  const m = document.getElementById("whatsNewModal");
-  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-  speakWhatsNewTour();
+  if (autoStartLiveTour) {
+    speakWhatsNewTour(0);
+  } else {
+    const m = document.getElementById("whatsNewModal");
+    if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
+  }
 }
 
 function closeWhatsNewModal() {
   cancelAllSpeechAndTimers();
+  setOwlFloatingGuide(false);
   const m = document.getElementById("whatsNewModal");
   if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
 }
 
-function speakWhatsNewTour() {
+function speakWhatsNewTour(onlyStep = 0) {
+  // Ukrywamy modal z listą, aby Sówka mogła na żywo pokazać prawdziwe przyciski na ekranie!
+  const m = document.getElementById("whatsNewModal");
+  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
+  if (typeof closeAvatarModal === "function") closeAvatarModal();
+  if (typeof closeBadgesModal === "function") closeBadgesModal();
+  if (typeof closeStickersModal === "function") closeStickersModal();
+
   const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : "Tato";
-  const hl = (id, on) => {
-    const el = document.getElementById(id);
+  const hl = (elOrId, on) => {
+    const el = typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
     if (el) {
-      el.classList.toggle("word-glow", on);
+      el.classList.toggle("tutorial-highlight", on);
       if (on) el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   };
-  speakSequence([
-    { lang: "pl", text: `Cześć ${kidName}! Zobacz co nowego przygotowaliśmy w wersji dwunastej!` },
-    { lang: "pl", text: "Po pierwsze: Wspólna Walka ze Smokiem! Możecie grać razem przeciwko groźnemu Smokowi. Dobra odpowiedź blokuje ogień tarczą i trafia Smoka, a za wygraną obaj dostajecie skrzynię!", onStart: () => hl("wn_1", true), onEnd: () => hl("wn_1", false) },
-    { lang: "pl", text: "Po drugie: Karmienie Zwierzaków! Teraz z każdej skrzyni wypadają pyszne owoce i warzywa. W Garderobie możesz nakarmić swojego zwierzaka ze spiżarni!", onStart: () => hl("wn_2", true), onEnd: () => hl("wn_2", false) },
-    { lang: "pl", text: "Po trzecie: Gra Mały Lekarz w lekcji Moje Ciało oraz Kolorowe Przedmioty w lekcji Kolory!", onStart: () => hl("wn_3", true), onEnd: () => hl("wn_3", false) },
-    { lang: "pl", text: "I po czwarte: Zagadki Detektywa Sówki, Układanka z literek oraz codzienne Zadanie Dnia za dodatkowe gwiazdki! Miłej zabawy!", onStart: () => hl("wn_4", true), onEnd: () => hl("wn_4", false) }
-  ]);
+  const getChangeProfBtn = () => document.querySelector('#topHeader button[onclick*="showStartScreen"]');
+
+  const allSteps = [
+    // KROK 1: ZADANIE DNIA W MENU LEKCJI
+    {
+      stepId: 1,
+      lang: "pl",
+      text: `Cześć ${kidName}! Już pokazuję gdzie pojawiły się nowości! Po pierwsze: Zadanie Dnia! Tutaj, w menu lekcji na samej górze nad kafelkami, codziennie czeka nowa misja. Gdy ją wykonasz, kliknij tutaj zielony przycisk Odbierz i zgarnij trzydzieści gwiazdek!`,
+      onStart: () => {
+        if (typeof showLessonMenu === "function") showLessonMenu();
+        setOwlFloatingGuide(true, "📅 Krok 1 z 5: Zadanie Dnia (+30 ⭐)", "Spójrz na żółty pasek na górze menu lekcji – tam codziennie czeka nowe zadanie!");
+        setTimeout(() => hl("dailyQuestBannerBox", true), 80);
+      },
+      onEnd: () => hl("dailyQuestBannerBox", false)
+    },
+    // KROK 2: WSPÓLNA WALKA ZE SMOKIEM
+    {
+      stepId: 2,
+      lang: "pl",
+      text: "Po drugie: Wspólna Walka ze Smokiem dla obu braci! Aby w nią zagrać, kliknij tutaj na górze przycisk Zmień profil, potem wybierz fioletowy kafelek Bracia Razem i kliknij zielony przycisk Wspólna Walka ze Smokiem!",
+      onStart: () => {
+        setOwlFloatingGuide(true, "🐉🛡️ Krok 2 z 5: Wspólna Walka ze Smokiem", "Kliknij na górze „👤 Zmień profil” ➔ „BRACIA RAZEM” ➔ „🐉🛡️ Wspólna Walka ze Smokiem”!");
+        hl(getChangeProfBtn(), true);
+        if (state.profile === "tata") hl("btnCoopDragonMenu", true);
+      },
+      onEnd: () => {
+        hl(getChangeProfBtn(), false);
+        hl("btnCoopDragonMenu", false);
+      }
+    },
+    // KROK 3: JEDZENIE ZE SKRZYŃ I KARMIENIE ZWIERZAKA W GARDEROBIE
+    {
+      stepId: 3,
+      lang: "pl",
+      text: "Po trzecie: Jedzenie ze Skrzyń i Karmienie Zwierzaków! Kliknij na górze przycisk Awatar. Teraz otwieram garderobę i zjeżdżam na sam dół! Tutaj, w zielonej Spiżarni Zwierzaka, kliknij dowolny owoc lub warzywo, aby nakarmić swojego towarzysza!",
+      onStart: () => {
+        setOwlFloatingGuide(true, "🍎🐾 Krok 3 z 5: Spiżarnia i Karmienie Zwierzaka", "Kliknij na górze „👑 Awatar” ➔ zjedź na dół do „🍎 Spiżarnia Zwierzaka” i kliknij przysmak!");
+        hl("navAvatarBtn", true);
+        if (state.profile !== "duel" && typeof openAvatarModal === "function") {
+          openAvatarModal();
+          setTimeout(() => {
+            const pantry = document.getElementById("petPantrySection") || document.getElementById("companionPetsSection");
+            hl(pantry, true);
+          }, 250);
+        }
+      },
+      onEnd: () => {
+        const pantry = document.getElementById("petPantrySection") || document.getElementById("companionPetsSection");
+        hl(pantry, false);
+        hl("navAvatarBtn", false);
+        if (typeof closeAvatarModal === "function") closeAvatarModal();
+      }
+    },
+    // KROK 4: MAŁY LEKARZ W LEKCJI 4 (MOJE CIAŁO)
+    {
+      stepId: 4,
+      lang: "pl",
+      text: "Po czwarte: Gra Mały Lekarz! W menu lekcji klikasz kafelek czwarty: Moje Ciało, a potem na górnym pasku klikasz czerwony przycisk Mały Lekarz! Zobacz, właśnie go podświetlam – tutaj chwytasz plasterek z apteczki i przyklejasz na chłopca!",
+      onStart: () => {
+        setOwlFloatingGuide(true, "🩺🩹 Krok 4 z 5: Mały Lekarz (Lekcja 4)", "Wejdź w „4. Moje Ciało”, a potem kliknij podświetlony przycisk „🩺 Mały Lekarz”!");
+        if (typeof startLesson === "function") {
+          startLesson("body_hurts", "doctor_game");
+          setTimeout(() => {
+            hl("subModeBtn_doctor_game", true);
+            hl("draggableBandAid", true);
+          }, 120);
+        }
+      },
+      onEnd: () => {
+        hl("subModeBtn_doctor_game", false);
+        hl("draggableBandAid", false);
+      }
+    },
+    // KROK 5: ZAGADKI SÓWKI (LEKCJA 5), KOLOROWE PRZEDMIOTY (LEKCJA 6) I LITERKI
+    {
+      stepId: 5,
+      lang: "pl",
+      text: "I po piąte: nowe gry w lekcjach! W lekcji piątej Dżungla i Zwierzęta pojawił się przycisk Zagadki Sówki, w lekcji szóstej Kolory klikasz przycisk Kolorowe Przedmioty, a obok w każdej lekcji czeka fioletowy przycisk Literki! Miłej zabawy!",
+      onStart: () => {
+        setOwlFloatingGuide(true, "🕵️‍♂️🎨🧩 Krok 5 z 5: Zagadki, Kolorowe Przedmioty i Literki", "W lekcji 5 kliknij „🕵️‍♂️ Zagadki Sówki”, w lekcji 6 „🎨 Kolorowe Przedmioty”, a obok „🧩 Literki”!");
+        if (typeof startLesson === "function") {
+          startLesson("colors", "color_mix_game");
+          setTimeout(() => {
+            hl("subModeBtn_color_mix_game", true);
+            hl("subModeBtn_letters_game", true);
+          }, 120);
+        }
+      },
+      onEnd: () => {
+        hl("subModeBtn_color_mix_game", false);
+        hl("subModeBtn_letters_game", false);
+      }
+    }
+  ];
+
+  const stepsToRun = onlyStep > 0 ? allSteps.filter(s => s.stepId === onlyStep) : allSteps;
+  speakSequence(stepsToRun, () => {
+    setOwlFloatingGuide(false);
+    if (typeof showLessonMenu === "function") showLessonMenu();
+  });
 }
 
 // ------------------------------------------------------------------------
@@ -996,6 +1145,7 @@ function cancelAllSpeechAndTimers() {
   if (pendingAdvanceTimer) { clearTimeout(pendingAdvanceTimer); pendingAdvanceTimer = null; }
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   document.querySelectorAll(".tutorial-highlight").forEach(el => el.classList.remove("tutorial-highlight", "word-glow"));
+  setOwlFloatingGuide(false);
   updateWhatsNewButtonGlow();
 }
 
@@ -1236,7 +1386,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
 <!-- ======================= POCZĄTEK CZĘŚCI 4 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE, SPIŻARNIA I GARDEROBA (WERSJA 12.6)
+   CZĘŚĆ 4 z 6: OSIĄGNIĘCIA, SKRZYNIE, SPIŻARNIA I GARDEROBA (WERSJA 12.7)
    ============================================================================ */
 
 function getActiveProfileKey() {
@@ -1504,7 +1654,7 @@ function openChestReal(profKey, tier) {
     ];
   } else if (dropType === "food") {
     const food = foodPool[Math.floor(Math.random() * foodPool.length)];
-    const qty = Math.floor(Math.random() * 5) + 1; // 1 do 5 sztuk (identyczna szansa dla każdej skrzyni)
+    const qty = Math.floor(Math.random() * 5) + 1;
     if (!p.petFood) p.petFood = {};
     p.petFood[food.id] = (p.petFood[food.id] || 0) + qty;
     rewardName = `Przysmak dla zwierzaka: ${qty}x ${food.pl} (${food.en})`;
@@ -1867,7 +2017,7 @@ function renderAvatarItems() {
     const lvInfo = activePetObj ? getPetLevelInfo((p.petXp && p.petXp[activePetObj.id]) || 0) : null;
 
     html += `
-      <div class="mb-3 p-3 rounded-2xl bg-emerald-50/90 border-2 border-emerald-300 shadow-sm">
+      <div id="petPantrySection" class="mb-3 p-3 rounded-2xl bg-emerald-50/90 border-2 border-emerald-300 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
           <div class="text-xs font-extrabold text-emerald-950">
             🍎 Spiżarnia Zwierzaka ${activePetObj ? `• Karmisz: ${activePetObj.icon} ${activePetObj.pl} (Poziom ${lvInfo.level} • ${lvInfo.inLevel}/3 🍎)` : `• (Wybierz zwierzaka poniżej!)`}
@@ -1960,7 +2110,7 @@ function setWardrobeTierFilter(tier) {
 <!-- ======================= POCZĄTEK CZĘŚCI 5 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 5 z 6: MENU, SMOK, LEKARZ Z SUWAKAMI I ZAGADKI (WERSJA 12.6)
+   CZĘŚĆ 5 z 6: MENU, SMOK, LEKARZ Z SUWAKAMI I ZAGADKI (WERSJA 12.7)
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -2189,7 +2339,7 @@ function showStartScreen() {
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
-        🌟 Akademia Angielskiego • Wersja 12.6
+        🌟 Akademia Angielskiego • Wersja 12.7
       </div>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Kto dzisiaj gra? 👇</h1>
 
@@ -2301,7 +2451,7 @@ function showLessonMenu() {
 
   const whatsNewGlow = shouldGlowWhatsNew() ? "tutorial-highlight" : "";
   const whatsNewBtnMenu = (state.profile !== "duel" && areNewFeaturesActive())
-    ? `<button id="menuWhatsNewBtn" onclick="openWhatsNewModal()" class="kid-card px-4 py-2.5 rounded-2xl bg-rose-100 border-3 border-rose-400 text-rose-900 font-extrabold text-sm flex items-center gap-2 shadow-sm ${whatsNewGlow}"><span>🆕🦉</span> Co nowego w Wersji 12?</button>`
+    ? `<button id="menuWhatsNewBtn" onclick="openWhatsNewModal(true)" class="kid-card px-4 py-2.5 rounded-2xl bg-rose-100 border-3 border-rose-400 text-rose-900 font-extrabold text-sm flex items-center gap-2 shadow-sm ${whatsNewGlow}"><span>🆕🦉</span> Co nowego w Wersji 12?</button>`
     : "";
 
   let dailyQuestBanner = "";
@@ -2311,7 +2461,7 @@ function showLessonMenu() {
     if (dq && dq.title) {
       const isDone = dq.progress >= dq.target;
       dailyQuestBanner = `
-        <div class="mb-4 p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-yellow-50 to-emerald-50 border-2 ${isDone ? 'border-emerald-400' : 'border-amber-300'} flex flex-wrap items-center justify-between gap-2 shadow-sm">
+        <div id="dailyQuestBannerBox" class="mb-4 p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-yellow-50 to-emerald-50 border-2 ${isDone ? 'border-emerald-400' : 'border-amber-300'} flex flex-wrap items-center justify-between gap-2 shadow-sm">
           <div class="flex items-center gap-2.5">
             <span class="text-3xl">${dq.claimed ? '✅' : isDone ? '🎁' : '📅'}</span>
             <div>
@@ -2335,12 +2485,12 @@ function showLessonMenu() {
   let topActionHtml = "";
   if (state.profile === "duel") {
     const dragonBtn = areNewFeaturesActive()
-      ? `<button onclick="startCoopDragonBattle()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-sm shadow-lg border-2 border-emerald-300">🐉🛡️ Wspólna Walka ze Smokiem (Kooperacja!)</button>`
+      ? `<button id="btnCoopDragonMenu" onclick="startCoopDragonBattle()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-sm shadow-lg border-2 border-emerald-300">🐉🛡️ Wspólna Walka ze Smokiem (Kooperacja!)</button>`
       : "";
     topActionHtml = `<div class="flex flex-wrap gap-2">${dragonBtn}<button onclick="startDuelAllWords()" class="kid-card px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-extrabold text-sm shadow-lg">⚔️🎲 Pojedynek VS: Wszystkie Słówka</button></div>`;
   } else if (state.profile === "hubert" || state.profile === "tata") {
     const dragonTestBtn = state.profile === "tata"
-      ? `<button onclick="startCoopDragonBattle()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-xs shadow-lg">🐉 Walka ze Smokiem</button>`
+      ? `<button id="btnCoopDragonMenu" onclick="startCoopDragonBattle()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-xs shadow-lg">🐉 Walka ze Smokiem</button>`
       : "";
     const examLabel = state.profile === "tata" ? "🎓👑 Sprawdzian" : "🎓👑 Sprawdzian Huberta";
     topActionHtml = `<div class="flex flex-wrap gap-2 items-center">${hardWordsBtnHtml}${dragonTestBtn}<button onclick="startGrandExam()" class="kid-card px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg flex flex-col"><span class="text-sm text-center">${examLabel}</span><span class="text-[10px] font-bold text-center text-amber-100">10 pytań + 5 x Wymowa!</span></button></div>`;
@@ -2371,7 +2521,7 @@ function showLessonMenu() {
             ? `<span class="px-2 py-0.5 rounded-full bg-amber-300 text-amber-950 font-extrabold text-[10px] border border-amber-500">🧪 TESTOWA (TYLKO TATA)</span>`
             : (state.profile === "tata" && testWordsCount > 0 ? `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold text-[10px] border border-amber-400">🧪 +${testWordsCount} słówek testowych</span>` : "");
           return `
-            <div onclick="startLesson('${l.id}')" class="kid-card cursor-pointer rounded-3xl border-4 ${l.borderColor} bg-white hover:bg-slate-50 p-4 shadow-md flex flex-col justify-between">
+            <div id="lessonCard_${l.id}" onclick="startLesson('${l.id}')" class="kid-card cursor-pointer rounded-3xl border-4 ${l.borderColor} bg-white hover:bg-slate-50 p-4 shadow-md flex flex-col justify-between">
               <div>
                 <div class="flex justify-between items-center mb-2 gap-1 flex-wrap">
                   <span class="text-4xl drop-shadow-sm">${l.icon}</span>
@@ -2571,7 +2721,7 @@ function renderTopGameBar(lesson) {
     const micBtn = `<button onclick="startLesson('${lesson.id}','mic_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'mic_game' ? 'bg-rose-600 text-white' : 'bg-white text-slate-700'}">🎤 Wymowa</button>`;
     const flashBtn = `<button onclick="startFlashcards('${lesson.id}')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-indigo-50 text-indigo-800 border-indigo-300">🃏 Fiszki</button>`;
     const lettersBtn = (v12 && lesson.type !== "prepositions" && lesson.type !== "mic_only")
-      ? `<button onclick="startLesson('${lesson.id}','letters_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'letters_game' ? 'bg-purple-600 text-white border-purple-700' : 'bg-purple-50 text-purple-900 border-purple-300'}">🧩 Literki</button>`
+      ? `<button id="subModeBtn_letters_game" onclick="startLesson('${lesson.id}','letters_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'letters_game' ? 'bg-purple-600 text-white border-purple-700' : 'bg-purple-50 text-purple-900 border-purple-300'}">🧩 Literki</button>`
       : "";
 
     if (lesson.type === "prepositions") {
@@ -2581,20 +2731,20 @@ function renderTopGameBar(lesson) {
     } else if (lesson.type === "vocab_and_shop" && v12) {
       subModesHtml = flashBtn +
                      `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
-                     `<button onclick="startLesson('${lesson.id}','shop_cart_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'shop_cart_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">🛒 Koszyk</button>` +
+                     `<button id="subModeBtn_shop_cart_game" onclick="startLesson('${lesson.id}','shop_cart_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'shop_cart_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">🛒 Koszyk</button>` +
                      `<button onclick="startLesson('${lesson.id}','shop_phrases_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'shop_phrases_game' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-emerald-50 text-emerald-900 border-emerald-300'}">👋 Zwroty</button>` + lettersBtn + micBtn;
     } else if (lesson.id === "body_hurts" && v12) {
       subModesHtml = flashBtn +
                      `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
-                     `<button onclick="startLesson('${lesson.id}','doctor_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'doctor_game' ? 'bg-rose-500 text-white border-rose-600' : 'bg-rose-50 text-rose-900 border-rose-300'}">🩺 Mały Lekarz</button>` + lettersBtn + micBtn;
+                     `<button id="subModeBtn_doctor_game" onclick="startLesson('${lesson.id}','doctor_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'doctor_game' ? 'bg-rose-500 text-white border-rose-600' : 'bg-rose-50 text-rose-900 border-rose-300'}">🩺 Mały Lekarz</button>` + lettersBtn + micBtn;
     } else if (lesson.id === "jungle_animals" && v12) {
       subModesHtml = flashBtn +
                      `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
-                     `<button onclick="startLesson('${lesson.id}','riddles_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'riddles_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">🕵️‍♂️ Zagadki Sówki</button>` + lettersBtn + micBtn;
+                     `<button id="subModeBtn_riddles_game" onclick="startLesson('${lesson.id}','riddles_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'riddles_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">🕵️‍♂️ Zagadki Sówki</button>` + lettersBtn + micBtn;
     } else if (lesson.id === "colors" && v12) {
       subModesHtml = flashBtn +
                      `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Kolory</button>` +
-                     `<button onclick="startLesson('${lesson.id}','color_mix_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'color_mix_game' ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-indigo-50 text-indigo-900 border-indigo-300'}">🎨 Kolorowe Przedmioty</button>` + lettersBtn + micBtn;
+                     `<button id="subModeBtn_color_mix_game" onclick="startLesson('${lesson.id}','color_mix_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'color_mix_game' ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-indigo-50 text-indigo-900 border-indigo-300'}">🎨 Kolorowe Przedmioty</button>` + lettersBtn + micBtn;
     } else {
       subModesHtml = flashBtn + `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` + lettersBtn + micBtn;
     }
@@ -2958,7 +3108,6 @@ function renderDoctorGame(lesson) {
       <div id="feedbackBanner" class="min-h-[32px] font-bold text-sm md:text-base mb-2 flex items-center justify-center"></div>
 
       <div class="flex flex-col md:flex-row items-center justify-center gap-6 my-1">
-        <!-- Sztywny wymiar 280x340px (mieści się na telefonie i laptopie 1:1 bez ściskania) -->
         <div id="doctorPatientBox" class="relative select-none bg-gradient-to-b from-sky-50 to-rose-50 rounded-3xl border-4 border-rose-300 shadow-inner overflow-hidden shrink-0" style="width: 280px; height: 340px; min-width: 280px; min-height: 340px;">
           <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-fill pointer-events-none z-10" />
           <div id="doctorZonesLayer" class="absolute inset-0 w-full h-full z-20">
@@ -3390,7 +3539,7 @@ function renderEndRoundScreen() {
 <!-- ======================= POCZĄTEK CZĘŚCI 6 z 6 ======================= -->
 <script>
 /* ============================================================================
-   CZĘŚĆ 6 z 6: UKŁADANKA LITERKOWA (BEZ PODPOWIEDZI SŁOWA), MEMORY, WYMOWA I PANEL RODZICA (WERSJA 12.6)
+   CZĘŚĆ 6 z 6: UKŁADANKA LITERKOWA (BEZ PODPOWIEDZI SŁOWA), MEMORY, WYMOWA I PANEL RODZICA (WERSJA 12.7)
    ============================================================================ */
 
 // ------------------------------------------------------------------------
@@ -4052,7 +4201,7 @@ function renderParentTestCenter() {
 
   box.innerHTML = `
     <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 12.6)</h3>
+      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty (Wersja 12.7)</h3>
       <span class="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-950 font-extrabold text-xs">Słówka/Lekcje w teście: ${totalPending}</span>
     </div>
     ${v12StatusBox}

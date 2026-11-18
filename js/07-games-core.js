@@ -1,32 +1,144 @@
 /* ============================================================================
    PLIK: js/07-games-core.js
-   PASEK GRY, ANIMACJA WALKI ZE SMOKIEM, MAŁY LEKARZ Z SUWAKAMI, ZAGADKI I QUIZ
+   PASEK GRY, PEŁNOEKRANOWA ANIMACJA SMOKA, LIMIT 3 SKRZYŃ, LEKARZ, ZAGADKI I QUIZ
    ============================================================================ */
+
+(function ensureDragonFullscreenStyles() {
+  if (document.getElementById("dragonFullscreenStyles")) return;
+  const style = document.createElement("style");
+  style.id = "dragonFullscreenStyles";
+  style.textContent = `
+    @keyframes dragonClashZoomHit {
+      0%   { transform: scale(0.75); filter: brightness(1); }
+      30%  { transform: scale(1.22); filter: brightness(1.45) drop-shadow(0 0 28px rgba(239,68,68,0.95)); }
+      55%  { transform: scale(1.08) rotate(-6deg); filter: sepia(1) saturate(6) hue-rotate(-35deg); }
+      75%  { transform: scale(1.15) rotate(5deg); filter: brightness(1.3); }
+      100% { transform: scale(1.0); filter: brightness(1); }
+    }
+    @keyframes dragonClashLungeFire {
+      0%   { transform: scale(0.7) translateY(-20px); }
+      35%  { transform: scale(1.42) translateY(8px); filter: drop-shadow(0 0 36px rgba(249,115,22,1)); }
+      65%  { transform: scale(1.32) rotate(-4deg); }
+      85%  { transform: scale(1.38) rotate(4deg); }
+      100% { transform: scale(1.15); }
+    }
+    @keyframes dragonOverlayShake {
+      0%, 100% { transform: translate(0, 0); }
+      15% { transform: translate(-14px, 8px) rotate(-1.2deg); }
+      30% { transform: translate(14px, -8px) rotate(1.2deg); }
+      45% { transform: translate(-12px, -6px) rotate(-0.8deg); }
+      60% { transform: translate(12px, 6px) rotate(0.8deg); }
+      75% { transform: translate(-8px, 4px); }
+      90% { transform: translate(8px, -4px); }
+    }
+    .dragon-fs-zoom-hit { animation: dragonClashZoomHit 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .dragon-fs-lunge-fire { animation: dragonClashLungeFire 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .dragon-fs-shake { animation: dragonOverlayShake 0.65s ease-in-out; }
+  `;
+  document.head.appendChild(style);
+})();
+
+function hideDragonFullscreenClash() {
+  const ov = document.getElementById("dragonFullscreenOverlay");
+  if (ov) {
+    ov.classList.add("hidden");
+    ov.classList.remove("flex");
+  }
+}
+
+function showDragonFullscreenClash(type) {
+  let ov = document.getElementById("dragonFullscreenOverlay");
+  if (!ov) {
+    ov = document.createElement("div");
+    ov.id = "dragonFullscreenOverlay";
+    document.body.appendChild(ov);
+  }
+
+  const db = state.dragonBattle || { dragonHp: 10, maxDragonHp: 10, teamHp: 4, maxTeamHp: 4 };
+  const isHit = type === "hit";
+  const isIgor = state.duelTurn === "igor";
+  const heroKey = isIgor ? "igor" : "hubert";
+  const heroName = isIgor ? "IGOR" : "HUBERT";
+  const dragonPct = Math.max(0, Math.round((db.dragonHp / db.maxDragonHp) * 100));
+  const hearts = "❤️".repeat(Math.max(0, db.teamHp)) + "💔".repeat(Math.max(0, db.maxTeamHp - db.teamHp));
+
+  ov.className = `fixed inset-0 z-[70] flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-colors duration-300 ${
+    isHit
+      ? "bg-gradient-to-b from-red-950/90 via-rose-900/85 to-slate-950/95"
+      : "bg-gradient-to-b from-red-900/95 via-orange-950/90 to-black/95 dragon-fs-shake"
+  }`;
+
+  ov.innerHTML = `
+    <div class="max-w-md w-full rounded-3xl border-4 ${isHit ? "border-amber-400 bg-rose-950/80" : "border-red-500 bg-red-950/85"} p-5 text-center text-white shadow-2xl relative overflow-hidden">
+      <div class="inline-block px-4 py-1 rounded-full font-extrabold text-xs uppercase tracking-wider mb-3 ${
+        isHit ? "bg-emerald-500 text-slate-950" : "bg-red-600 text-white animate-pulse"
+      }">
+        ${isHit ? `⚔️ TRAFIENIE! ${heroName} ATAKUJE SMOKA!` : `🔥 SMOK ZIONIE OGNIEM NA DRUŻYNĘ!`}
+      </div>
+
+      <div class="relative my-3 flex items-center justify-center h-44">
+        <div class="text-[115px] leading-none select-none ${isHit ? "dragon-fs-zoom-hit" : "dragon-fs-lunge-fire"}">🐉</div>
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span class="text-7xl sword-slash-fx">${isHit ? "⚔️💥" : "🔥🔥🔥"}</span>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <div class="flex justify-between text-xs font-extrabold text-amber-300 mb-1">
+          <span>🐉 Życie Smoka</span>
+          <span>${db.dragonHp} / ${db.maxDragonHp} HP</span>
+        </div>
+        <div class="w-full h-4 bg-slate-800 rounded-full overflow-hidden border-2 border-amber-400">
+          <div class="h-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 transition-all duration-500" style="width:${dragonPct}%"></div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between bg-black/40 rounded-2xl p-2.5 border border-white/15">
+        <div class="flex items-center gap-2">
+          ${typeof renderBoyAvatarSvg === "function" ? renderBoyAvatarSvg(heroKey, 46) : ""}
+          <div class="text-left">
+            <div class="text-[10px] font-bold text-slate-300 uppercase">Życie Braci</div>
+            <div class="text-base tracking-wider">${hearts}</div>
+          </div>
+        </div>
+        <div class="text-xs font-extrabold ${isHit ? "text-emerald-300" : "text-rose-300"}">
+          ${isHit ? "-1 HP Smoka!" : "-1 ❤️ Drużyny!"}
+        </div>
+      </div>
+    </div>
+  `;
+
+  clearTimeout(window._dragonFsTimer);
+  window._dragonFsTimer = setTimeout(() => {
+    hideDragonFullscreenClash();
+  }, 1900);
+}
 
 function triggerDragonBattleAnimation(type) {
   const hud = document.getElementById("dragonBattleHudBox");
   const icon = document.getElementById("dragonBossIcon");
   const fx = document.getElementById("dragonBattleFxOverlay");
-  if (!hud) return;
+  if (hud) {
+    hud.classList.remove("dragon-hit-anim", "dragon-fire-anim");
+    if (icon) icon.classList.remove("dragon-hit-anim");
+    void hud.offsetWidth;
 
-  hud.classList.remove("dragon-hit-anim", "dragon-fire-anim");
-  if (icon) icon.classList.remove("dragon-hit-anim");
-  void hud.offsetWidth;
-
-  if (type === "hit") {
-    hud.classList.add("dragon-hit-anim");
-    if (icon) icon.classList.add("dragon-hit-anim");
-    if (fx) {
-      fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">⚔️💥</span>`;
-      setTimeout(() => { if (fx) fx.innerHTML = ""; }, 700);
-    }
-  } else if (type === "fire") {
-    hud.classList.add("dragon-fire-anim");
-    if (fx) {
-      fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">🔥🐉💥</span>`;
-      setTimeout(() => { if (fx) fx.innerHTML = ""; }, 700);
+    if (type === "hit") {
+      hud.classList.add("dragon-hit-anim");
+      if (icon) icon.classList.add("dragon-hit-anim");
+      if (fx) {
+        fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">⚔️💥</span>`;
+        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 700);
+      }
+    } else if (type === "fire") {
+      hud.classList.add("dragon-fire-anim");
+      if (fx) {
+        fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">🔥🐉💥</span>`;
+        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 700);
+      }
     }
   }
+  showDragonFullscreenClash(type);
 }
 
 function renderTopGameBar(lesson) {
@@ -71,6 +183,7 @@ function renderTopGameBar(lesson) {
     const db = state.dragonBattle;
     const hearts = "❤️".repeat(Math.max(0, db.teamHp)) + "🖤".repeat(Math.max(0, db.maxTeamHp - db.teamHp));
     const dragonPct = Math.max(0, Math.round((db.dragonHp / db.maxDragonHp) * 100));
+    const dailySt = getDailySpecialChestStatus("dragon");
     dragonHud = `
       <div id="dragonBattleHudBox" class="relative mb-3 p-3 rounded-3xl bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white border-4 border-amber-400 shadow-xl overflow-hidden">
         <div id="dragonBattleFxOverlay" class="pointer-events-none absolute inset-0 flex items-center justify-center z-30"></div>
@@ -82,13 +195,16 @@ function renderTopGameBar(lesson) {
               <div class="text-sm tracking-widest">${hearts}</div>
             </div>
           </div>
-          <div class="px-3 py-1 rounded-xl font-extrabold text-xs ${state.duelTurn === 'igor' ? 'bg-amber-500 text-slate-950' : 'bg-sky-500 text-white'}">
-            Teraz broni i atakuje: ${state.duelTurn === 'igor' ? '👦 IGOR' : '🧑 HUBERT'}
+          <div class="flex flex-col items-center gap-1">
+            <div class="px-3 py-1 rounded-xl font-extrabold text-xs ${state.duelTurn === 'igor' ? 'bg-amber-500 text-slate-950' : 'bg-sky-500 text-white'}">
+              Teraz walczy: ${state.duelTurn === 'igor' ? '👦 IGOR' : '🧑 HUBERT'}
+            </div>
+            <span class="text-[10px] font-bold text-amber-200">Skrzynie dziś: ${dailySt.remaining}/${dailySt.limit}</span>
           </div>
           <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-2xl">
             <div class="text-right">
               <div class="text-[10px] font-bold text-rose-300 uppercase">Groźny Smok (${db.dragonHp}/${db.maxDragonHp} HP)</div>
-              <div class="w-32 h-3 bg-slate-700 rounded-full overflow-hidden border border-rose-400 mt-0.5">
+              <div class="w-28 sm:w-32 h-3 bg-slate-700 rounded-full overflow-hidden border border-rose-400 mt-0.5">
                 <div class="h-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-500" style="width:${dragonPct}%"></div>
               </div>
             </div>
@@ -117,7 +233,8 @@ function renderTopGameBar(lesson) {
     ? `<button onclick="toggleTataPreviewAge()" class="px-2.5 py-1 rounded-xl font-extrabold text-xs border-2 ${state.tataPreviewAsIgor ? 'bg-amber-400 text-amber-950 border-amber-600' : 'bg-sky-600 text-white border-sky-800'}">${state.tataPreviewAsIgor ? '👦 Widok: IGOR (4 l.) 🔄' : '🧑 Widok: HUBERT (6 l.) 🔄'}</button>`
     : "";
 
-  const duelBar = (state.profile === "duel" && !state.isCoopDragonMode) ? `<div class="mb-2 p-2.5 rounded-2xl bg-gradient-to-r from-amber-100 via-purple-100 to-sky-100 border-2 border-purple-400 flex justify-between items-center font-extrabold text-[10px] md:text-xs"><div>👦 IGOR: ${state.duelScores.igor} pkt ⚡ VS ⚡ 🧑 HUBERT: ${state.duelScores.hubert} pkt</div><div class="px-3 py-1 rounded-xl ${state.duelTurn === 'igor' ? 'bg-amber-500' : 'bg-sky-600'} text-white">Teraz: ${state.duelTurn === 'igor' ? 'IGOR' : 'HUBERT'}</div></div>` : "";
+  const duelDaily = getDailySpecialChestStatus("duel");
+  const duelBar = (state.profile === "duel" && !state.isCoopDragonMode) ? `<div class="mb-2 p-2.5 rounded-2xl bg-gradient-to-r from-amber-100 via-purple-100 to-sky-100 border-2 border-purple-400 flex flex-wrap justify-between items-center gap-1 font-extrabold text-[10px] md:text-xs"><div>👦 IGOR: ${state.duelScores.igor} pkt ⚡ VS ⚡ 🧑 HUBERT: ${state.duelScores.hubert} pkt</div><div class="px-2 py-0.5 rounded-lg bg-white/80 text-purple-900">🎁 Skrzynie dziś: ${duelDaily.remaining}/${duelDaily.limit}</div><div class="px-3 py-1 rounded-xl ${state.duelTurn === 'igor' ? 'bg-amber-500' : 'bg-sky-600'} text-white">Teraz: ${state.duelTurn === 'igor' ? 'IGOR' : 'HUBERT'}</div></div>` : "";
   const examBar = state.isExamMode ? `<div class="mb-2 p-2 rounded-2xl bg-orange-100 border-2 border-orange-400 text-orange-950 font-extrabold text-center text-xs shadow-sm uppercase">🎓 Wielki Sprawdzian (Pytanie ${state.roundIndex+1}/15)</div>` : "";
   const hardBar = state.isHardWordsMode ? `<div class="mb-2 p-2 rounded-2xl bg-rose-100 border-2 border-rose-400 text-rose-950 font-extrabold text-center text-xs shadow-sm uppercase">🎯 Trening Trudnych Słówek • Za odpowiedź bez błędu: +2 ⭐!</div>` : "";
   return `
@@ -136,6 +253,7 @@ function renderTopGameBar(lesson) {
 
 function renderCurrentQuestion() {
   cancelAllSpeechAndTimers();
+  hideDragonFullscreenClash();
   state.answeredCurrent = false;
   state.currentQuestionMistakes = 0;
   state.riddleHintShown = false;
@@ -531,7 +649,6 @@ function renderShopCartGame(lesson) {
 function renderUniversalVisualQuiz(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const isIgorTurn = isEffectiveIgorMode();
-  // W Walce ze Smokiem Igor ma 4 odpowiedzi (zamiast 3), w standardowych rundach 3; Hubert zawsze 6
   const numChoices = !isIgorTurn ? 6 : (state.isCoopDragonMode ? 4 : 3);
   const gridColsClass = numChoices === 4 ? "grid-cols-2 sm:grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
 
@@ -554,7 +671,7 @@ function renderUniversalVisualQuiz(lesson) {
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
       <div class="grid ${gridColsClass} gap-3.5">
-        ${choices.map((it, idx) => `<div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 p-4 shadow flex flex-col items-center justify-between"><div class="text-6xl md:text-7xl my-2 float-anim drop-shadow-sm">${it.icon || '⭐'}</div><div id="vLabel_${idx}" class="w-full py-2 px-2 mt-2 rounded-xl bg-white border font-bold text-slate-700 text-sm shadow-sm uppercase tracking-wide">Wybierz</div></div>`).join("")}
+        ${choices.map((it, idx) => `<div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 p-4 shadow flex flex-col items-center justify-between"><div class="text-6xl md:text-7xl my-2 float-anim drop-shadow-sm flex justify-center">${it.icon || '⭐'}</div><div id="vLabel_${idx}" class="w-full py-2 px-2 mt-2 rounded-xl bg-white border font-bold text-slate-700 text-sm shadow-sm uppercase tracking-wide">Wybierz</div></div>`).join("")}
       </div>
     </div>
   `;
@@ -624,6 +741,7 @@ function awardCorrectAnswer() {
 
 function advanceNextQuestion() {
   cancelAllSpeechAndTimers();
+  hideDragonFullscreenClash();
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
   if (!state.answeredCurrent) {
     state.roundResults.push("wrong"); state.roundMistakes++;
@@ -661,6 +779,7 @@ function startNextSequentialLesson() {
 
 function renderEndRoundScreen() {
   cancelAllSpeechAndTimers();
+  hideDragonFullscreenClash();
   const finishedLessonId = state.currentLessonId || state.lastPlayedLessonId;
   if (finishedLessonId) state.lastPlayedLessonId = finishedLessonId;
 
@@ -674,41 +793,73 @@ function renderEndRoundScreen() {
     if (dragonDefeated) {
       playEffect("fanfare");
       state.stats.igor.cups++; state.stats.hubert.cups++;
-      const chestType = state.dragonBattle.teamHp >= 3 ? "gold" : "silver";
-      const chestNamePl = chestType === "gold" ? "Złotą Skrzynię" : "Srebrną Skrzynię";
-      const chestBadgeLabel = chestType === "gold" ? "👑 Złota Skrzynia" : "🥈 Srebrna Skrzynia";
+      const dailyDragon = getDailySpecialChestStatus("dragon");
 
-      state.rewardQueue.push({ profKey: "igor", achievement: { name: "Pogromca Smoka (Igor)" }, chestType });
-      state.rewardQueue.push({ profKey: "hubert", achievement: { name: "Pogromca Smoka (Hubert)" }, chestType });
-      saveCloudData();
+      if (dailyDragon.canEarn) {
+        recordDailySpecialChestAwarded("dragon");
+        const updatedDragon = getDailySpecialChestStatus("dragon");
+        const chestType = state.dragonBattle.teamHp >= 3 ? "gold" : "silver";
+        const chestNamePl = chestType === "gold" ? "Złotą Skrzynię" : "Srebrną Skrzynię";
+        const chestBadgeLabel = chestType === "gold" ? "👑 Złota Skrzynia" : "🥈 Srebrna Skrzynia";
 
-      mc.innerHTML = `
-        <div class="bg-white rounded-3xl shadow-2xl border-4 border-emerald-400 p-6 text-center max-w-xl mx-auto">
-          <div class="text-6xl mb-2">🐉🏳️🏆</div>
-          <h2 class="text-3xl font-extrabold text-emerald-900 mb-2">SMOK POKONANY!</h2>
-          <p class="text-slate-700 font-bold mb-3">Wspólnymi siłami pokonaliście Groźnego Smoka! Zostało Wam ${state.dragonBattle.teamHp} ❤️!</p>
-          <div class="mb-4 p-3 rounded-2xl bg-amber-50 border-2 border-amber-400 text-sm font-extrabold text-amber-950">
-            🎁 Nagrody za zwycięstwo:<br>
-            👦 IGOR otrzymuje: ${chestBadgeLabel}<br>
-            🧑 HUBERT otrzymuje: ${chestBadgeLabel}
+        state.rewardQueue.push({ profKey: "igor", achievement: { name: "Pogromca Smoka (Igor)" }, chestType });
+        state.rewardQueue.push({ profKey: "hubert", achievement: { name: "Pogromca Smoka (Hubert)" }, chestType });
+        saveCloudData();
+
+        mc.innerHTML = `
+          <div class="bg-white rounded-3xl shadow-2xl border-4 border-emerald-400 p-6 text-center max-w-xl mx-auto">
+            <div class="text-6xl mb-2">🐉🏳️🏆</div>
+            <h2 class="text-3xl font-extrabold text-emerald-900 mb-2">SMOK POKONANY!</h2>
+            <p class="text-slate-700 font-bold mb-3">Wspólnymi siłami pokonaliście Groźnego Smoka! Zostało Wam ${state.dragonBattle.teamHp} ❤️!</p>
+            <div class="mb-4 p-3 rounded-2xl bg-amber-50 border-2 border-amber-400 text-sm font-extrabold text-amber-950">
+              🎁 Nagrody za zwycięstwo (Skrzynie dziś: ${updatedDragon.used}/${updatedDragon.limit}):<br>
+              👦 IGOR otrzymuje: ${chestBadgeLabel}<br>
+              🧑 HUBERT otrzymuje: ${chestBadgeLabel}
+            </div>
+            <div class="flex flex-col gap-2">
+              <button onclick="processNextRewardInQueue()" class="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold shadow-lg text-base">🎁 Otwórz Skrzynie!</button>
+              <button onclick="startCoopDragonBattle()" class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg text-base">🔄 Zagraj jeszcze raz</button>
+              <button onclick="showLessonMenu()" class="w-full py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-base">🏠 Wróć do Menu</button>
+            </div>
           </div>
-          <div class="flex flex-col gap-2">
-            <button onclick="processNextRewardInQueue()" class="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold shadow-lg text-base">🎁 Otwórz Skrzynie!</button>
-            <button onclick="startCoopDragonBattle()" class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg text-base">🔄 Zagraj jeszcze raz</button>
-            <button onclick="showLessonMenu()" class="w-full py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-base">🏠 Wróć do Menu</button>
-          </div>
-        </div>
-      `;
+        `;
 
-      // Lektor czyta na głos kto i jaką skrzynkę zdobył po pokonaniu Smoka
-      speakSequence([
-        {
-          lang: "pl",
-          text: `Hurra! Smok pokonany! Gratulacje chłopaki! Nagrodę za pokonanie smoka zdobywa Igor – otrzymuje ${chestNamePl}, oraz Hubert – również otrzymuje ${chestNamePl}! Zaraz otworzycie swoje skrzynki!`
-        }
-      ], () => {
-        processNextRewardInQueue();
-      });
+        speakSequence([
+          {
+            lang: "pl",
+            text: `Hurra! Smok pokonany! Gratulacje chłopaki! Nagrodę za pokonanie smoka zdobywa Igor – otrzymuje ${chestNamePl}, oraz Hubert – również otrzymuje ${chestNamePl}! Zaraz otworzycie swoje skrzynki!`
+          }
+        ], () => {
+          processNextRewardInQueue();
+        });
+      } else {
+        state.stats.igor.stars += 10;
+        state.stats.hubert.stars += 10;
+        saveCloudData();
+
+        mc.innerHTML = `
+          <div class="bg-white rounded-3xl shadow-2xl border-4 border-emerald-400 p-6 text-center max-w-xl mx-auto">
+            <div class="text-6xl mb-2">🐉🏳️⭐</div>
+            <h2 class="text-3xl font-extrabold text-emerald-900 mb-2">SMOK POKONANY!</h2>
+            <p class="text-slate-700 font-bold mb-3">Brawo chłopaki! Pokonaliście Smoka jeszcze raz!</p>
+            <div class="mb-4 p-3 rounded-2xl bg-sky-50 border-2 border-sky-300 text-xs md:text-sm font-extrabold text-sky-950">
+              ℹ️ Dzisiejszy limit skrzyń u Smoka (${dailyDragon.limit}/${dailyDragon.limit}) został już zdobyty!<br>
+              W nagrodę otrzymujecie po <strong>+10 ⭐</strong> oraz Puchar! Kolejne skrzynie u Smoka będą dostępne jutro lub teraz w lekcjach!
+            </div>
+            <div class="flex flex-col gap-2">
+              <button onclick="startCoopDragonBattle()" class="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg text-base">🔄 Zagraj jeszcze raz</button>
+              <button onclick="showLessonMenu()" class="w-full py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-base">🏠 Wróć do Lekcji</button>
+            </div>
+          </div>
+        `;
+
+        speakSequence([
+          {
+            lang: "pl",
+            text: `Brawo chłopaki! Smok znów pokonany! Dzisiejszy limit trzech skrzyń u smoka został już zdobyty, więc otrzymujecie po dziesięć złotych gwiazdek! Kolejne skrzynki czekają w lekcjach lub jutro!`
+          }
+        ]);
+      }
     } else {
       playEffect("wrong");
       mc.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl border-4 border-rose-500 p-6 text-center max-w-xl mx-auto"><div class="text-6xl mb-2">🐉🔥💥</div><h2 class="text-3xl font-extrabold text-rose-900 mb-2">Smok wygrał walkę!</h2><p class="text-slate-600 font-bold mb-4">Straciliście wszystkie serduszka! Smokowi zostało jeszcze ${state.dragonBattle.dragonHp} HP. Spróbujcie jeszcze raz!</p><div class="flex flex-col gap-2"><button onclick="startCoopDragonBattle()" class="w-full px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold shadow-lg text-lg">🔄⚔️ Zagraj jeszcze raz!</button><button onclick="showLessonMenu()" class="w-full px-6 py-3 rounded-2xl bg-slate-200 text-slate-800 font-bold text-base">🏠 Wróć do Menu</button></div></div>`;
@@ -718,11 +869,34 @@ function renderEndRoundScreen() {
   }
 
   playEffect("fanfare");
+  let duelChestBannerHtml = "";
   if (state.profile === "duel") {
     state.stats.igor.cups++; state.stats.hubert.cups++;
     if (state.duelScores.igor > state.duelScores.hubert) state.stats.igor.duelsWon++;
     else if (state.duelScores.hubert > state.duelScores.igor) state.stats.hubert.duelsWon++;
     checkAndUnlockAchievements("igor"); checkAndUnlockAchievements("hubert");
+
+    const dailyDuel = getDailySpecialChestStatus("duel");
+    if (dailyDuel.canEarn) {
+      recordDailySpecialChestAwarded("duel");
+      const updatedDuel = getDailySpecialChestStatus("duel");
+      if (state.duelScores.igor > state.duelScores.hubert) {
+        state.rewardQueue.push({ profKey: "igor", achievement: { name: "Zwycięzca Pojedynku (Igor)" }, chestType: "silver" });
+        duelChestBannerHtml = `<div class="mt-2 p-2.5 rounded-xl bg-amber-100 border border-amber-400 text-xs font-extrabold text-amber-950">🎁 Nagroda za Pojedynek (${updatedDuel.used}/${updatedDuel.limit} dziś): 👦 IGOR zdobywa 🥈 Srebrną Skrzynię!</div>`;
+      } else if (state.duelScores.hubert > state.duelScores.igor) {
+        state.rewardQueue.push({ profKey: "hubert", achievement: { name: "Zwycięzca Pojedynku (Hubert)" }, chestType: "silver" });
+        duelChestBannerHtml = `<div class="mt-2 p-2.5 rounded-xl bg-amber-100 border border-amber-400 text-xs font-extrabold text-amber-950">🎁 Nagroda za Pojedynek (${updatedDuel.used}/${updatedDuel.limit} dziś): 🧑 HUBERT zdobywa 🥈 Srebrną Skrzynię!</div>`;
+      } else {
+        state.rewardQueue.push({ profKey: "igor", achievement: { name: "Remis w Pojedynku (Igor)" }, chestType: "bronze" });
+        state.rewardQueue.push({ profKey: "hubert", achievement: { name: "Remis w Pojedynku (Hubert)" }, chestType: "bronze" });
+        duelChestBannerHtml = `<div class="mt-2 p-2.5 rounded-xl bg-amber-100 border border-amber-400 text-xs font-extrabold text-amber-950">🎁 Remis (${updatedDuel.used}/${updatedDuel.limit} dziś): Obaj bracia zdobywają 📦 Brązową Skrzynię!</div>`;
+      }
+      setTimeout(processNextRewardInQueue, 450);
+    } else {
+      state.stats.igor.stars += 5;
+      state.stats.hubert.stars += 5;
+      duelChestBannerHtml = `<div class="mt-2 p-2.5 rounded-xl bg-sky-100 border border-sky-300 text-xs font-bold text-sky-950">ℹ️ Dzisiejszy limit skrzyń w Pojedynku VS (${dailyDuel.limit}/${dailyDuel.limit}) został już zdobyty! W nagrodę dostajecie po +5 ⭐!</div>`;
+    }
   } else {
     p.cups++;
     advanceDailyQuestProgress(profKey, "rounds", 1);
@@ -742,7 +916,7 @@ function renderEndRoundScreen() {
 
   const isMemory = finishedLessonId === "memory_game";
   const duelInfo = state.profile === "duel"
-    ? `<div class="my-3 p-4 rounded-2xl bg-purple-50 border-2 border-purple-300 font-extrabold text-lg">${state.duelScores.igor > state.duelScores.hubert ? '🏆 Zwycięża IGOR!' : state.duelScores.hubert > state.duelScores.igor ? '🏆 Zwycięża HUBERT!' : '🤝 Zasłużony REMIS!'}<div class="text-sm mt-1">👦 Igor: ${state.duelScores.igor}/8 pkt &nbsp;|&nbsp; 🧑 Hubert: ${state.duelScores.hubert}/8 pkt</div></div>`
+    ? `<div class="my-3 p-4 rounded-2xl bg-purple-50 border-2 border-purple-300 font-extrabold text-lg">${state.duelScores.igor > state.duelScores.hubert ? '🏆 Zwycięża IGOR!' : state.duelScores.hubert > state.duelScores.igor ? '🏆 Zwycięża HUBERT!' : '🤝 Zasłużony REMIS!'}<div class="text-sm mt-1">👦 Igor: ${state.duelScores.igor}/8 pkt &nbsp;|&nbsp; 🧑 Hubert: ${state.duelScores.hubert}/8 pkt</div>${duelChestBannerHtml}</div>`
     : (isMemory
         ? `<p class="text-slate-700 font-bold mb-4">Brawo! Znaleziono wszystkie pary (${state.memoryMatchedPairs}/${state.memoryMatchedPairs})! 🎉</p>`
         : `<p class="text-slate-600 mb-4">Wynik: <strong>${state.roundScore}/${state.roundQuestions.length}</strong> (Błędy: ${state.roundMistakes})</p>`);

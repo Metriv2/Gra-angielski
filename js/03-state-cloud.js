@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/03-state-cloud.js
-   STAN GRY, URODZINY, KOLEJKA SKRZYŃ SYNA, TRWAŁE LEKCJE I SYNCHRONIZACJA GAS
+   STAN GRY, URODZINY, KOLEJKA SKRZYŃ, DZIENNY LIMIT SKRZYŃ I SYNCHRONIZACJA GAS
    ============================================================================ */
 
 const PROFILE_META = {
@@ -75,6 +75,43 @@ function checkPendingDadChestsForPlayer(profKey) {
   }, 450);
 }
 
+function getDailySpecialChestStatus(mode) {
+  const limit = (typeof APP_CONFIG !== "undefined" && APP_CONFIG.dailySpecialChestLimit) ? APP_CONFIG.dailySpecialChestLimit : 3;
+  const today = new Date().toISOString().slice(0, 10);
+  const field = mode === "dragon" ? "dragonChestDaily" : "duelChestDaily";
+
+  let maxUsed = 0;
+  ["igor", "hubert"].forEach(k => {
+    const p = ensurePlayerStructure(state.stats[k]);
+    state.stats[k] = p;
+    const rec = p[field];
+    if (rec && rec.date === today) {
+      maxUsed = Math.max(maxUsed, rec.count || 0);
+    }
+  });
+
+  return {
+    limit,
+    used: maxUsed,
+    remaining: Math.max(0, limit - maxUsed),
+    canEarn: maxUsed < limit
+  };
+}
+
+function recordDailySpecialChestAwarded(mode) {
+  const today = new Date().toISOString().slice(0, 10);
+  const field = mode === "dragon" ? "dragonChestDaily" : "duelChestDaily";
+  const status = getDailySpecialChestStatus(mode);
+  const nextCount = status.used + 1;
+
+  ["igor", "hubert"].forEach(k => {
+    const p = ensurePlayerStructure(state.stats[k]);
+    p[field] = { date: today, count: nextCount };
+    state.stats[k] = p;
+  });
+  saveCloudData();
+}
+
 const DEFAULT_AVATAR_CALIBRATION = {
   cap:         { label: "🧢 Czapki (Brązowa i Srebrna)", top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
   goldCap:     { label: "👑 Czapki (Złota)",             top: -3, width: 48, height: 31, scaleX: 1.06, scaleY: 1.06 },
@@ -123,6 +160,8 @@ function createDefaultPlayerStats() {
     badges: [], avatar: { head: "", torso: "", legs: "", pet: "" },
     unlockedItems: [], memoryAnimals: [], hardWords: [],
     pendingChests: [],
+    dragonChestDaily: { date: "", count: 0 },
+    duelChestDaily: { date: "", count: 0 },
     petFood: {}, petXp: {},
     dailyQuest: { date: "", type: "", title: "", target: 1, progress: 0, rewardStars: 30, claimed: false },
     lessonCounts: {}, equipped: {}
@@ -179,6 +218,8 @@ function ensurePlayerStructure(p) {
     memoryAnimals: Array.from(new Set(rawAnimals)),
     hardWords: Array.isArray(p.hardWords) ? p.hardWords : [],
     pendingChests: Array.isArray(p.pendingChests) ? p.pendingChests : [],
+    dragonChestDaily: (p.dragonChestDaily && typeof p.dragonChestDaily === "object") ? { ...def.dragonChestDaily, ...p.dragonChestDaily } : def.dragonChestDaily,
+    duelChestDaily: (p.duelChestDaily && typeof p.duelChestDaily === "object") ? { ...def.duelChestDaily, ...p.duelChestDaily } : def.duelChestDaily,
     petFood: (p.petFood && typeof p.petFood === "object") ? p.petFood : {},
     petXp: (p.petXp && typeof p.petXp === "object") ? p.petXp : {},
     dailyQuest: (p.dailyQuest && typeof p.dailyQuest === "object") ? { ...def.dailyQuest, ...p.dailyQuest } : def.dailyQuest,
@@ -190,6 +231,13 @@ function ensurePlayerStructure(p) {
     },
     equipped: { ...def.equipped, ...(p.equipped || {}) }
   };
+}
+
+function mergeDailyCounterSafe(locRec, cldRec) {
+  const l = locRec || { date: "", count: 0 };
+  const c = cldRec || { date: "", count: 0 };
+  if (l.date === c.date) return { date: l.date, count: Math.max(l.count || 0, c.count || 0) };
+  return (c.date || "") >= (l.date || "") ? c : l;
 }
 
 function mergePlayerProgressSafe(localRaw, cloudRaw) {
@@ -231,6 +279,8 @@ function mergePlayerProgressSafe(localRaw, cloudRaw) {
     memoryAnimals: Array.from(new Set([...(loc.memoryAnimals || []), ...(cld.memoryAnimals || [])])),
     hardWords: (cld.hardWords && cld.hardWords.length > 0) ? cld.hardWords : (loc.hardWords || []),
     pendingChests: [...(cld.pendingChests || []), ...(loc.pendingChests || [])].filter((v, i, arr) => arr.findIndex(x => JSON.stringify(x) === JSON.stringify(v)) === i),
+    dragonChestDaily: mergeDailyCounterSafe(loc.dragonChestDaily, cld.dragonChestDaily),
+    duelChestDaily: mergeDailyCounterSafe(loc.duelChestDaily, cld.duelChestDaily),
     petFood: mergedPetFood,
     petXp: mergedPetXp,
     lessonCounts: mergedLessonCounts,
@@ -325,7 +375,7 @@ function isEffectiveIgorMode(lessonIdOverride = null) {
     : ((state.stats && Array.isArray(state.stats.equalizedLessonsForIgor)) ? state.stats.equalizedLessonsForIgor : []);
 
   if (activeLid && eqList.includes(activeLid)) {
-    return false; // Zrównane z poziomem Huberta!
+    return false;
   }
   if (state.profile === "igor") return true;
   if (state.profile === "tata" && state.tataPreviewAsIgor) return true;
@@ -361,9 +411,6 @@ function areNewFeaturesActive() {
   return true;
 }
 
-// ------------------------------------------------------------------------
-// KOMUNIKACJA Z CHMURĄ (ZAPIS / ODCZYT Z OCHRONĄ POSTĘPÓW I LEKCJI)
-// ------------------------------------------------------------------------
 function loadCloudData() {
   let localStatsCache = null;
   let localLessonsCache = null;

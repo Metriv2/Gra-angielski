@@ -777,7 +777,7 @@ function checkUniversalAnswer(idx, isShopCart = false) {
         clearTimeout(window._dragonPostAnimTimer);
         window._dragonPostAnimTimer = setTimeout(() => {
           advanceNextQuestion(true);
-        }, 4650);
+        }, 2200);
       });
     } else {
       playEffect("success");
@@ -800,7 +800,7 @@ function checkUniversalAnswer(idx, isShopCart = false) {
         clearTimeout(window._dragonPostAnimTimer);
         window._dragonPostAnimTimer = setTimeout(() => {
           advanceNextQuestion(true);
-        }, 4650);
+        }, 2200);
       });
     } else if (state.profile === "duel") {
       playEffect("wrong");

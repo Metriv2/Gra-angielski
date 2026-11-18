@@ -61,8 +61,8 @@ function hideDragonFullscreenClash() {
   clearTimeout(window._dragonHpAnimTimer);
   const ov = document.getElementById("dragonFullscreenOverlay");
   if (ov) {
-    ov.classList.add("hidden");
-    ov.classList.remove("flex");
+    ov.className = "fixed inset-0 z-[70] hidden pointer-events-none";
+    ov.innerHTML = "";
   }
 }
 

@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/07-games-core.js
-   PASEK GRY, ANIMACJA SMOKA (LEKTOR PRZED ANIMACJĄ), LIMIT 3 SKRZYŃ I GRY
+   PASEK GRY, PEŁNOEKRANOWA ANIMACJA SMOKA, LIMIT 3 SKRZYŃ, LEKARZ I QUIZ
    ============================================================================ */
 
 (function ensureDragonFullscreenStyles() {
@@ -193,29 +193,6 @@ function showDragonFullscreenClash(type) {
 
 function triggerDragonBattleAnimation(type) {
   window._dragonAnimUntil = Date.now() + 4550;
-  const hud = document.getElementById("dragonBattleHudBox");
-  const icon = document.getElementById("dragonBossIcon");
-  const fx = document.getElementById("dragonBattleFxOverlay");
-  if (hud) {
-    hud.classList.remove("dragon-hit-anim", "dragon-fire-anim");
-    if (icon) icon.classList.remove("dragon-hit-anim");
-    void hud.offsetWidth;
-
-    if (type === "hit") {
-      hud.classList.add("dragon-hit-anim");
-      if (icon) icon.classList.add("dragon-hit-anim");
-      if (fx) {
-        fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">⚔️💥</span>`;
-        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 1800);
-      }
-    } else if (type === "fire") {
-      hud.classList.add("dragon-fire-anim");
-      if (fx) {
-        fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">🔥🐉💥</span>`;
-        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 1800);
-      }
-    }
-  }
   showDragonFullscreenClash(type);
 }
 
@@ -263,8 +240,7 @@ function renderTopGameBar(lesson) {
     const dragonPct = Math.max(0, Math.round((db.dragonHp / db.maxDragonHp) * 100));
     const dailySt = getDailySpecialChestStatus("dragon");
     dragonHud = `
-      <div id="dragonBattleHudBox" class="relative mb-3 p-3 rounded-3xl bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white border-4 border-amber-400 shadow-xl overflow-hidden">
-        <div id="dragonBattleFxOverlay" class="pointer-events-none absolute inset-0 flex items-center justify-center z-30"></div>
+      <div id="dragonBattleHudBox" class="mb-3 p-3 rounded-3xl bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white border-4 border-amber-400 shadow-xl">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
           <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-2xl">
             <span class="text-xl">👦🧑🛡️</span>
@@ -286,7 +262,7 @@ function renderTopGameBar(lesson) {
                 <div class="h-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-500" style="width:${dragonPct}%"></div>
               </div>
             </div>
-            <span id="dragonBossIcon" class="text-4xl float-anim inline-block">🐉🔥</span>
+            <span class="text-3xl inline-block">🐉</span>
           </div>
         </div>
         <div class="text-center text-xs font-extrabold text-amber-200 bg-black/30 py-1.5 px-3 rounded-xl">${db.statusText}</div>
@@ -423,6 +399,7 @@ function renderColorMixGame(lesson) {
   `;
   speakSequence([{ lang: "pl", text: "Wskaż:" }, { lang: "en", text: q.en }]);
 }
+
 // ------------------------------------------------------------------------
 // GABINET MAŁEGO LEKARZA: SUWAKI KALIBRACJI STREF
 // ------------------------------------------------------------------------
@@ -772,13 +749,12 @@ function checkUniversalAnswer(idx, isShopCart = false) {
       fb.innerHTML = `<span class="text-emerald-600 font-extrabold">🛡️⚔️ Brawo! Atakujemy Smoka!</span>`;
       awardCorrectAnswer();
 
-      speakSequence([{ lang: "pl", text: "Super! Zaatakujemy teraz smoka!" }], () => {
-        triggerDragonBattleAnimation("hit");
-        clearTimeout(window._dragonPostAnimTimer);
-        window._dragonPostAnimTimer = setTimeout(() => {
-          advanceNextQuestion(true);
-        }, 4400);
-      });
+      speakSequence([{ lang: "pl", text: "Super! Zaatakujemy teraz smoka!" }]);
+      triggerDragonBattleAnimation("hit");
+      clearTimeout(window._dragonPostAnimTimer);
+      window._dragonPostAnimTimer = setTimeout(() => {
+        advanceNextQuestion(true);
+      }, 4650);
     } else {
       playEffect("success");
       fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! ${state.isHardWordsMode && state.currentQuestionMistakes === 0 ? 'Opanowano trudne słówko (+2 ⭐)!' : 'O to chodziło!'}</span>`;
@@ -795,13 +771,12 @@ function checkUniversalAnswer(idx, isShopCart = false) {
       state.dragonBattle.statusText = `🔥💥 ZIONIĘCIE OGNIEM! Smok trafia drużynę! Tracicie 1 serduszko! (Zostało: ${state.dragonBattle.teamHp} ❤️)`;
       fb.innerHTML = `<span class="text-rose-600 font-extrabold">🔥💥 O nie! Smok atakuje nas! Szukaliśmy: ${q.en} (${q.pl})</span>`;
 
-      speakSequence([{ lang: "pl", text: "Niestety, smok atakuje nas!" }], () => {
-        triggerDragonBattleAnimation("fire");
-        clearTimeout(window._dragonPostAnimTimer);
-        window._dragonPostAnimTimer = setTimeout(() => {
-          advanceNextQuestion(true);
-        }, 4400);
-      });
+      speakSequence([{ lang: "pl", text: "Niestety, smok atakuje nas!" }]);
+      triggerDragonBattleAnimation("fire");
+      clearTimeout(window._dragonPostAnimTimer);
+      window._dragonPostAnimTimer = setTimeout(() => {
+        advanceNextQuestion(true);
+      }, 4650);
     } else if (state.profile === "duel") {
       playEffect("wrong");
       state.answeredCurrent = true;
@@ -834,33 +809,31 @@ function awardCorrectAnswer() {
 }
 
 function advanceNextQuestion(forceSkip = false) {
+  if (!forceSkip && state.isCoopDragonMode && window._dragonAnimUntil && Date.now() < window._dragonAnimUntil) {
+    const waitMs = window._dragonAnimUntil - Date.now();
+    clearTimeout(window._dragonPendingNextTimer);
+    window._dragonPendingNextTimer = setTimeout(() => {
+      window._dragonAnimUntil = 0;
+      advanceNextQuestion(true);
+    }, waitMs);
+    return;
+  }
   clearTimeout(window._dragonPendingNextTimer);
   clearTimeout(window._dragonPostAnimTimer);
   window._dragonAnimUntil = 0;
 
   cancelAllSpeechAndTimers();
-  if (typeof hideDragonFullscreenClash === "function") hideDragonFullscreenClash();
-  
-  window._letterTargetWord = ""; 
-  window._letterRoundIdx = -1;
-
+  hideDragonFullscreenClash();
+  window._letterTargetWord = ""; window._letterRoundIdx = -1;
   if (!state.answeredCurrent) {
-    state.roundResults.push("wrong"); 
-    state.roundMistakes++;
-    if (state.isCoopDragonMode) {
-      state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
-    }
+    state.roundResults.push("wrong"); state.roundMistakes++;
+    if (state.isCoopDragonMode) state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
   }
-
-  if (state.isCoopDragonMode && (state.dragonBattle.dragonHp <= 0 || state.dragonBattle.teamHp <= 0)) {
-    return renderEndRoundScreen();
-  }
-
+  if (state.isCoopDragonMode && (state.dragonBattle.dragonHp <= 0 || state.dragonBattle.teamHp <= 0)) return renderEndRoundScreen();
   if (state.profile === "duel" || state.isCoopDragonMode) {
     state.duelTurn = state.duelTurn === "igor" ? "hubert" : "igor";
     state.duelReadyWaiting = true;
   }
-
   state.roundIndex++;
   renderCurrentQuestion();
 }

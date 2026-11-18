@@ -1,218 +1,453 @@
-(function ensureDragonFullscreenStyles() {
-  if (document.getElementById("dragonFullscreenStyles")) return;
-  const style = document.createElement("style");
-  style.id = "dragonFullscreenStyles";
-  style.textContent = `
-    @keyframes dragonStageAppear {
-      0%   { opacity: 0; transform: scale(0.25) translateY(30px); filter: brightness(0.4); }
-      65%  { opacity: 1; transform: scale(1.14) translateY(-6px); filter: brightness(1.15) drop-shadow(0 0 28px rgba(251,191,36,0.85)); }
-      100% { opacity: 1; transform: scale(1.04) translateY(0); filter: brightness(1); }
-    }
-    @keyframes dragonClashZoomHit {
-      0%   { transform: scale(1.04); filter: brightness(1); }
-      22%  { transform: scale(1.30); filter: brightness(1.55) drop-shadow(0 0 36px rgba(239,68,68,1)); }
-      45%  { transform: scale(1.14) rotate(-9deg); filter: sepia(1) saturate(8) hue-rotate(-38deg) brightness(1.3); }
-      68%  { transform: scale(1.22) rotate(7deg); filter: sepia(0.8) saturate(6) hue-rotate(-25deg); }
-      86%  { transform: scale(1.08) rotate(-3deg); filter: brightness(1.15); }
-      100% { transform: scale(1.0) rotate(0deg); filter: brightness(1); }
-    }
-    @keyframes dragonClashLungeFire {
-      0%   { transform: scale(1.04); }
-      28%  { transform: scale(1.52) translateY(10px); filter: drop-shadow(0 0 46px rgba(249,115,22,1)); }
-      52%  { transform: scale(1.40) rotate(-6deg); filter: drop-shadow(0 0 38px rgba(239,68,68,1)); }
-      76%  { transform: scale(1.48) rotate(6deg); }
-      100% { transform: scale(1.28) rotate(0deg); }
-    }
-    @keyframes dragonOverlayShake {
-      0%, 100% { transform: translate(0, 0); }
-      10% { transform: translate(-16px, 10px) rotate(-1.4deg); }
-      20% { transform: translate(16px, -10px) rotate(1.4deg); }
-      30% { transform: translate(-15px, -8px) rotate(-1.1deg); }
-      40% { transform: translate(15px, 8px) rotate(1.1deg); }
-      50% { transform: translate(-12px, 6px) rotate(-0.8deg); }
-      60% { transform: translate(12px, -6px) rotate(0.8deg); }
-      74% { transform: translate(-8px, 4px); }
-      88% { transform: translate(8px, -4px); }
-    }
-    @keyframes dragonWeaponSlow {
-      0%   { opacity: 0; transform: scale(0.3) rotate(-40deg); }
-      22%  { opacity: 1; transform: scale(1.42) rotate(12deg); }
-      68%  { opacity: 1; transform: scale(1.22) rotate(-6deg); }
-      100% { opacity: 0; transform: scale(1.0) rotate(18deg); }
-    }
-    .dragon-fs-appear { animation: dragonStageAppear 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    .dragon-fs-zoom-hit { animation: dragonClashZoomHit 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    .dragon-fs-lunge-fire { animation: dragonClashLungeFire 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    .dragon-fs-shake { animation: dragonOverlayShake 1.7s ease-in-out; }
-    .dragon-weapon-slow { animation: dragonWeaponSlow 2.1s ease-out forwards; }
-  `;
-  document.head.appendChild(style);
-})();
+/* ============================================================================
+   PLIK: js/04-audio-tour.js
+   DŹWIĘKI (WZMOCNIONE EFEKTY SMOKA), LEKTOR TTS, "CO NOWEGO?" I AWATAR
+   ============================================================================ */
 
-function hideDragonFullscreenClash() {
-  clearTimeout(window._dragonStageTimer);
-  clearTimeout(window._dragonHpAnimTimer);
-  clearTimeout(window._dragonFsTimer);
-  const ov = document.getElementById("dragonFullscreenOverlay");
-  if (ov) {
-    ov.className = "fixed inset-0 z-[70] hidden pointer-events-none";
-    ov.innerHTML = "";
-  }
+function playEffect(type) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const now = audioCtx.currentTime;
+
+    const compressor = audioCtx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-12, now);
+    compressor.knee.setValueAtTime(18, now);
+    compressor.ratio.setValueAtTime(6, now);
+    compressor.attack.setValueAtTime(0.005, now);
+    compressor.release.setValueAtTime(0.2, now);
+    compressor.connect(audioCtx.destination);
+
+    if (type === "dragon_roar") {
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(620, now);
+      filter.frequency.exponentialRampToValueAtTime(240, now + 1.15);
+      filter.connect(compressor);
+
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const osc3 = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc1.type = "sawtooth";
+      osc2.type = "triangle";
+      osc3.type = "sawtooth";
+
+      osc1.frequency.setValueAtTime(150, now);
+      osc1.frequency.linearRampToValueAtTime(195, now + 0.28);
+      osc1.frequency.exponentialRampToValueAtTime(68, now + 1.15);
+
+      osc2.frequency.setValueAtTime(75, now);
+      osc2.frequency.exponentialRampToValueAtTime(40, now + 1.15);
+
+      osc3.frequency.setValueAtTime(112, now);
+      osc3.frequency.exponentialRampToValueAtTime(52, now + 1.15);
+
+      gain.gain.setValueAtTime(0.02, now);
+      gain.gain.linearRampToValueAtTime(0.72, now + 0.14);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.18);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      osc3.connect(gain);
+      gain.connect(filter);
+
+      osc1.start(now); osc2.start(now); osc3.start(now);
+      osc1.stop(now + 1.2); osc2.stop(now + 1.2); osc3.stop(now + 1.2);
+      return;
+    }
+
+    if (type === "sword_hit") {
+      const swoosh = audioCtx.createOscillator();
+      const swooshGain = audioCtx.createGain();
+      swoosh.type = "triangle";
+      swoosh.frequency.setValueAtTime(540, now);
+      swoosh.frequency.exponentialRampToValueAtTime(1600, now + 0.14);
+      swoosh.frequency.exponentialRampToValueAtTime(180, now + 0.34);
+      swooshGain.gain.setValueAtTime(0.65, now);
+      swooshGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      swoosh.connect(swooshGain);
+      swooshGain.connect(compressor);
+      swoosh.start(now);
+      swoosh.stop(now + 0.36);
+
+      [95, 523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = idx === 0 ? "sawtooth" : "triangle";
+        osc.frequency.setValueAtTime(freq, now + 0.15);
+        if (idx === 0) osc.frequency.exponentialRampToValueAtTime(38, now + 0.7);
+        g.gain.setValueAtTime(idx === 0 ? 0.75 : 0.36, now + 0.15);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.78);
+        osc.connect(g);
+        g.connect(compressor);
+        osc.start(now + 0.15);
+        osc.stop(now + 0.8);
+      });
+      return;
+    }
+
+    if (type === "dragon_fire") {
+      const bufferSize = Math.floor(audioCtx.sampleRate * 1.25);
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = noiseBuffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(920, now);
+      filter.frequency.exponentialRampToValueAtTime(220, now + 1.2);
+      filter.Q.value = 1.2;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.linearRampToValueAtTime(0.85, now + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.22);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(compressor);
+      noise.start(now);
+      noise.stop(now + 1.24);
+
+      const rumble = audioCtx.createOscillator();
+      const rGain = audioCtx.createGain();
+      rumble.type = "sawtooth";
+      rumble.frequency.setValueAtTime(95, now);
+      rumble.frequency.exponentialRampToValueAtTime(40, now + 1.15);
+      rGain.gain.setValueAtTime(0.62, now);
+      rGain.gain.exponentialRampToValueAtTime(0.001, now + 1.18);
+      rumble.connect(rGain);
+      rGain.connect(compressor);
+      rumble.start(now);
+      rumble.stop(now + 1.2);
+      return;
+    }
+
+    const notes = type === "success" ? [523.25, 659.25, 783.99, 1046.5] : type === "wrong" ? [240, 180] : type === "beep" ? [880] : [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.type = type === "wrong" ? "sawtooth" : "triangle";
+      osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+      gain.gain.setValueAtTime(0.24, now + idx * 0.09);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.24);
+      osc.connect(gain); gain.connect(compressor);
+      osc.start(now + idx * 0.09); osc.stop(now + idx * 0.09 + 0.25);
+    });
+  } catch (e) {}
 }
 
-function showDragonFullscreenClash(type) {
-  hideDragonFullscreenClash();
+function cancelAllSpeechAndTimers() {
+  activeSpeechToken++;
+  if (pendingAdvanceTimer) { clearTimeout(pendingAdvanceTimer); pendingAdvanceTimer = null; }
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  document.querySelectorAll(".tutorial-highlight").forEach(el => el.classList.remove("tutorial-highlight", "word-glow"));
+  setOwlFloatingGuide(false);
+  updateWhatsNewButtonGlow();
+}
 
-  let ov = document.getElementById("dragonFullscreenOverlay");
-  if (!ov) {
-    ov = document.createElement("div");
-    ov.id = "dragonFullscreenOverlay";
-    document.body.appendChild(ov);
+function speakSequence(segments, onComplete = null) {
+  cancelAllSpeechAndTimers();
+  const myToken = activeSpeechToken;
+  if (!("speechSynthesis" in window) || !segments || !segments.length) {
+    if (onComplete) pendingAdvanceTimer = setTimeout(onComplete, 800);
+    return;
   }
+  const voices = window.speechSynthesis.getVoices();
+  let idx = 0;
+  function next() {
+    if (myToken !== activeSpeechToken) return;
+    if (idx >= segments.length) {
+      if (onComplete) pendingAdvanceTimer = setTimeout(() => { if (myToken === activeSpeechToken) onComplete(); }, 450);
+      return;
+    }
+    const seg = segments[idx++];
+    if (seg.onStart) seg.onStart();
+    const utter = new SpeechSynthesisUtterance(seg.text.toLowerCase());
+    window._activeUtterance = utter;
+    if (seg.lang === "en") {
+      utter.lang = "en-GB";
+      const enV = voices.find(v => v.lang.startsWith("en-GB") || v.lang.startsWith("en-US") || v.lang.startsWith("en"));
+      if (enV) utter.voice = enV;
+      utter.rate = state.turtleMode ? 0.6 : 0.85;
+    } else {
+      utter.lang = "pl-PL";
+      const plV = voices.find(v => v.lang.startsWith("pl"));
+      if (plV) utter.voice = plV;
+      utter.rate = 1.02;
+    }
+    let done = false;
+    const finish = () => { if (done || myToken !== activeSpeechToken) return; done = true; if (seg.onEnd) seg.onEnd(); next(); };
+    const safety = setTimeout(finish, Math.max(4200, seg.text.length * 145));
+    utter.onend = () => { clearTimeout(safety); finish(); };
+    utter.onerror = () => { clearTimeout(safety); finish(); };
+    window.speechSynthesis.speak(utter);
+  }
+  next();
+}
 
-  const db = state.dragonBattle || { dragonHp: 10, maxDragonHp: 10, teamHp: 4, maxTeamHp: 4 };
-  const isHit = type === "hit";
-  const isIgor = state.duelTurn === "igor";
-  const heroKey = isIgor ? "igor" : "hubert";
-  const heroName = isIgor ? "IGOR" : "HUBERT";
+function getPetLevelInfo(xp) {
+  const fed = xp || 0;
+  const level = Math.floor(fed / 3) + 1;
+  const inLevel = fed % 3;
+  return { level, fed, inLevel, nextTarget: 3 };
+}
 
-  const prevDragonHp = isHit ? Math.min(db.maxDragonHp, db.dragonHp + 1) : db.dragonHp;
-  const startDragonPct = Math.max(0, Math.round((prevDragonHp / db.maxDragonHp) * 100));
-  const endDragonPct = Math.max(0, Math.round((db.dragonHp / db.maxDragonHp) * 100));
+function shouldGlowWhatsNew() {
+  if (!state.profile || state.profile === "duel") return false;
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  const p = state.stats[profKey];
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.1";
+  return !p || p.seenVersion !== ver;
+}
 
-  const prevTeamHp = !isHit ? Math.min(db.maxTeamHp, db.teamHp + 1) : db.teamHp;
-  const startHearts = "❤️".repeat(Math.max(0, prevTeamHp)) + "🖤".repeat(Math.max(0, db.maxTeamHp - prevTeamHp));
-  const endHearts = "❤️".repeat(Math.max(0, db.teamHp)) + "💔".repeat(Math.max(0, db.maxTeamHp - db.teamHp));
+function updateWhatsNewButtonGlow() {
+  const btn = document.getElementById("navWhatsNewBtn");
+  if (!btn) return;
+  if (state.profile === "duel") {
+    btn.classList.add("hidden");
+    btn.classList.remove("tutorial-highlight");
+    return;
+  }
+  btn.classList.remove("hidden");
+  btn.classList.toggle("tutorial-highlight", shouldGlowWhatsNew());
+}
 
-  // ETAP 1 (0.0s - 1.45s): Pojawienie się Smoka + ryk
-  if (typeof playEffect === "function") playEffect("dragon_roar");
+function checkAutoShowWhatsNewOnVersionChange(profKey) {
+  if (!PROFILE_META[profKey]) return false;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.1";
+  if (p.seenVersion === ver) return false;
+  setTimeout(() => {
+    openWhatsNewModal(false);
+  }, 350);
+  return true;
+}
 
-  ov.className = "fixed inset-0 z-[70] flex flex-col items-center justify-center p-4 backdrop-blur-sm bg-gradient-to-b from-slate-950/94 via-purple-950/90 to-slate-950/96 transition-colors duration-500";
-
-  ov.innerHTML = `
-    <div id="dragonFsCard" class="max-w-md w-full rounded-3xl border-4 border-amber-400 bg-slate-900/90 p-5 text-center text-white shadow-2xl relative overflow-hidden transition-colors duration-500">
-      <div id="dragonFsBadge" class="inline-block px-4 py-1.5 rounded-full font-extrabold text-xs uppercase tracking-wider mb-3 bg-amber-400 text-slate-950">
-        🐉 GROŹNY SMOK POJAWIA SIĘ NA ARENIE!
-      </div>
-
-      <div class="relative my-3 flex items-center justify-center h-52">
-        <div id="dragonFsSprite" class="text-[126px] leading-none select-none dragon-fs-appear">🐉</div>
-        <div id="dragonFsWeaponFx" class="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
-      </div>
-
-      <div class="mb-3">
-        <div class="flex justify-between text-xs font-extrabold text-amber-300 mb-1">
-          <span>🐉 Życie Smoka</span>
-          <span id="dragonFsHpText">${prevDragonHp} / ${db.maxDragonHp} HP</span>
+function setOwlFloatingGuide(visible, titleText = "", stepText = "") {
+  let bar = document.getElementById("owlTourFloatingBanner");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "owlTourFloatingBanner";
+    bar.className = "fixed bottom-3 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[95%] bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-4 border-amber-500 rounded-3xl p-3.5 shadow-2xl hidden";
+    document.body.appendChild(bar);
+  }
+  if (!visible) { bar.classList.add("hidden"); return; }
+  bar.classList.remove("hidden");
+  bar.innerHTML = `
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 text-left">
+        <span class="text-4xl float-anim shrink-0">🦉👉</span>
+        <div>
+          <div class="text-xs font-extrabold uppercase text-amber-900">${titleText}</div>
+          <div class="text-xs md:text-sm font-bold text-slate-900 leading-snug mt-0.5">${stepText}</div>
         </div>
-        <div class="w-full h-4 bg-slate-800 rounded-full overflow-hidden border-2 border-amber-400">
-          <div id="dragonFsHpBar" class="h-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 transition-all duration-1000 ease-out" style="width:${startDragonPct}%"></div>
-        </div>
       </div>
-
-      <div class="flex items-center justify-between bg-black/45 rounded-2xl p-2.5 border border-white/15">
-        <div class="flex items-center gap-2">
-          ${typeof renderBoyAvatarSvg === "function" ? renderBoyAvatarSvg(heroKey, 48) : ""}
-          <div class="text-left">
-            <div class="text-[10px] font-bold text-slate-300 uppercase">Życie Braci</div>
-            <div id="dragonFsHearts" class="text-base tracking-wider transition-all duration-500">${startHearts}</div>
-          </div>
-        </div>
-        <div id="dragonFsActionNote" class="text-xs font-extrabold text-amber-300">
-          ${isHit ? `🛡️ ${heroName} szykuje atak!` : `⚠️ Uwaga! Smok bierze oddech!`}
-        </div>
-      </div>
+      <button onclick="stopWhatsNewLiveTour()" class="shrink-0 px-3.5 py-2 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow">
+        ⏹️ Zakończ pokaz
+      </button>
     </div>
   `;
-
-  // ETAP 2 (po 1.45s): Atak mieczem LUB zionięcie ogniem Smoka + dźwięk ataku
-  window._dragonStageTimer = setTimeout(() => {
-    const currentOv = document.getElementById("dragonFullscreenOverlay");
-    if (!currentOv || currentOv.classList.contains("hidden")) return;
-
-    if (typeof playEffect === "function") {
-      playEffect(isHit ? "sword_hit" : "dragon_fire");
-    }
-
-    currentOv.className = `fixed inset-0 z-[70] flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-colors duration-300 ${
-      isHit
-        ? "bg-gradient-to-b from-red-950/94 via-rose-900/90 to-slate-950/96"
-        : "bg-gradient-to-b from-red-900/96 via-orange-950/94 to-black/96 dragon-fs-shake"
-    }`;
-
-    const card = document.getElementById("dragonFsCard");
-    const badge = document.getElementById("dragonFsBadge");
-    const sprite = document.getElementById("dragonFsSprite");
-    const weaponFx = document.getElementById("dragonFsWeaponFx");
-    const actionNote = document.getElementById("dragonFsActionNote");
-
-    if (card) {
-      card.className = `max-w-md w-full rounded-3xl border-4 ${
-        isHit ? "border-amber-400 bg-rose-950/90" : "border-red-500 bg-red-950/92"
-      } p-5 text-center text-white shadow-2xl relative overflow-hidden transition-colors duration-300`;
-    }
-    if (badge) {
-      badge.className = `inline-block px-4 py-1.5 rounded-full font-extrabold text-xs uppercase tracking-wider mb-3 ${
-        isHit ? "bg-emerald-500 text-slate-950" : "bg-red-600 text-white animate-pulse"
-      }`;
-      badge.textContent = isHit
-        ? `⚔️ TRAFIENIE! ${heroName} UDERZA W SMOKA!`
-        : `🔥 SMOK ZIONIE OGNIEM NA DRUŻYNĘ!`;
-    }
-    if (sprite) {
-      sprite.className = `text-[126px] leading-none select-none ${
-        isHit ? "dragon-fs-zoom-hit" : "dragon-fs-lunge-fire"
-      }`;
-    }
-    if (weaponFx) {
-      weaponFx.innerHTML = `<span class="text-7xl dragon-weapon-slow">${isHit ? "⚔️💥" : "🔥🔥🔥"}</span>`;
-    }
-    if (actionNote) {
-      actionNote.className = `text-xs font-extrabold ${isHit ? "text-emerald-300" : "text-rose-300"}`;
-      actionNote.textContent = isHit ? "-1 HP Smoka!" : "-1 ❤️ Drużyny!";
-    }
-  }, 1450);
-
-  // Aktualizacja paska HP / serduszek w trakcie ciosu (2.05s)
-  window._dragonHpAnimTimer = setTimeout(() => {
-    const bar = document.getElementById("dragonFsHpBar");
-    const hpTxt = document.getElementById("dragonFsHpText");
-    const heartsEl = document.getElementById("dragonFsHearts");
-    if (bar) bar.style.width = `${endDragonPct}%`;
-    if (hpTxt) hpTxt.textContent = `${db.dragonHp} / ${db.maxDragonHp} HP`;
-    if (heartsEl) heartsEl.textContent = endHearts;
-  }, 2050);
-
-  // Zamknięcie ekranu walki po 4.6s
-  window._dragonFsTimer = setTimeout(() => {
-    hideDragonFullscreenClash();
-  }, 4600);
 }
 
-function triggerDragonBattleAnimation(type) {
-  window._dragonAnimUntil = Date.now() + 4550;
-  const hud = document.getElementById("dragonBattleHudBox");
-  const icon = document.getElementById("dragonBossIcon");
-  const fx = document.getElementById("dragonBattleFxOverlay");
-  if (hud) {
-    hud.classList.remove("dragon-hit-anim", "dragon-fire-anim");
-    if (icon) icon.classList.remove("dragon-hit-anim");
-    void hud.offsetWidth;
+function stopWhatsNewLiveTour() {
+  cancelAllSpeechAndTimers();
+  setOwlFloatingGuide(false);
+  if (typeof closeAvatarModal === "function") closeAvatarModal();
+  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+}
 
-    if (type === "hit") {
-      hud.classList.add("dragon-hit-anim");
-      if (icon) icon.classList.add("dragon-hit-anim");
-      if (fx) {
-        fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">⚔️💥</span>`;
-        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 1800);
-      }
-    } else if (type === "fire") {
-      hud.classList.add("dragon-fire-anim");
-      if (fx) {
-        fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">🔥🐉💥</span>`;
-        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 1800);
-      }
+function openWhatsNewModal(startTourAfter = false) {
+  cancelAllSpeechAndTimers();
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.1";
+  if (state.profile && state.profile !== "duel") {
+    const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+    state.stats[profKey] = ensurePlayerStructure(state.stats[profKey]);
+    if (state.stats[profKey].seenVersion !== ver) {
+      state.stats[profKey].seenVersion = ver;
+      saveCloudData();
     }
   }
-  showDragonFullscreenClash(type);
+  updateWhatsNewButtonGlow();
+  const menuBtn = document.getElementById("menuWhatsNewBtn");
+  if (menuBtn) menuBtn.classList.remove("tutorial-highlight");
+
+  const itemsList = (typeof APP_CONFIG !== "undefined" && Array.isArray(APP_CONFIG.whatsNewItems)) ? APP_CONFIG.whatsNewItems : [];
+  const box = document.getElementById("whatsNewContentBox");
+  if (box) {
+    box.innerHTML = itemsList.map(item => `
+      <div class="p-3.5 rounded-2xl bg-rose-50/70 border-2 border-rose-200 flex items-start gap-3">
+        <span class="text-3xl shrink-0">${item.icon}</span>
+        <div>
+          <div class="font-extrabold text-rose-950 text-sm md:text-base">${item.title}</div>
+          <div class="text-xs md:text-sm font-bold text-slate-700 mt-0.5">${item.desc}</div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  const m = document.getElementById("whatsNewModal");
+  if (m) {
+    m.classList.remove("hidden");
+    m.classList.add("flex");
+  }
+  if (typeof syncVersionLabelsInDom === "function") syncVersionLabelsInDom();
+
+  const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : "Tato";
+  const summaryText = itemsList.map((it, i) => `${i + 1}. ${it.title} ${it.desc}`).join(" ");
+  speakSequence([
+    { lang: "pl", text: `Huhu! Cześć ${kidName}! Pojawiła się nowa Wersja ${ver}! Posłuchaj co nowego: ${summaryText}` }
+  ], () => {
+    if (startTourAfter) speakWhatsNewTour(0);
+  });
+}
+
+function closeWhatsNewModal() {
+  cancelAllSpeechAndTimers();
+  setOwlFloatingGuide(false);
+  const m = document.getElementById("whatsNewModal");
+  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
+  if (state.profile && PROFILE_META[state.profile]) {
+    checkPendingDadChestsForPlayer(state.profile);
+  }
+}
+
+function speakWhatsNewTour(onlyStep = 0) {
+  const m = document.getElementById("whatsNewModal");
+  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
+  if (typeof closeAvatarModal === "function") closeAvatarModal();
+  if (typeof closeBadgesModal === "function") closeBadgesModal();
+  if (typeof closeStickersModal === "function") closeStickersModal();
+  if (typeof showLessonMenu === "function") showLessonMenu();
+
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.1";
+  const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : "Tato";
+  const hl = (elOrId, on) => {
+    const el = typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
+    if (el) {
+      el.classList.toggle("tutorial-highlight", on);
+      if (on) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  const allSteps = [
+    {
+      stepId: 1, lang: "pl",
+      text: `Cześć ${kidName}! Już pokazuję nowości w wersji ${ver}! Po pierwsze: Pojedynek Braci oraz Walka ze Smokiem są teraz zawsze pod ręką w menu głównym!`,
+      onStart: () => { setOwlFloatingGuide(true, "⚔️🐉 Krok 1 z 4: Pojedynek Braci i Smok w Menu", "Przycisk Pojedynku Braci jest zawsze widoczny!"); hl("btnDuelMenuAlways", true); hl("btnCoopDragonMenu", true); },
+      onEnd: () => { hl("btnDuelMenuAlways", false); hl("btnCoopDragonMenu", false); }
+    },
+    {
+      stepId: 2, lang: "pl",
+      text: "Po drugie: Asystent Zakupowy w Awatarze! Kiedy wejdziesz w Awatar na górze i klikniesz swojego bohatera lub przycisk sprawdzenia gwiazdek, Sówka powie ile masz gwiazdek i podświetli skrzynie, które możesz kupić!",
+      onStart: () => { setOwlFloatingGuide(true, "👑💬 Krok 2 z 4: Asystent Zakupowy w Awatarze", "Kliknij „👑 Awatar” na górze, aby sprawdzić na jakie skrzynie wystarczą Twoje gwiazdki!"); hl("navAvatarBtn", true); },
+      onEnd: () => hl("navAvatarBtn", false)
+    },
+    {
+      stepId: 3, lang: "pl",
+      text: "Po trzecie: w walce ze Smokiem dodaliśmy pełnoekranową animację ataku i ognia z głośnymi efektami dźwiękowymi oraz nielimitowane próby z mikrofonem dla Huberta!",
+      onStart: () => { setOwlFloatingGuide(true, "🔥🗡️ Krok 3 z 4: Walka ze Smokiem", "Pełnoekranowa animacja i głośne dźwięki walki!"); hl("btnCoopDragonMenu", true); },
+      onEnd: () => hl("btnCoopDragonMenu", false)
+    },
+    {
+      stepId: 4, lang: "pl",
+      text: "I po czwarte: w lekcji Pieczenie Pankejków mąka, jogurt naturalny i olej mają swoje własne rysunki, a nowe słówka automatycznie trafiają do Pojedynku i walki ze Smokiem! Miłej zabawy!",
+      onStart: () => { setOwlFloatingGuide(true, "🥞🥣 Krok 4 z 4: Pankejki i nowe słówka", "Nowe lekcje automatycznie zasilają Pojedynek Braci i Smoka!"); hl("lessonCard_pancakes_cooking", true); },
+      onEnd: () => hl("lessonCard_pancakes_cooking", false)
+    }
+  ];
+
+  const stepsToRun = onlyStep > 0 ? allSteps.filter(s => s.stepId === onlyStep) : allSteps;
+  speakSequence(stepsToRun, () => setOwlFloatingGuide(false));
+}
+
+function toggleTurtle() {
+  state.turtleMode = !state.turtleMode;
+  const lbl = document.getElementById("turtleLabel");
+  if (lbl) lbl.textContent = state.turtleMode ? "Żółwik" : "Normalnie";
+}
+
+function startKidVoiceTour() {
+  if (!state.profile) return;
+  if (typeof closeBadgesModal === "function") closeBadgesModal();
+  if (typeof closeStickersModal === "function") closeStickersModal();
+  if (typeof closeAvatarModal === "function") closeAvatarModal();
+  if (state.currentLessonId && typeof showLessonMenu === "function") showLessonMenu();
+  const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : state.profile === "tata" ? "Tato" : "Chłopaki";
+  const hl = (id, on) => { const el = document.getElementById(id); if (el) { el.classList.toggle("tutorial-highlight", on); if (on) el.scrollIntoView({ behavior: "smooth", block: "center" }); } };
+  speakSequence([
+    { lang: "pl", text: `Cześć ${kidName}! Pokażę Ci co gdzie jest! Na środku ekranu masz kolorowe kafelki z lekcjami oraz Pojedynek Braci. Kliknij lekcję, aby zbierać gwiazdki!`, onStart: () => hl("lessonsGridBox", true), onEnd: () => hl("lessonsGridBox", false) },
+    { lang: "pl", text: "Teraz wchodzimy w Odznaki! Im więcej dni z rzędu grasz i im dokładniej odpowiadasz, tym większą masz szansę na srebrną lub złotą skrzynię!", onStart: () => { hl("navBadgesBtn", true); if (state.profile !== "duel" && typeof openBadgesModal === "function") openBadgesModal(); }, onEnd: () => { hl("navBadgesBtn", false); if (typeof closeBadgesModal === "function") closeBadgesModal(); } },
+    { lang: "pl", text: "Obok świeci przycisk Naklejki! Tam zobaczysz swój klaser ze stoma naklejkami.", onStart: () => hl("navStickersBtn", true), onEnd: () => hl("navStickersBtn", false) },
+    { lang: "pl", text: "A teraz wchodzimy w Awatar! Tutaj możesz ubierać swojego bohatera, zapytać asystenta ile masz gwiazdek i na jakie skrzynie Ci wystarczy, oraz karmić zwierzaka!", onStart: () => { hl("navAvatarBtn", true); if (state.profile !== "duel" && typeof openAvatarModal === "function") openAvatarModal(); }, onEnd: () => { hl("navAvatarBtn", false); if (typeof closeAvatarModal === "function") closeAvatarModal(); } }
+  ]);
+}
+
+function classifyHeadItem(src) {
+  if (!src) return "none";
+  const fn = src.split("/").pop().toLowerCase();
+  if (fn === "helmet_firefighter.png" || fn === "helmet_electrician.png") return "openHelmet";
+  if (fn.startsWith("helmet_") || fn.startsWith("mask_") || fn.includes("hot-dog")) return "helmet";
+  if (src.includes("/zlota/")) return "goldCap";
+  return "cap";
+}
+function classifyTorsoItem(src) {
+  if (!src) return "none";
+  const fn = src.split("/").pop().toLowerCase();
+  if (fn.startsWith("armor_") || fn.startsWith("jacket_") || fn.startsWith("suit_") || fn === "shirt_commando.png" || fn === "shirt_soldier.png" || fn === "shirt_police.png") return "armor";
+  return "shirt";
+}
+function classifyLegsItem(src) {
+  if (!src) return "none";
+  const fn = src.split("/").pop().toLowerCase();
+  if (fn.startsWith("jeans_")) return "jeans";
+  if (fn === "pants_barcelona.png" || fn === "pants_poland.png") return "goldShorts";
+  if (fn.startsWith("short_") || fn.startsWith("shorts_")) return "shorts";
+  if (fn === "pants_paramedic.png" || fn === "pants_police.png" || fn === "pants_firefighter.png") return "silverPants";
+  if (src.includes("/zlota/")) return "goldPants";
+  return "silverPants";
+}
+
+function renderBoyAvatarSvg(playerKey, size = 80) {
+  const key = PROFILE_META[playerKey] ? playerKey : "igor";
+  const p = ensurePlayerStructure(state.stats[key]);
+  state.stats[key] = p;
+  const avatar = p.avatar || {};
+  const cal = getAvatarCalibration();
+
+  const headImg = resolveOutfitPath(avatar.head); const torsoImg = resolveOutfitPath(avatar.torso); const legsImg = resolveOutfitPath(avatar.legs);
+  const headFb = getFallbackOutfitPath(headImg); const torsoFb = getFallbackOutfitPath(torsoImg); const legsFb = getFallbackOutfitPath(legsImg);
+  const headType = classifyHeadItem(headImg); const torsoType = classifyTorsoItem(torsoImg); const legsType = classifyLegsItem(legsImg);
+  const hCfg = cal[headType] || cal.cap; const tCfg = cal[torsoType] || cal.shirt; const lCfg = cal[legsType] || cal.jeans;
+
+  let baseClip = "none";
+  if (headType === "helmet") { if (headImg && !(headImg.includes("hot-dog"))) baseClip = "inset(28% 0% 0% 0%)"; }
+  else if (headType === "openHelmet") baseClip = "inset(15% 0% 0% 0%)";
+  else if (headType === "cap" || headType === "goldCap") baseClip = "inset(12% 0% 0% 0%)";
+
+  let petHtml = "";
+  if (avatar.pet) {
+    const memoryPool = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
+    const petObj = memoryPool.find(a => a.id === avatar.pet);
+    if (petObj) {
+      const petSize = Math.max(16, Math.floor(size * 0.40));
+      const lvInfo = getPetLevelInfo((p.petXp && p.petXp[avatar.pet]) || 0);
+      const badgeHtml = size >= 65 && lvInfo.fed > 0
+        ? `<span class="block text-[9px] font-extrabold bg-amber-400 text-amber-950 px-1 rounded-full border border-amber-600 leading-tight -mt-1">${lvInfo.level >= 3 ? '👑' : '❤️'} Lv.${lvInfo.level}</span>`
+        : "";
+      petHtml = `<div class="absolute bottom-0 -right-4 z-50 float-anim drop-shadow-md flex flex-col items-center" style="font-size: ${petSize}px; line-height: 1;"><span>${petObj.icon}</span>${badgeHtml}</div>`;
+    }
+  }
+
+  return `
+    <div class="relative mx-auto select-none pointer-events-none overflow-visible shrink-0" style="width: ${size}px; height: ${size}px; min-width: ${size}px; min-height: ${size}px;">
+      <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${baseClip};" onerror="this.style.display='none';" />
+      ${legsImg ? `<img src="${legsImg}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
+      ${torsoImg ? `<img src="${torsoImg}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
+      ${headImg ? `<img src="${headImg}" class="absolute left-1/2 object-fill z-40" style="top: ${hCfg.top}%; width: ${hCfg.width}%; height: ${hCfg.height}%; transform: translateX(-50%) scale(${hCfg.scaleX}, ${hCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${headFb}'!=='${headImg}'){this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
+      ${petHtml}
+    </div>
+  `;
 }

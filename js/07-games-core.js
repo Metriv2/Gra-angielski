@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/07-games-core.js
-   PASEK GRY, PEŁNOEKRANOWA ANIMACJA SMOKA, LIMIT 3 SKRZYŃ, LEKARZ, ZAGADKI I QUIZ
+   PASEK GRY, PEŁNOEKRANOWA ANIMACJA SMOKA (3.4s), LIMIT 3 SKRZYŃ, LEKARZ, QUIZ
    ============================================================================ */
 
 (function ensureDragonFullscreenStyles() {
@@ -9,36 +9,56 @@
   style.id = "dragonFullscreenStyles";
   style.textContent = `
     @keyframes dragonClashZoomHit {
-      0%   { transform: scale(0.75); filter: brightness(1); }
-      30%  { transform: scale(1.22); filter: brightness(1.45) drop-shadow(0 0 28px rgba(239,68,68,0.95)); }
-      55%  { transform: scale(1.08) rotate(-6deg); filter: sepia(1) saturate(6) hue-rotate(-35deg); }
-      75%  { transform: scale(1.15) rotate(5deg); filter: brightness(1.3); }
-      100% { transform: scale(1.0); filter: brightness(1); }
+      0%   { transform: scale(0.62); filter: brightness(1); }
+      28%  { transform: scale(1.26); filter: brightness(1.4) drop-shadow(0 0 32px rgba(239,68,68,0.95)); }
+      48%  { transform: scale(1.14) rotate(-8deg); filter: sepia(1) saturate(7) hue-rotate(-38deg) brightness(1.25); }
+      68%  { transform: scale(1.20) rotate(6deg); filter: sepia(0.8) saturate(5) hue-rotate(-25deg); }
+      85%  { transform: scale(1.10) rotate(-3deg); filter: brightness(1.15); }
+      100% { transform: scale(1.05) rotate(0deg); filter: brightness(1); }
     }
     @keyframes dragonClashLungeFire {
-      0%   { transform: scale(0.7) translateY(-20px); }
-      35%  { transform: scale(1.42) translateY(8px); filter: drop-shadow(0 0 36px rgba(249,115,22,1)); }
-      65%  { transform: scale(1.32) rotate(-4deg); }
-      85%  { transform: scale(1.38) rotate(4deg); }
-      100% { transform: scale(1.15); }
+      0%   { transform: scale(0.62) translateY(-18px); }
+      32%  { transform: scale(1.45) translateY(6px); filter: drop-shadow(0 0 42px rgba(249,115,22,1)); }
+      55%  { transform: scale(1.36) rotate(-5deg); filter: drop-shadow(0 0 35px rgba(239,68,68,1)); }
+      78%  { transform: scale(1.42) rotate(5deg); }
+      100% { transform: scale(1.25) rotate(0deg); }
     }
     @keyframes dragonOverlayShake {
       0%, 100% { transform: translate(0, 0); }
-      15% { transform: translate(-14px, 8px) rotate(-1.2deg); }
-      30% { transform: translate(14px, -8px) rotate(1.2deg); }
-      45% { transform: translate(-12px, -6px) rotate(-0.8deg); }
-      60% { transform: translate(12px, 6px) rotate(0.8deg); }
-      75% { transform: translate(-8px, 4px); }
-      90% { transform: translate(8px, -4px); }
+      10% { transform: translate(-15px, 9px) rotate(-1.3deg); }
+      20% { transform: translate(15px, -9px) rotate(1.3deg); }
+      30% { transform: translate(-14px, -7px) rotate(-1deg); }
+      40% { transform: translate(14px, 7px) rotate(1deg); }
+      50% { transform: translate(-11px, 6px) rotate(-0.7deg); }
+      60% { transform: translate(11px, -6px) rotate(0.7deg); }
+      72% { transform: translate(-8px, 4px); }
+      84% { transform: translate(8px, -4px); }
     }
-    .dragon-fs-zoom-hit { animation: dragonClashZoomHit 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    .dragon-fs-lunge-fire { animation: dragonClashLungeFire 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    .dragon-fs-shake { animation: dragonOverlayShake 0.65s ease-in-out; }
+    @keyframes dragonRedFlashBg {
+      0%   { opacity: 0; }
+      18%  { opacity: 1; }
+      55%  { opacity: 0.92; }
+      85%  { opacity: 0.85; }
+      100% { opacity: 0; }
+    }
+    @keyframes dragonWeaponSlow {
+      0%   { opacity: 0; transform: scale(0.35) rotate(-35deg); }
+      25%  { opacity: 1; transform: scale(1.35) rotate(10deg); }
+      65%  { opacity: 1; transform: scale(1.18) rotate(-5deg); }
+      100% { opacity: 0; transform: scale(1.0) rotate(15deg); }
+    }
+    .dragon-fs-zoom-hit { animation: dragonClashZoomHit 1.95s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .dragon-fs-lunge-fire { animation: dragonClashLungeFire 1.95s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .dragon-fs-shake { animation: dragonOverlayShake 1.45s ease-in-out; }
+    .dragon-fs-backdrop { animation: dragonRedFlashBg 3.4s ease-in-out forwards; }
+    .dragon-weapon-slow { animation: dragonWeaponSlow 1.65s ease-out forwards; }
   `;
   document.head.appendChild(style);
 })();
 
 function hideDragonFullscreenClash() {
+  clearTimeout(window._dragonFsTimer);
+  clearTimeout(window._dragonHpAnimTimer);
   const ov = document.getElementById("dragonFullscreenOverlay");
   if (ov) {
     ov.classList.add("hidden");
@@ -59,46 +79,52 @@ function showDragonFullscreenClash(type) {
   const isIgor = state.duelTurn === "igor";
   const heroKey = isIgor ? "igor" : "hubert";
   const heroName = isIgor ? "IGOR" : "HUBERT";
-  const dragonPct = Math.max(0, Math.round((db.dragonHp / db.maxDragonHp) * 100));
-  const hearts = "❤️".repeat(Math.max(0, db.teamHp)) + "💔".repeat(Math.max(0, db.maxTeamHp - db.teamHp));
 
-  ov.className = `fixed inset-0 z-[70] flex flex-col items-center justify-center p-4 backdrop-blur-sm transition-colors duration-300 ${
+  const prevDragonHp = isHit ? Math.min(db.maxDragonHp, db.dragonHp + 1) : db.dragonHp;
+  const startDragonPct = Math.max(0, Math.round((prevDragonHp / db.maxDragonHp) * 100));
+  const endDragonPct = Math.max(0, Math.round((db.dragonHp / db.maxDragonHp) * 100));
+
+  const prevTeamHp = !isHit ? Math.min(db.maxTeamHp, db.teamHp + 1) : db.teamHp;
+  const startHearts = "❤️".repeat(Math.max(0, prevTeamHp)) + "🖤".repeat(Math.max(0, db.maxTeamHp - prevTeamHp));
+  const endHearts = "❤️".repeat(Math.max(0, db.teamHp)) + "💔".repeat(Math.max(0, db.maxTeamHp - db.teamHp));
+
+  ov.className = `fixed inset-0 z-[70] flex flex-col items-center justify-center p-4 backdrop-blur-sm dragon-fs-backdrop ${
     isHit
-      ? "bg-gradient-to-b from-red-950/90 via-rose-900/85 to-slate-950/95"
-      : "bg-gradient-to-b from-red-900/95 via-orange-950/90 to-black/95 dragon-fs-shake"
+      ? "bg-gradient-to-b from-red-950/92 via-rose-900/88 to-slate-950/95"
+      : "bg-gradient-to-b from-red-900/95 via-orange-950/92 to-black/95 dragon-fs-shake"
   }`;
 
   ov.innerHTML = `
-    <div class="max-w-md w-full rounded-3xl border-4 ${isHit ? "border-amber-400 bg-rose-950/80" : "border-red-500 bg-red-950/85"} p-5 text-center text-white shadow-2xl relative overflow-hidden">
-      <div class="inline-block px-4 py-1 rounded-full font-extrabold text-xs uppercase tracking-wider mb-3 ${
+    <div class="max-w-md w-full rounded-3xl border-4 ${isHit ? "border-amber-400 bg-rose-950/85" : "border-red-500 bg-red-950/90"} p-5 text-center text-white shadow-2xl relative overflow-hidden">
+      <div class="inline-block px-4 py-1.5 rounded-full font-extrabold text-xs uppercase tracking-wider mb-3 ${
         isHit ? "bg-emerald-500 text-slate-950" : "bg-red-600 text-white animate-pulse"
       }">
         ${isHit ? `⚔️ TRAFIENIE! ${heroName} ATAKUJE SMOKA!` : `🔥 SMOK ZIONIE OGNIEM NA DRUŻYNĘ!`}
       </div>
 
-      <div class="relative my-3 flex items-center justify-center h-44">
-        <div class="text-[115px] leading-none select-none ${isHit ? "dragon-fs-zoom-hit" : "dragon-fs-lunge-fire"}">🐉</div>
+      <div class="relative my-3 flex items-center justify-center h-48">
+        <div class="text-[120px] leading-none select-none ${isHit ? "dragon-fs-zoom-hit" : "dragon-fs-lunge-fire"}">🐉</div>
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span class="text-7xl sword-slash-fx">${isHit ? "⚔️💥" : "🔥🔥🔥"}</span>
+          <span class="text-7xl dragon-weapon-slow">${isHit ? "⚔️💥" : "🔥🔥🔥"}</span>
         </div>
       </div>
 
       <div class="mb-3">
         <div class="flex justify-between text-xs font-extrabold text-amber-300 mb-1">
           <span>🐉 Życie Smoka</span>
-          <span>${db.dragonHp} / ${db.maxDragonHp} HP</span>
+          <span id="dragonFsHpText">${prevDragonHp} / ${db.maxDragonHp} HP</span>
         </div>
         <div class="w-full h-4 bg-slate-800 rounded-full overflow-hidden border-2 border-amber-400">
-          <div class="h-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 transition-all duration-500" style="width:${dragonPct}%"></div>
+          <div id="dragonFsHpBar" class="h-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 transition-all duration-1000 ease-out" style="width:${startDragonPct}%"></div>
         </div>
       </div>
 
-      <div class="flex items-center justify-between bg-black/40 rounded-2xl p-2.5 border border-white/15">
+      <div class="flex items-center justify-between bg-black/45 rounded-2xl p-2.5 border border-white/15">
         <div class="flex items-center gap-2">
-          ${typeof renderBoyAvatarSvg === "function" ? renderBoyAvatarSvg(heroKey, 46) : ""}
+          ${typeof renderBoyAvatarSvg === "function" ? renderBoyAvatarSvg(heroKey, 48) : ""}
           <div class="text-left">
             <div class="text-[10px] font-bold text-slate-300 uppercase">Życie Braci</div>
-            <div class="text-base tracking-wider">${hearts}</div>
+            <div id="dragonFsHearts" class="text-base tracking-wider transition-all duration-500">${startHearts}</div>
           </div>
         </div>
         <div class="text-xs font-extrabold ${isHit ? "text-emerald-300" : "text-rose-300"}">
@@ -108,13 +134,24 @@ function showDragonFullscreenClash(type) {
     </div>
   `;
 
+  clearTimeout(window._dragonHpAnimTimer);
+  window._dragonHpAnimTimer = setTimeout(() => {
+    const bar = document.getElementById("dragonFsHpBar");
+    const hpTxt = document.getElementById("dragonFsHpText");
+    const heartsEl = document.getElementById("dragonFsHearts");
+    if (bar) bar.style.width = `${endDragonPct}%`;
+    if (hpTxt) hpTxt.textContent = `${db.dragonHp} / ${db.maxDragonHp} HP`;
+    if (heartsEl) heartsEl.textContent = endHearts;
+  }, 650);
+
   clearTimeout(window._dragonFsTimer);
   window._dragonFsTimer = setTimeout(() => {
     hideDragonFullscreenClash();
-  }, 1900);
+  }, 3400);
 }
 
 function triggerDragonBattleAnimation(type) {
+  window._dragonAnimUntil = Date.now() + 3350;
   const hud = document.getElementById("dragonBattleHudBox");
   const icon = document.getElementById("dragonBossIcon");
   const fx = document.getElementById("dragonBattleFxOverlay");
@@ -128,13 +165,13 @@ function triggerDragonBattleAnimation(type) {
       if (icon) icon.classList.add("dragon-hit-anim");
       if (fx) {
         fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">⚔️💥</span>`;
-        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 700);
+        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 1200);
       }
     } else if (type === "fire") {
       hud.classList.add("dragon-fire-anim");
       if (fx) {
         fx.innerHTML = `<span class="text-5xl sword-slash-fx inline-block">🔥🐉💥</span>`;
-        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 700);
+        setTimeout(() => { if (fx) fx.innerHTML = ""; }, 1200);
       }
     }
   }
@@ -242,7 +279,7 @@ function renderTopGameBar(lesson) {
     <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-sky-200 flex flex-col gap-2 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-wrap gap-1.5 items-center">${subModesHtml}${tataSwitchBar}</div>
-        <button onclick="advanceNextQuestion()" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Pomiń ⏭️</button>
+        <button onclick="advanceNextQuestion(true)" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Pomiń ⏭️</button>
       </div>
       <div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100">
         <span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}
@@ -739,7 +776,19 @@ function awardCorrectAnswer() {
   saveCloudData();
 }
 
-function advanceNextQuestion() {
+function advanceNextQuestion(forceSkip = false) {
+  if (!forceSkip && state.isCoopDragonMode && window._dragonAnimUntil && Date.now() < window._dragonAnimUntil) {
+    const waitMs = window._dragonAnimUntil - Date.now();
+    clearTimeout(window._dragonPendingNextTimer);
+    window._dragonPendingNextTimer = setTimeout(() => {
+      window._dragonAnimUntil = 0;
+      advanceNextQuestion(true);
+    }, waitMs);
+    return;
+  }
+  clearTimeout(window._dragonPendingNextTimer);
+  window._dragonAnimUntil = 0;
+
   cancelAllSpeechAndTimers();
   hideDragonFullscreenClash();
   window._letterTargetWord = ""; window._letterRoundIdx = -1;

@@ -3,37 +3,33 @@
    CENTRALNA KONFIGURACJA WERSJI ORAZ WŁASNE GRAFIKI SVG DLA PANKEJKÓW
    ============================================================================ */
 
-const CURRENT_GAME_VERSION = "14.0";
+const CURRENT_GAME_VERSION = "14.1";
 
 const APP_CONFIG = {
   version: CURRENT_GAME_VERSION,
   parentPin: "0608",
+  dailySpecialChestLimit: 3,
   gasApiUrl: "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec",
   whatsNewItems: [
     {
-      icon: "⚔️",
-      title: "Pojedynek Braci (VS) zawsze w Menu!",
-      desc: "Przycisk Pojedynku Braci jest teraz stale widoczny na ekranie startowym oraz w menu lekcji."
+      icon: "🐉🔥",
+      title: "Nowa, pełnoekranowa animacja Walki ze Smokiem!",
+      desc: "Teraz również na telefonie zobaczysz każdą akcję na całym ekranie: przy dobrej odpowiedzi zbliżenie i cios mieczem w Smoka, a przy błędzie Smok zieje ogniem i trzęsie całym ekranem!"
     },
     {
-      icon: "🐉🔥",
-      title: "Animacja walki ze Smokiem i nowe wyzwania!",
-      desc: "Smok zionie ogniem i otrzymuje ciosy mieczem! Hubert ma 2 obowiązkowe zadania z mikrofonem, Igor ma 4 opcje wyboru, a po pokonaniu Smoka lektor czyta na głos kto i jaką skrzynię zdobył!"
+      icon: "🎤✨",
+      title: "Ulepszony mikrofon w Walce ze Smokiem i Studio Wymowy!",
+      desc: "Mikrofon lepiej rozumie wymowę dzieci (w tym cyfry i podobne wyrazy) i daje Hubertowi 2 próby przed atakiem Smoka."
+    },
+    {
+      icon: "🎁🛡️",
+      title: "Dzienny limit 3 skrzyń u Smoka i w Pojedynku VS!",
+      desc: "Każdego dnia w Walce ze Smokiem oraz w Pojedynku Braci można zdobyć po 3 skrzynie z nagrodami. Po wykorzystaniu limitu nadal zdobywacie gwiazdki i puchary!"
     },
     {
       icon: "👑💬",
-      title: "Asystent Zakupowy w Awatarze!",
-      desc: "Kliknij swój awatar na górze ekranu lub w Garderobie, a Sówka powie ile masz gwiazdek, jaką skrzynię możesz już kupić i ile brakuje do droższych skrzyń!"
-    },
-    {
-      icon: "🥞🥣",
-      title: "Nowe obrazki w Kuchni Pankejków!",
-      desc: "Mąka (FLOUR), jogurt naturalny (YOGHURT) i olej (OIL) mają teraz własne wyraźne rysunki, a nowe lekcje automatycznie trafiają do Pojedynku i walki ze Smokiem!"
-    },
-    {
-      icon: "🎁🛠️",
-      title: "Skrzynie od Taty i nowe opcje w Panelu Rodzica!",
-      desc: "Przyznane skrzynie czekają w kolejce po wejściu na profil syna, zatwierdzone lekcje zapisują się na stałe w chmurze, a Igor może mieć zrównany poziom wybranej lekcji z Hubertem."
+      title: "Asystent Zakupowy w Awatarze i Kuchnia Pankejków!",
+      desc: "Kliknij swój awatar, aby usłyszeć ile masz gwiazdek i na jakie skrzynie wystarczy, a w Kuchni Pankejków czekają rysunki FLOUR, YOGHURT i OIL."
     }
   ]
 };

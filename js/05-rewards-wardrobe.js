@@ -13,6 +13,20 @@ function getActiveProfileLabel() {
   return "IGOR";
 }
 
+function setShopChestHighlight(tiersArr) {
+  ["bronze", "silver", "gold"].forEach(t => {
+    const el = document.getElementById(`avatarShopChest_${t}`);
+    if (el) {
+      el.classList.toggle("tutorial-highlight", Array.isArray(tiersArr) && tiersArr.includes(t));
+    }
+  });
+}
+
+function setShopStarsHighlight(on) {
+  const sb = document.getElementById("avatarShopStarsBadge");
+  if (sb) sb.classList.toggle("tutorial-highlight", Boolean(on));
+}
+
 function getAvatarShoppingAdvisorSummary(profKey = null) {
   const key = profKey || getActiveProfileKey();
   const p = ensurePlayerStructure(state.stats[key]);
@@ -53,12 +67,87 @@ function getAvatarShoppingAdvisorSummary(profKey = null) {
 
 function speakAvatarShoppingAdvisor() {
   if (!state.profile || state.profile === "duel") return;
+
+  const avModal = document.getElementById("avatarModal");
+  if (avModal && avModal.classList.contains("hidden")) {
+    openAvatarModal();
+  }
+
   const profKey = getActiveProfileKey();
   const p = ensurePlayerStructure(state.stats[profKey]);
   const info = getAvatarShoppingAdvisorSummary(profKey);
+  const stars = info.stars;
   playEffect("success");
 
-  const segments = [{ lang: "pl", text: info.fullSpeech }];
+  const segments = [
+    {
+      lang: "pl",
+      text: `Cześć ${info.kidName}! Masz teraz ${stars} złotych gwiazdek.`,
+      onStart: () => { setShopChestHighlight([]); setShopStarsHighlight(true); },
+      onEnd: () => setShopStarsHighlight(false)
+    }
+  ];
+
+  if (stars >= 250) {
+    segments.push({
+      lang: "pl",
+      text: "Masz już wystarczająco gwiazdek na każdą skrzynię! Możesz kupić Brązową za 50, Srebrną za 120 albo najlepszą Złotą Skrzynię za 250 gwiazdek!",
+      onStart: () => setShopChestHighlight(["bronze", "silver", "gold"]),
+      onEnd: () => setShopChestHighlight([])
+    });
+  } else if (stars >= 120) {
+    segments.push({
+      lang: "pl",
+      text: "Możesz już kupić Brązową Skrzynię za 50 gwiazdek albo Srebrną Skrzynię za 120 gwiazdek!",
+      onStart: () => setShopChestHighlight(["bronze", "silver"]),
+      onEnd: () => setShopChestHighlight([])
+    });
+    segments.push({
+      lang: "pl",
+      text: `Do najdroższej Złotej Skrzyni brakuje Ci jeszcze ${250 - stars} gwiazdek.`,
+      onStart: () => setShopChestHighlight(["gold"]),
+      onEnd: () => setShopChestHighlight([])
+    });
+  } else if (stars >= 50) {
+    segments.push({
+      lang: "pl",
+      text: "Możesz już kupić Brązową Skrzynię za 50 gwiazdek!",
+      onStart: () => setShopChestHighlight(["bronze"]),
+      onEnd: () => setShopChestHighlight([])
+    });
+    segments.push({
+      lang: "pl",
+      text: `Do Srebrnej Skrzyni brakuje Ci jeszcze ${120 - stars} gwiazdek.`,
+      onStart: () => setShopChestHighlight(["silver"]),
+      onEnd: () => setShopChestHighlight([])
+    });
+    segments.push({
+      lang: "pl",
+      text: `A do Złotej Skrzyni brakuje Ci ${250 - stars} gwiazdek.`,
+      onStart: () => setShopChestHighlight(["gold"]),
+      onEnd: () => setShopChestHighlight([])
+    });
+  } else {
+    segments.push({
+      lang: "pl",
+      text: `Na razie zbierasz gwiazdki. Do Brązowej Skrzyni brakuje Ci jeszcze ${50 - stars} gwiazdek.`,
+      onStart: () => setShopChestHighlight(["bronze"]),
+      onEnd: () => setShopChestHighlight([])
+    });
+    segments.push({
+      lang: "pl",
+      text: `Do Srebrnej Skrzyni brakuje Ci ${120 - stars} gwiazdek.`,
+      onStart: () => setShopChestHighlight(["silver"]),
+      onEnd: () => setShopChestHighlight([])
+    });
+    segments.push({
+      lang: "pl",
+      text: `A do Złotej Skrzyni brakuje Ci ${250 - stars} gwiazdek.`,
+      onStart: () => setShopChestHighlight(["gold"]),
+      onEnd: () => setShopChestHighlight([])
+    });
+  }
+
   const av = p.avatar || {};
   if (av.pet) {
     const petObj = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).find(a => a.id === av.pet);
@@ -68,7 +157,11 @@ function speakAvatarShoppingAdvisor() {
       segments.push({ lang: "en", text: `My friend is a ${petObj.en}!` });
     }
   }
-  speakSequence(segments);
+
+  speakSequence(segments, () => {
+    setShopStarsHighlight(false);
+    setShopChestHighlight([]);
+  });
 }
 
 function speakAvatarGreeting() {
@@ -375,7 +468,7 @@ function renderBadges() {
 }
 
 function openAvatarModal() { if (!state.profile || state.profile === "duel") return; document.getElementById("avatarModalPlayerName").textContent = getActiveProfileLabel(); updateAvatarPreviewWithCalibrator(); renderAvatarItems(); const m = document.getElementById("avatarModal"); if (m) { m.classList.remove("hidden"); m.classList.add("flex"); } }
-function closeAvatarModal() { saveCloudData(); updateHeaderUI(); const m = document.getElementById("avatarModal"); if (m) { m.classList.add("hidden"); m.classList.remove("flex"); } }
+function closeAvatarModal() { cancelAllSpeechAndTimers(); saveCloudData(); updateHeaderUI(); const m = document.getElementById("avatarModal"); if (m) { m.classList.add("hidden"); m.classList.remove("flex"); } }
 
 function updateAvatarPreviewWithCalibrator() {
   const box = document.getElementById("avatarPreviewBox");
@@ -452,11 +545,11 @@ function renderAvatarItems() {
   const stars = p.stars || 0;
   let shopHtml = `
     <div class="p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-300 shadow-sm mb-3">
-      <div class="flex flex-wrap items-center justify-between gap-1 mb-2"><div class="text-xs font-extrabold text-amber-950">🛒 Sklepik ze Skrzyniami</div><span class="px-2.5 py-0.5 rounded-full bg-white border border-amber-400 text-amber-900 font-extrabold text-xs">Twoje Gwiazdki: ⭐ ${stars}</span></div>
+      <div class="flex flex-wrap items-center justify-between gap-1 mb-2"><div class="text-xs font-extrabold text-amber-950">🛒 Sklepik ze Skrzyniami</div><span id="avatarShopStarsBadge" class="px-2.5 py-0.5 rounded-full bg-white border border-amber-400 text-amber-900 font-extrabold text-xs">Twoje Gwiazdki: ⭐ ${stars}</span></div>
       <div class="grid grid-cols-3 gap-2">
-        <button onclick="buyChestWithStars('bronze', 50)" class="kid-card py-2 px-2 rounded-xl ${stars >= 50 ? 'bg-amber-700 hover:bg-amber-800 text-white' : 'bg-amber-700/70 text-amber-100'} font-extrabold text-[11px] shadow flex flex-col items-center"><span class="text-lg">📦 Brązowa</span><span>Koszt: 50 ⭐</span><span class="text-[9px] mt-0.5">${stars >= 50 ? '✅ Możesz kupić!' : `Brakuje ${50 - stars} ⭐`}</span></button>
-        <button onclick="buyChestWithStars('silver', 120)" class="kid-card py-2 px-2 rounded-xl ${stars >= 120 ? 'bg-slate-600 hover:bg-slate-700 text-white' : 'bg-slate-500/70 text-slate-100'} font-extrabold text-[11px] shadow flex flex-col items-center"><span class="text-lg">🥈 Srebrna</span><span>Koszt: 120 ⭐</span><span class="text-[9px] mt-0.5">${stars >= 120 ? '✅ Możesz kupić!' : `Brakuje ${120 - stars} ⭐`}</span></button>
-        <button onclick="buyChestWithStars('gold', 250)" class="kid-card py-2 px-2 rounded-xl ${stars >= 250 ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-amber-300/70 text-amber-900'} font-extrabold text-[11px] shadow flex flex-col items-center border border-amber-600"><span class="text-lg">👑 Złota</span><span>Koszt: 250 ⭐</span><span class="text-[9px] mt-0.5">${stars >= 250 ? '✅ Możesz kupić!' : `Brakuje ${250 - stars} ⭐`}</span></button>
+        <button id="avatarShopChest_bronze" onclick="buyChestWithStars('bronze', 50)" class="kid-card py-2 px-2 rounded-xl ${stars >= 50 ? 'bg-amber-700 hover:bg-amber-800 text-white' : 'bg-amber-700/70 text-amber-100'} font-extrabold text-[11px] shadow flex flex-col items-center"><span class="text-lg">📦 Brązowa</span><span>Koszt: 50 ⭐</span><span class="text-[9px] mt-0.5">${stars >= 50 ? '✅ Możesz kupić!' : `Brakuje ${50 - stars} ⭐`}</span></button>
+        <button id="avatarShopChest_silver" onclick="buyChestWithStars('silver', 120)" class="kid-card py-2 px-2 rounded-xl ${stars >= 120 ? 'bg-slate-600 hover:bg-slate-700 text-white' : 'bg-slate-500/70 text-slate-100'} font-extrabold text-[11px] shadow flex flex-col items-center"><span class="text-lg">🥈 Srebrna</span><span>Koszt: 120 ⭐</span><span class="text-[9px] mt-0.5">${stars >= 120 ? '✅ Możesz kupić!' : `Brakuje ${120 - stars} ⭐`}</span></button>
+        <button id="avatarShopChest_gold" onclick="buyChestWithStars('gold', 250)" class="kid-card py-2 px-2 rounded-xl ${stars >= 250 ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-amber-300/70 text-amber-900'} font-extrabold text-[11px] shadow flex flex-col items-center border border-amber-600"><span class="text-lg">👑 Złota</span><span>Koszt: 250 ⭐</span><span class="text-[9px] mt-0.5">${stars >= 250 ? '✅ Możesz kupić!' : `Brakuje ${250 - stars} ⭐`}</span></button>
       </div>
     </div>`;
   let html = `${shopHtml}<div class="flex flex-wrap gap-1.5 mb-3 pb-2 border-b border-indigo-100">${tierTabs.map(t => `<button onclick="setWardrobeTierFilter('${t.id}')" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedWardrobeTier === t.id ? 'bg-indigo-600 text-white border-indigo-800' : 'bg-white text-slate-700 border-slate-200'}">${t.label}</button>`).join("")}</div>`;

@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/08-pancakes-minigames.js
-   KUCHNIA PANKEJKÓW (SVG), LITERKI, MEMORY, MIKROFON BEZ LIMITU PRÓB I PRZYIMKI
+   KUCHNIA PANKEJKÓW (SVG), LITERKI, MEMORY, MIKROFON (POPRAWKA SMOKA) I PRZYIMKI
    ============================================================================ */
 
 const _origRenderTopGameBarV14 = typeof renderTopGameBar === "function" ? renderTopGameBar : null;
@@ -496,9 +496,17 @@ function flipMemoryCard(idx) {
 }
 
 // ------------------------------------------------------------------------
-// STUDIO WYMOWY (BEZ LIMITU PRÓB + POMOC TATY OD 5. PRÓBY)
+// STUDIO WYMOWY (BEZ LIMITU PRÓB + POMOC TATY OD 5. PRÓBY + PŁYNNE PRZEJŚCIE)
 // ------------------------------------------------------------------------
+function stopActiveSpeechRecSafely() {
+  if (window._activeSpeechRec) {
+    try { window._activeSpeechRec.abort(); } catch (e) {}
+    window._activeSpeechRec = null;
+  }
+}
+
 function renderMicGame(lesson) {
+  stopActiveSpeechRecSafely();
   const q = state.roundQuestions[state.roundIndex];
   const isAdvanced = !isEffectiveIgorMode();
   const isDragonMic = state.isCoopDragonMode && state.duelTurn === "hubert" && q._dragonMicQuestion;
@@ -558,6 +566,7 @@ function renderMicGame(lesson) {
 
 function startSpeechCheck() {
   if (state.answeredCurrent) return;
+  stopActiveSpeechRecSafely();
   cancelAllSpeechAndTimers();
   playEffect("beep");
 
@@ -584,20 +593,21 @@ function startSpeechCheck() {
     if (state.answeredCurrent) return;
     try {
       const rec = new SpeechRec();
+      window._activeSpeechRec = rec;
       rec.lang = "en-US";
       rec.interimResults = true;
       rec.continuous = false;
       rec.maxAlternatives = 5;
 
       rec.onresult = (e) => {
-        if (handled) return;
+        if (handled || state.answeredCurrent) return;
         for (let i = e.resultIndex; i < e.results.length; i++) {
           for (let a = 0; a < e.results[i].length; a++) {
             const candidate = (e.results[i][a].transcript || "").trim();
             if (candidate) finalHeard = candidate;
             if (isSpeechMatchForWord(candidate, q.en)) {
               handled = true;
-              try { rec.stop(); } catch (err) {}
+              stopActiveSpeechRecSafely();
               approveMicAnswer(`Zrozumiałem: "${candidate}"!`);
               return;
             }
@@ -606,7 +616,8 @@ function startSpeechCheck() {
       };
 
       rec.onend = () => {
-        if (handled) return;
+        window._activeSpeechRec = null;
+        if (handled || state.answeredCurrent) return;
         handled = true;
 
         if (isDragonMic) {
@@ -646,7 +657,8 @@ function startSpeechCheck() {
       };
 
       rec.onerror = (err) => {
-        if (handled) return;
+        window._activeSpeechRec = null;
+        if (handled || state.answeredCurrent) return;
         handled = true;
         const reason = (err && err.error === "not-allowed")
           ? "Brak zgody na mikrofon w przeglądarce! Zezwól na mikrofon lub kliknij 🔒 Zalicz (Tata)."
@@ -674,30 +686,40 @@ function startSpeechCheck() {
 function fallbackMicTimer(box) {
   setTimeout(() => { if (!state.answeredCurrent && box) box.innerHTML += `<div class="mt-2 text-xs text-rose-600 font-bold">Spróbuj ponownie lub poproś Tatę!</div>`; }, 2000);
 }
-function requestParentMicApproval() { if (!state.answeredCurrent) openParentPinModal("mic_approve"); }
+
+function requestParentMicApproval() {
+  if (state.answeredCurrent) return;
+  stopActiveSpeechRecSafely();
+  openParentPinModal("mic_approve");
+}
+
 function approveMicAnswer(msg) {
   if (state.answeredCurrent) return;
   state.answeredCurrent = true;
+  stopActiveSpeechRecSafely();
+
   const q = state.roundQuestions[state.roundIndex];
   const profKey = state.isCoopDragonMode ? "hubert" : ((state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor");
   state.stats[profKey].micCount = (state.stats[profKey].micCount || 0) + 1;
   removeHardWordIfMastered(q);
 
   const box = document.getElementById("micStatusBox");
-  if (box) { box.className = "p-4 rounded-3xl bg-emerald-500 text-white font-extrabold text-base mb-5 drop-shadow-md"; box.innerHTML = `✅🌟 Brawo! ${msg} (${q.en} = ${q.pl})`; }
+  if (box) {
+    box.className = "p-4 rounded-3xl bg-emerald-500 text-white font-extrabold text-base mb-5 drop-shadow-md";
+    box.innerHTML = `✅🌟 Brawo! ${msg} (${q.en} = ${q.pl})`;
+  }
 
   if (state.isCoopDragonMode) {
     state.dragonBattle.dragonHp = Math.max(0, state.dragonBattle.dragonHp - 1);
     state.dragonBattle.statusText = `🎤⚔️ POTĘŻNY OKRZYK HUBERTA! Zadałeś Smokowi obrażenie głosem! (Smok ma ${state.dragonBattle.dragonHp} HP)`;
     awardCorrectAnswer();
 
-    speakSequence([{ lang: "pl", text: "Super! Zaatakujemy teraz smoka!" }], () => {
-      if (typeof triggerDragonBattleAnimation === "function") triggerDragonBattleAnimation("hit");
-      clearTimeout(window._dragonPostAnimTimer);
-      window._dragonPostAnimTimer = setTimeout(() => {
-        advanceNextQuestion(true);
-      }, 4650);
-    });
+    speakSequence([{ lang: "pl", text: "Super! Zaatakujemy teraz smoka!" }]);
+    if (typeof triggerDragonBattleAnimation === "function") triggerDragonBattleAnimation("hit");
+    clearTimeout(window._dragonPostAnimTimer);
+    window._dragonPostAnimTimer = setTimeout(() => {
+      advanceNextQuestion(true);
+    }, 4650);
     return;
   }
 

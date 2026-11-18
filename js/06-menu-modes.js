@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/06-menu-modes.js
-   EKRAN STARTOWY, MENU LEKCJI (STAŁY POJEDYNEK VS), ZADANIE DNIA I START TRYBÓW
+   EKRAN STARTOWY, MENU LEKCJI (LICZNIK SKRZYŃ 3/3), ZADANIE DNIA I START TRYBÓW
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -242,6 +242,9 @@ function showStartScreen() {
   const hubertBday = isPlayerBirthdayToday("hubert") ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold animate-bounce">🎂 DZIŚ URODZINY! ZŁOTA SKRZYNIA!</div>` : `<div class="text-[10px] font-bold text-sky-700">🎂 ur. 17.08.2020</div>`;
   const tataBday = isPlayerBirthdayToday("tata") ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold animate-bounce">🎂 DZIŚ URODZINY!</div>` : `<div class="text-[10px] font-bold text-emerald-700">🧪 Konto Testowe (PIN)</div>`;
 
+  const duelDaily = getDailySpecialChestStatus("duel");
+  const dragonDaily = getDailySpecialChestStatus("dragon");
+
   mc.innerHTML = `
     <div class="bg-white/95 rounded-3xl shadow-2xl border-4 border-sky-300 p-5 md:p-7 text-center max-w-6xl mx-auto w-full">
       <div class="inline-block px-4 py-1 rounded-full bg-purple-100 text-purple-900 font-bold text-xs mb-2">
@@ -267,7 +270,7 @@ function showStartScreen() {
         <div onclick="chooseProfile('duel')" class="kid-card cursor-pointer rounded-3xl border-4 border-purple-400 bg-gradient-to-b from-purple-50 to-indigo-100 p-4 shadow-lg flex flex-col items-center justify-between">
           <div class="text-5xl my-3 float-anim drop-shadow-md">⚔️🐉</div>
           <div><h2 class="text-xl font-extrabold text-purple-950">BRACIA RAZEM</h2><div class="text-[10px] font-bold text-purple-700">Pojedynek VS lub Walka ze Smokiem!</div></div>
-          <div class="text-[11px] font-bold text-purple-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-purple-300 w-full">Igor i Hubert na jednym ekranie!</div>
+          <div class="text-[11px] font-bold text-purple-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-purple-300 w-full">Skrzynie dziś: VS ${duelDaily.remaining}/${duelDaily.limit} • Smok ${dragonDaily.remaining}/${dragonDaily.limit}</div>
           <span class="w-full py-2.5 bg-purple-600 text-white font-extrabold rounded-2xl shadow text-sm">Wybierz tryb braci ▶</span>
         </div>
 
@@ -373,13 +376,17 @@ function showLessonMenu() {
     }
   }
 
-  // STAŁY DOSTĘP DO POJEDYNKU BRACI (VS) I WALKI ZE SMOKIEM W MENU GŁÓWNYM
+  // STAŁY DOSTĘP DO POJEDYNKU BRACI (VS) I WALKI ZE SMOKIEM W MENU GŁÓWNYM Z LICZNIKIEM SKRZYŃ 3/3
+  const duelDaily = getDailySpecialChestStatus("duel");
+  const dragonDaily = getDailySpecialChestStatus("dragon");
   const alwaysBrothersButtons = `
     <button id="btnDuelMenuAlways" onclick="startDuelAllWords()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-extrabold text-xs md:text-sm shadow-lg border-2 border-purple-300 flex items-center gap-1.5">
       <span>⚔️</span> Pojedynek Braci (VS)
+      <span class="px-1.5 py-0.5 rounded-lg bg-white/20 text-[10px]">🎁 ${duelDaily.remaining}/${duelDaily.limit}</span>
     </button>
     <button id="btnCoopDragonMenu" onclick="startCoopDragonBattle()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-xs md:text-sm shadow-lg border-2 border-emerald-300 flex items-center gap-1.5">
       <span>🐉🛡️</span> Walka ze Smokiem
+      <span class="px-1.5 py-0.5 rounded-lg bg-white/20 text-[10px]">🎁 ${dragonDaily.remaining}/${dragonDaily.limit}</span>
     </button>
   `;
 
@@ -491,22 +498,23 @@ function startCoopDragonBattle() {
     animClass: ""
   };
 
-  // Automatyczne pobieranie wszystkich zatwierdzonych lekcji (w tym pankejków)
   const all = collectAllWordsForBrothersModes();
   const shuffled = shuffleArray(all);
   state.roundQuestions = [];
   for (let i = 0; i < 24; i++) {
     const item = Object.assign({}, shuffled[i % shuffled.length]);
     item._dragonMicQuestion = false;
+    item._dragonMicTries = 0;
     state.roundQuestions.push(item);
   }
 
-  // Utrudnienie: 2 obowiązkowe pytania z mikrofonem dla Huberta (tury nieparzyste: indeksy 1, 3, 5, 7...)
+  // 2 obowiązkowe pytania z mikrofonem dla Huberta (tury nieparzyste: indeksy 1, 3, 5, 7, 9, 11)
   const hubertTurnIndices = [1, 3, 5, 7, 9, 11];
   const pickedMicIndices = shuffleArray(hubertTurnIndices).slice(0, 2);
   pickedMicIndices.forEach(idx => {
     if (state.roundQuestions[idx]) {
       state.roundQuestions[idx]._dragonMicQuestion = true;
+      state.roundQuestions[idx]._dragonMicTries = 0;
     }
   });
 
@@ -581,7 +589,6 @@ function startDuelAllWords() {
   state.duelTurn = "igor"; state.duelReadyWaiting = true;
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
 
-  // Automatyczne pobieranie wszystkich zatwierdzonych lekcji (w tym pankejków)
   const all = collectAllWordsForBrothersModes();
   const shuffled = shuffleArray(all);
   state.roundQuestions = [];

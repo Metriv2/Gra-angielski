@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/08-pancakes-minigames.js
-   KUCHNIA PANKEJKÓW (SVG), LITERKI, MEMORY, ULEPSZONY MIKROFON I PRZYIMKI
+   KUCHNIA PANKEJKÓW (SVG), LITERKI, MEMORY, MIKROFON BEZ LIMITU PRÓB I PRZYIMKI
    ============================================================================ */
 
 const _origRenderTopGameBarV14 = typeof renderTopGameBar === "function" ? renderTopGameBar : null;
@@ -42,9 +42,6 @@ renderTopGameBar = function(lesson) {
   return _origRenderTopGameBarV14 ? _origRenderTopGameBarV14(lesson) : "";
 };
 
-// ------------------------------------------------------------------------
-// SŁOWNIK FONETYCZNY I DOPASOWYWANIE MOWY DZIECKA (MIKROFON)
-// ------------------------------------------------------------------------
 const SPEECH_HOMOPHONES_MAP = {
   "one": ["1", "won", "wan"],
   "two": ["2", "to", "too", "tu"],
@@ -499,7 +496,7 @@ function flipMemoryCard(idx) {
 }
 
 // ------------------------------------------------------------------------
-// STUDIO WYMOWY (ULEPSZONY MIKROFON + WALKA ZE SMOKIEM + PIN RODZICA)
+// STUDIO WYMOWY (MIKROFON BEZ LIMITU PRÓB + PODPOWIEDŹ DLA TATY OD 5. PRÓBY)
 // ------------------------------------------------------------------------
 function renderMicGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
@@ -511,10 +508,27 @@ function renderMicGame(lesson) {
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
 
-  const triesLeft = Math.max(1, 2 - (q._dragonMicTries || 0));
-  const badgeTitle = isDragonMic ? `🐉🎤 ATAK GŁOSOWY HUBERTA NA SMOKA! (Szanse: ${triesLeft}/2)` : "🎤 Studio Wymowy";
+  const triesCount = q._dragonMicTries || 0;
+  const badgeTitle = isDragonMic
+    ? `🐉🎤 ATAK GŁOSOWY HUBERTA NA SMOKA! (<span id="dragonMicTriesBadge">Próba: ${triesCount + 1}</span>)`
+    : "🎤 Studio Wymowy";
   const displayTitle = isTranslation ? `<span class="text-slate-500 font-normal">Jak powiesz: </span>"${q.pl}"?` : `"${q.en}"`;
   const subTitle = isTranslation ? `<span class="text-rose-600">Nie podglądaj! Przetłumacz i wymów.</span>` : `${q.pl} ${q.phonetic ? '[' + q.phonetic + ']' : ''}`;
+
+  const initialBoxClass = (isDragonMic && triesCount >= 5)
+    ? "p-4 rounded-3xl bg-amber-100 border-4 border-amber-500 font-extrabold text-sm text-amber-950 mb-5 flex flex-col items-center justify-center gap-2 text-center"
+    : "p-4 rounded-3xl bg-slate-50 border-2 border-slate-200 font-bold text-sm text-slate-700 mb-5 flex flex-col items-center justify-center gap-2 text-center";
+
+  const initialBoxHtml = (isDragonMic && triesCount >= 5)
+    ? `👨‍💻 Tato, posłuchaj Huberta! Jeśli powiedział dobrze, kliknij zielony przycisk <strong>🔒 Zalicz (Tata)</strong>!`
+    : `<div>1. Kliknij 🔊 Posłuchaj &nbsp;➔&nbsp; 2. Kliknij 🎤 Mów!</div>
+       <div id="eqVisualizer" class="hidden items-end gap-1 h-10 my-1">
+         <div class="w-1.5 bg-rose-500 rounded-full eq-bar-1"></div><div class="w-1.5 bg-rose-500 rounded-full eq-bar-2"></div>
+         <div class="w-1.5 bg-rose-500 rounded-full eq-bar-3"></div><div class="w-1.5 bg-rose-500 rounded-full eq-bar-4"></div>
+         <div class="w-1.5 bg-rose-500 rounded-full eq-bar-5"></div>
+       </div>`;
+
+  const dadBtnHighlight = (isDragonMic && triesCount >= 5) ? "tutorial-highlight" : "";
 
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
@@ -523,18 +537,13 @@ function renderMicGame(lesson) {
       <div class="text-6xl md:text-7xl my-3 float-anim drop-shadow-sm flex justify-center">${q.icon || '⭐'}</div>
       <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1 tracking-wide">${displayTitle}</h2>
       <p class="text-sm font-bold text-slate-500 mb-4">${subTitle}</p>
-      <div id="micStatusBox" class="p-4 rounded-3xl bg-slate-50 border-2 border-slate-200 font-bold text-sm text-slate-700 mb-5 flex flex-col items-center justify-center gap-2">
-        <div>1. Kliknij 🔊 Posłuchaj &nbsp;➔&nbsp; 2. Kliknij 🎤 Mów!</div>
-        <div id="eqVisualizer" class="hidden items-end gap-1 h-10 my-1">
-          <div class="w-1.5 bg-rose-500 rounded-full eq-bar-1"></div><div class="w-1.5 bg-rose-500 rounded-full eq-bar-2"></div>
-          <div class="w-1.5 bg-rose-500 rounded-full eq-bar-3"></div><div class="w-1.5 bg-rose-500 rounded-full eq-bar-4"></div>
-          <div class="w-1.5 bg-rose-500 rounded-full eq-bar-5"></div>
-        </div>
+      <div id="micStatusBox" class="${initialBoxClass}">
+        ${initialBoxHtml}
       </div>
       <div class="flex flex-wrap justify-center gap-3">
         <button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card px-5 py-3 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-base shadow">🔊 Posłuchaj</button>
         <button id="btnStartMic" onclick="startSpeechCheck()" class="kid-card px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-base shadow-lg">🎤 Mów!</button>
-        <button onclick="requestParentMicApproval()" class="kid-card px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-emerald-950 font-bold text-sm shadow border-2 border-emerald-600">🔒 Zalicz (Tata)</button>
+        <button id="btnParentMicApprove" onclick="requestParentMicApproval()" class="kid-card px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-emerald-950 font-bold text-sm shadow border-2 border-emerald-600 ${dadBtnHighlight}">🔒 Zalicz (Tata)</button>
       </div>
     </div>
   `;
@@ -571,7 +580,6 @@ function startSpeechCheck() {
   let handled = false;
   let finalHeard = "";
 
-  // Krótkie opóźnienie (180 ms), aby telefon zwolnił kanał audio po wyciszeniu lektora TTS
   setTimeout(() => {
     if (state.answeredCurrent) return;
     try {
@@ -603,25 +611,27 @@ function startSpeechCheck() {
 
         if (isDragonMic) {
           q._dragonMicTries = (q._dragonMicTries || 0) + 1;
-          if (q._dragonMicTries >= 2) {
-            state.answeredCurrent = true;
-            state.roundMistakes++;
-            state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
-            state.dragonBattle.statusText = `🔥💥 SMOK NIE USŁYSZAŁ ZAKLĘCIA! Zionął ogniem! (Zostało: ${state.dragonBattle.teamHp} ❤️)`;
-            playEffect("wrong");
-            if (typeof triggerDragonBattleAnimation === "function") triggerDragonBattleAnimation("fire");
+          const badgeEl = document.getElementById("dragonMicTriesBadge");
+          if (badgeEl) badgeEl.textContent = `Próba: ${q._dragonMicTries + 1}`;
+
+          if (q._dragonMicTries >= 5) {
+            const dadBtn = document.getElementById("btnParentMicApprove");
+            if (dadBtn) dadBtn.classList.add("tutorial-highlight");
             if (box) {
-              box.className = "p-4 rounded-3xl bg-rose-100 border-4 border-rose-500 font-extrabold text-sm text-rose-950 mb-5";
-              box.innerHTML = `🔥💥 Smok zaatakował! ${finalHeard ? `Usłyszałem: "${finalHeard}", a szukaliśmy "${q.en}".` : `Nie usłyszałem słowa "${q.en}".`}`;
+              box.className = "p-4 rounded-3xl bg-amber-100 border-4 border-amber-500 font-extrabold text-sm text-amber-950 mb-5 text-center";
+              box.innerHTML = `👨‍💻 Tato, posłuchaj Huberta! Jeśli powiedział dobrze, kliknij zielony przycisk <strong>🔒 Zalicz (Tata)</strong>!<br><span class="text-xs font-bold text-slate-700">${finalHeard ? `(Mikrofon usłyszał: "${finalHeard}", szukamy: "${q.en}")` : `Możecie też spróbować ponownie klikając 🎤 Mów!`}</span>`;
             }
-            speakSequence([{ lang: "pl", text: "O nie! Smok nie usłyszał zaklęcia i zionął ogniem! Drużyna traci serduszko!" }], () => advanceNextQuestion());
+            if (q._dragonMicTries === 5) {
+              speakSequence([{ lang: "pl", text: "Tato, posłuchaj proszę Huberta i jeśli powiedział dobrze, kliknij przycisk Zalicz!" }]);
+            }
             return;
           }
+
           if (box) {
-            box.className = "p-4 rounded-3xl bg-amber-100 border-4 border-amber-500 font-extrabold text-sm text-amber-950 mb-5";
+            box.className = "p-4 rounded-3xl bg-amber-100 border-2 border-amber-400 font-extrabold text-sm text-amber-950 mb-5 text-center";
             box.innerHTML = finalHeard
-              ? `🎧 Usłyszałem: "${finalHeard}" (szukamy: "${q.en}").<br>⚠️ Została 1 próba! Kliknij 🎤 Mów! jeszcze raz lub 🔒 Zalicz (Tata)!`
-              : `🎧 Cicho... Nic nie usłyszałem. ⚠️ Została 1 próba! Kliknij 🎤 Mów! jeszcze raz!`;
+              ? `🎧 Usłyszałem: "${finalHeard}" (szukamy: "${q.en}").<br>Spróbuj jeszcze raz! Kliknij 🎤 Mów! (Próba ${q._dragonMicTries + 1})`
+              : `🎧 Cicho... Nic nie usłyszałem. Zbliż telefon i kliknij 🎤 Mów! (Próba ${q._dragonMicTries + 1})`;
           }
           return;
         }
@@ -672,7 +682,6 @@ function approveMicAnswer(msg) {
   const profKey = state.isCoopDragonMode ? "hubert" : ((state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor");
   state.stats[profKey].micCount = (state.stats[profKey].micCount || 0) + 1;
   removeHardWordIfMastered(q);
-  playEffect("success");
 
   const box = document.getElementById("micStatusBox");
   if (box) { box.className = "p-4 rounded-3xl bg-emerald-500 text-white font-extrabold text-base mb-5 drop-shadow-md"; box.innerHTML = `✅🌟 Brawo! ${msg} (${q.en} = ${q.pl})`; }
@@ -680,9 +689,19 @@ function approveMicAnswer(msg) {
   if (state.isCoopDragonMode) {
     state.dragonBattle.dragonHp = Math.max(0, state.dragonBattle.dragonHp - 1);
     state.dragonBattle.statusText = `🎤⚔️ POTĘŻNY OKRZYK HUBERTA! Zadałeś Smokowi obrażenie głosem! (Smok ma ${state.dragonBattle.dragonHp} HP)`;
-    if (typeof triggerDragonBattleAnimation === "function") triggerDragonBattleAnimation("hit");
+    awardCorrectAnswer();
+
+    speakSequence([{ lang: "pl", text: "Super! Zaatakujemy teraz smoka!" }], () => {
+      if (typeof triggerDragonBattleAnimation === "function") triggerDragonBattleAnimation("hit");
+      clearTimeout(window._dragonPostAnimTimer);
+      window._dragonPostAnimTimer = setTimeout(() => {
+        advanceNextQuestion(true);
+      }, 4650);
+    });
+    return;
   }
 
+  playEffect("success");
   awardCorrectAnswer();
   speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Piękna wymowa! To znaczy ${q.pl}!` }], () => advanceNextQuestion());
 }

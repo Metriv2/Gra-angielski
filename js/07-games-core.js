@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/07-games-core.js
-   PASEK GRY, PEŁNOEKRANOWA ANIMACJA SMOKA (3.4s), LIMIT 3 SKRZYŃ, LEKARZ, QUIZ
+   PASEK GRY, ANIMACJA SMOKA (LEKTOR PRZED ANIMACJĄ), LIMIT 3 SKRZYŃ I GRY
    ============================================================================ */
 
 (function ensureDragonFullscreenStyles() {
@@ -58,6 +58,7 @@ function hideDragonFullscreenClash() {
   clearTimeout(window._dragonStageTimer);
   clearTimeout(window._dragonHpAnimTimer);
   clearTimeout(window._dragonFsTimer);
+  clearTimeout(window._dragonPostAnimTimer);
   const ov = document.getElementById("dragonFullscreenOverlay");
   if (ov) {
     ov.className = "fixed inset-0 z-[70] hidden pointer-events-none";
@@ -89,7 +90,6 @@ function showDragonFullscreenClash(type) {
   const startHearts = "❤️".repeat(Math.max(0, prevTeamHp)) + "🖤".repeat(Math.max(0, db.maxTeamHp - prevTeamHp));
   const endHearts = "❤️".repeat(Math.max(0, db.teamHp)) + "💔".repeat(Math.max(0, db.maxTeamHp - db.teamHp));
 
-  // ETAP 1 (0.0s - 1.45s): Pojawienie się Smoka + ryk
   if (typeof playEffect === "function") playEffect("dragon_roar");
 
   ov.className = "fixed inset-0 z-[70] flex flex-col items-center justify-center p-4 backdrop-blur-sm bg-gradient-to-b from-slate-950/94 via-purple-950/90 to-slate-950/96 transition-colors duration-500";
@@ -130,7 +130,6 @@ function showDragonFullscreenClash(type) {
     </div>
   `;
 
-  // ETAP 2 (po 1.45s): Atak mieczem LUB zionięcie ogniem Smoka + dźwięk ataku
   window._dragonStageTimer = setTimeout(() => {
     const currentOv = document.getElementById("dragonFullscreenOverlay");
     if (!currentOv || currentOv.classList.contains("hidden")) return;
@@ -178,7 +177,6 @@ function showDragonFullscreenClash(type) {
     }
   }, 1450);
 
-  // Aktualizacja paska HP / serduszek w trakcie ciosu (2.05s)
   window._dragonHpAnimTimer = setTimeout(() => {
     const bar = document.getElementById("dragonFsHpBar");
     const hpTxt = document.getElementById("dragonFsHpText");
@@ -188,7 +186,6 @@ function showDragonFullscreenClash(type) {
     if (heartsEl) heartsEl.textContent = endHearts;
   }, 2050);
 
-  // Zamknięcie ekranu walki po 4.6s
   window._dragonFsTimer = setTimeout(() => {
     hideDragonFullscreenClash();
   }, 4600);
@@ -765,37 +762,56 @@ function checkUniversalAnswer(idx, isShopCart = false) {
   const card = document.getElementById(`vCard_${idx}`), lbl = document.getElementById(`vLabel_${idx}`), fb = document.getElementById("feedbackBanner");
 
   if (chosen.en === q.en) {
-    state.answeredCurrent = true; playEffect("success"); card.classList.add("pop-correct");
+    state.answeredCurrent = true;
+    card.classList.add("pop-correct");
     if (isShopCart) { if (!Array.isArray(state.shopCart)) state.shopCart = []; state.shopCart.push(chosen.icon || "🥐"); }
     lbl.textContent = `✅ ${chosen.pl}`;
+
     if (state.isCoopDragonMode) {
       state.dragonBattle.dragonHp = Math.max(0, state.dragonBattle.dragonHp - 1);
       state.dragonBattle.statusText = `🛡️⚔️ TARCZA I CIOS! Zablokowano ogień Smoka i zadano mu 1 obrażenie! (Smok ma ${state.dragonBattle.dragonHp} HP)`;
-      triggerDragonBattleAnimation("hit");
-      fb.innerHTML = `<span class="text-emerald-600 font-extrabold">🛡️⚔️ Brawo! Zablokowałeś atak Smoka i trafiłeś go mieczem!</span>`;
+      fb.innerHTML = `<span class="text-emerald-600 font-extrabold">🛡️⚔️ Brawo! Atakujemy Smoka!</span>`;
       awardCorrectAnswer();
-      speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: "Tarcza zablokowała ogień! Smok traci punkt życia!" }], () => advanceNextQuestion());
+
+      // Najpierw krótki komunikat lektora, a potem pełnoekranowa animacja wyłącznie z głośnymi dźwiękami
+      speakSequence([{ lang: "pl", text: "Super! Zaatakujemy teraz smoka!" }], () => {
+        triggerDragonBattleAnimation("hit");
+        clearTimeout(window._dragonPostAnimTimer);
+        window._dragonPostAnimTimer = setTimeout(() => {
+          advanceNextQuestion(true);
+        }, 4650);
+      });
     } else {
+      playEffect("success");
       fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! ${state.isHardWordsMode && state.currentQuestionMistakes === 0 ? 'Opanowano trudne słówko (+2 ⭐)!' : 'O to chodziło!'}</span>`;
       awardCorrectAnswer();
       speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Brawo! To znaczy ${q.pl}!` }], () => advanceNextQuestion());
     }
   } else {
-    state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); card.classList.add("shake-wrong");
+    state.roundMistakes++; state.currentQuestionMistakes++; card.classList.add("shake-wrong");
     recordHardWordForActivePlayer(q);
     lbl.textContent = `❌ ${chosen.pl}`;
     if (state.isCoopDragonMode) {
       state.answeredCurrent = true;
       state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
       state.dragonBattle.statusText = `🔥💥 ZIONIĘCIE OGNIEM! Smok trafia drużynę! Tracicie 1 serduszko! (Zostało: ${state.dragonBattle.teamHp} ❤️)`;
-      triggerDragonBattleAnimation("fire");
-      fb.innerHTML = `<span class="text-rose-600 font-extrabold">🔥💥 O nie! Smok zionął ogniem! Szukaliśmy: ${q.en} (${q.pl})</span>`;
-      speakSequence([{ lang: "pl", text: "O nie! Smok zionął ogniem! Drużyna traci serduszko!" }], () => advanceNextQuestion());
+      fb.innerHTML = `<span class="text-rose-600 font-extrabold">🔥💥 O nie! Smok atakuje nas! Szukaliśmy: ${q.en} (${q.pl})</span>`;
+
+      // Najpierw krótki komunikat lektora, a potem pełnoekranowy atak Smoka z samymi efektami dźwiękowymi
+      speakSequence([{ lang: "pl", text: "Niestety, smok atakuje nas!" }], () => {
+        triggerDragonBattleAnimation("fire");
+        clearTimeout(window._dragonPostAnimTimer);
+        window._dragonPostAnimTimer = setTimeout(() => {
+          advanceNextQuestion(true);
+        }, 4650);
+      });
     } else if (state.profile === "duel") {
+      playEffect("wrong");
       state.answeredCurrent = true;
       fb.innerHTML = `<span class="text-rose-600">❌ Pudło w pojedynku (0 pkt)! Szukaliśmy: ${q.en}</span>`;
       speakSequence([{ lang: "pl", text: "Pudło! Kolej brata!" }], () => advanceNextQuestion());
     } else {
+      playEffect("wrong");
       fb.innerHTML = `<span class="text-rose-600">❌ To jest ${chosen.pl}. Spróbuj jeszcze raz!</span>`;
       speakSequence([{ lang: "pl", text: `Oj nie! To jest ${chosen.pl}. Szukamy:` }, { lang: "en", text: q.en }]);
     }
@@ -831,6 +847,7 @@ function advanceNextQuestion(forceSkip = false) {
     return;
   }
   clearTimeout(window._dragonPendingNextTimer);
+  clearTimeout(window._dragonPostAnimTimer);
   window._dragonAnimUntil = 0;
 
   cancelAllSpeechAndTimers();

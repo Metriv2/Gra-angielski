@@ -777,7 +777,7 @@ function checkUniversalAnswer(idx, isShopCart = false) {
         clearTimeout(window._dragonPostAnimTimer);
         window._dragonPostAnimTimer = setTimeout(() => {
           advanceNextQuestion(true);
-        }, 2200);
+        }, 4400);
       });
     } else {
       playEffect("success");
@@ -800,7 +800,7 @@ function checkUniversalAnswer(idx, isShopCart = false) {
         clearTimeout(window._dragonPostAnimTimer);
         window._dragonPostAnimTimer = setTimeout(() => {
           advanceNextQuestion(true);
-        }, 2200);
+        }, 4400);
       });
     } else if (state.profile === "duel") {
       playEffect("wrong");
@@ -834,31 +834,33 @@ function awardCorrectAnswer() {
 }
 
 function advanceNextQuestion(forceSkip = false) {
-  if (!forceSkip && state.isCoopDragonMode && window._dragonAnimUntil && Date.now() < window._dragonAnimUntil) {
-    const waitMs = window._dragonAnimUntil - Date.now();
-    clearTimeout(window._dragonPendingNextTimer);
-    window._dragonPendingNextTimer = setTimeout(() => {
-      window._dragonAnimUntil = 0;
-      advanceNextQuestion(true);
-    }, waitMs);
-    return;
-  }
   clearTimeout(window._dragonPendingNextTimer);
   clearTimeout(window._dragonPostAnimTimer);
   window._dragonAnimUntil = 0;
 
   cancelAllSpeechAndTimers();
-  hideDragonFullscreenClash();
-  window._letterTargetWord = ""; window._letterRoundIdx = -1;
+  if (typeof hideDragonFullscreenClash === "function") hideDragonFullscreenClash();
+  
+  window._letterTargetWord = ""; 
+  window._letterRoundIdx = -1;
+
   if (!state.answeredCurrent) {
-    state.roundResults.push("wrong"); state.roundMistakes++;
-    if (state.isCoopDragonMode) state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
+    state.roundResults.push("wrong"); 
+    state.roundMistakes++;
+    if (state.isCoopDragonMode) {
+      state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
+    }
   }
-  if (state.isCoopDragonMode && (state.dragonBattle.dragonHp <= 0 || state.dragonBattle.teamHp <= 0)) return renderEndRoundScreen();
+
+  if (state.isCoopDragonMode && (state.dragonBattle.dragonHp <= 0 || state.dragonBattle.teamHp <= 0)) {
+    return renderEndRoundScreen();
+  }
+
   if (state.profile === "duel" || state.isCoopDragonMode) {
     state.duelTurn = state.duelTurn === "igor" ? "hubert" : "igor";
     state.duelReadyWaiting = true;
   }
+
   state.roundIndex++;
   renderCurrentQuestion();
 }

@@ -496,7 +496,7 @@ function flipMemoryCard(idx) {
 }
 
 // ------------------------------------------------------------------------
-// STUDIO WYMOWY (MIKROFON BEZ LIMITU PRÓB + PODPOWIEDŹ DLA TATY OD 5. PRÓBY)
+// STUDIO WYMOWY (BEZ LIMITU PRÓB + POMOC TATY OD 5. PRÓBY)
 // ------------------------------------------------------------------------
 function renderMicGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];

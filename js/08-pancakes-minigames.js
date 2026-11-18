@@ -496,7 +496,7 @@ function flipMemoryCard(idx) {
 }
 
 // ------------------------------------------------------------------------
-// STUDIO WYMOWY (BEZ LIMITU PRÓB + POMOC TATY OD 5. PRÓBY + PŁYNNE PRZEJŚCIE)
+// STUDIO WYMOWY (BEZ LIMITU PRÓB + POMOC TATY OD 5. PRÓBY + LEKTOR -> ANIMACJA)
 // ------------------------------------------------------------------------
 function stopActiveSpeechRecSafely() {
   if (window._activeSpeechRec) {
@@ -700,7 +700,9 @@ function approveMicAnswer(msg) {
 
   const q = state.roundQuestions[state.roundIndex];
   const profKey = state.isCoopDragonMode ? "hubert" : ((state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor");
-  state.stats[profKey].micCount = (state.stats[profKey].micCount || 0) + 1;
+  if (state.stats[profKey]) {
+    state.stats[profKey].micCount = (state.stats[profKey].micCount || 0) + 1;
+  }
   removeHardWordIfMastered(q);
 
   const box = document.getElementById("micStatusBox");
@@ -714,12 +716,14 @@ function approveMicAnswer(msg) {
     state.dragonBattle.statusText = `🎤⚔️ POTĘŻNY OKRZYK HUBERTA! Zadałeś Smokowi obrażenie głosem! (Smok ma ${state.dragonBattle.dragonHp} HP)`;
     awardCorrectAnswer();
 
-    speakSequence([{ lang: "pl", text: "Super! Zaatakujemy teraz smoka!" }]);
-    if (typeof triggerDragonBattleAnimation === "function") triggerDragonBattleAnimation("hit");
-    clearTimeout(window._dragonPostAnimTimer);
-    window._dragonPostAnimTimer = setTimeout(() => {
-      advanceNextQuestion(true);
-    }, 4650);
+    if (typeof playDragonAttackSequence === "function") {
+      playDragonAttackSequence("hit", "Super! Zaatakujemy teraz smoka!");
+    } else {
+      speakSequence([{ lang: "pl", text: "Super! Zaatakujemy teraz smoka!" }], () => {
+        if (typeof triggerDragonBattleAnimation === "function") triggerDragonBattleAnimation("hit");
+        setTimeout(() => advanceNextQuestion(true), 4650);
+      });
+    }
     return;
   }
 

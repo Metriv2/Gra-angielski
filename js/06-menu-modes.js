@@ -101,6 +101,21 @@ function collectAllWordsForBrothersModes() {
   return all;
 }
 
+function resetBrothersAndOverlayState(restoreSingleProfile = true) {
+  clearTimeout(window._dragonPendingNextTimer);
+  window._dragonAnimUntil = 0;
+  if (typeof hideDragonFullscreenClash === "function") hideDragonFullscreenClash();
+  if (typeof setOwlFloatingGuide === "function") setOwlFloatingGuide(false);
+
+  state.isCoopDragonMode = false;
+  state.duelReadyWaiting = false;
+  state.duelTurn = "igor";
+
+  if (restoreSingleProfile && state.profile === "duel") {
+    state.profile = state.returnProfileAfterBrothers || state.lastSingleProfile || "igor";
+  }
+}
+
 function recordHardWordForActivePlayer(q) {
   if (!q || !q.en || state.profile === "duel" || state.isCoopDragonMode) return;
   const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
@@ -219,9 +234,10 @@ function updateHeaderUI() {
 
 function showStartScreen() {
   cancelAllSpeechAndTimers();
+  resetBrothersAndOverlayState(false);
   state.profile = null;
+  state.returnProfileAfterBrothers = null;
   state.currentLessonId = null;
-  state.isCoopDragonMode = false;
   const topH = document.getElementById("topHeader");
   if (topH) topH.classList.add("hidden");
 
@@ -291,11 +307,13 @@ function showStartScreen() {
 }
 
 function chooseProfile(prof) {
+  resetBrothersAndOverlayState(false);
   state.profile = prof;
-  state.isCoopDragonMode = false;
   let openedAutoWhatsNew = false;
 
   if (prof === "igor" || prof === "hubert" || prof === "tata") {
+    state.lastSingleProfile = prof;
+    state.returnProfileAfterBrothers = prof;
     state.stats[prof] = ensurePlayerStructure(state.stats[prof]);
     updateDailyStreakForPlayer(prof);
     ensureDailyQuestForPlayer(prof);
@@ -306,6 +324,7 @@ function chooseProfile(prof) {
       checkPendingDadChestsForPlayer(prof);
     }
   } else {
+    state.returnProfileAfterBrothers = null;
     updateDailyStreakForPlayer("igor");
     updateDailyStreakForPlayer("hubert");
   }
@@ -318,12 +337,12 @@ function chooseProfile(prof) {
 
 function showLessonMenu() {
   cancelAllSpeechAndTimers();
+  resetBrothersAndOverlayState(true);
   if (!state.profile) { showStartScreen(); return; }
   normalizePancakesIconsInLessons(state.lessons);
   state.currentLessonId = null;
   state.isExamMode = false;
   state.isHardWordsMode = false;
-  state.isCoopDragonMode = false;
   window._letterTargetWord = "";
   window._letterRoundIdx = -1;
   updateHeaderUI();
@@ -376,7 +395,6 @@ function showLessonMenu() {
     }
   }
 
-  // STAŁY DOSTĘP DO POJEDYNKU BRACI (VS) I WALKI ZE SMOKIEM W MENU GŁÓWNYM Z LICZNIKIEM SKRZYŃ 3/3
   const duelDaily = getDailySpecialChestStatus("duel");
   const dragonDaily = getDailySpecialChestStatus("dragon");
   const alwaysBrothersButtons = `
@@ -461,13 +479,14 @@ function shuffleArray(arr) {
 
 function startHardWordsTraining() {
   cancelAllSpeechAndTimers();
+  resetBrothersAndOverlayState(true);
   const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
   const hardList = (state.stats[profKey] && Array.isArray(state.stats[profKey].hardWords)) ? state.stats[profKey].hardWords : [];
   if (hardList.length === 0) return showLessonMenu();
   state.currentLessonId = "hard_words_training";
   state.lastPlayedLessonId = "hard_words_training";
   state.currentSubMode = "listen_pick";
-  state.isExamMode = false; state.isHardWordsMode = true; state.isCoopDragonMode = false;
+  state.isExamMode = false; state.isHardWordsMode = true;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
   const shuffled = shuffleArray(hardList);
@@ -479,6 +498,14 @@ function startHardWordsTraining() {
 
 function startCoopDragonBattle() {
   cancelAllSpeechAndTimers();
+  clearTimeout(window._dragonPendingNextTimer);
+  window._dragonAnimUntil = 0;
+  if (typeof hideDragonFullscreenClash === "function") hideDragonFullscreenClash();
+
+  if (state.profile && state.profile !== "duel") {
+    state.returnProfileAfterBrothers = state.profile;
+  }
+
   const topH = document.getElementById("topHeader");
   if (topH) topH.classList.remove("hidden");
   state.currentLessonId = "dragon_coop";
@@ -508,7 +535,6 @@ function startCoopDragonBattle() {
     state.roundQuestions.push(item);
   }
 
-  // 2 obowiązkowe pytania z mikrofonem dla Huberta (tury nieparzyste: indeksy 1, 3, 5, 7, 9, 11)
   const hubertTurnIndices = [1, 3, 5, 7, 9, 11];
   const pickedMicIndices = shuffleArray(hubertTurnIndices).slice(0, 2);
   pickedMicIndices.forEach(idx => {
@@ -524,9 +550,10 @@ function startCoopDragonBattle() {
 
 function startLesson(lessonId, subMode = null) {
   cancelAllSpeechAndTimers();
+  resetBrothersAndOverlayState(true);
   state.currentLessonId = lessonId;
   state.lastPlayedLessonId = lessonId;
-  state.isExamMode = false; state.isHardWordsMode = false; state.isCoopDragonMode = false;
+  state.isExamMode = false; state.isHardWordsMode = false;
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
   state.letterBuilt = ""; state.letterPool = [];
 
@@ -580,6 +607,14 @@ function startLesson(lessonId, subMode = null) {
 
 function startDuelAllWords() {
   cancelAllSpeechAndTimers();
+  clearTimeout(window._dragonPendingNextTimer);
+  window._dragonAnimUntil = 0;
+  if (typeof hideDragonFullscreenClash === "function") hideDragonFullscreenClash();
+
+  if (state.profile && state.profile !== "duel") {
+    state.returnProfileAfterBrothers = state.profile;
+  }
+
   const topH = document.getElementById("topHeader");
   if (topH) topH.classList.remove("hidden");
   state.profile = "duel"; state.currentLessonId = "duel_all"; state.lastPlayedLessonId = "duel_all"; state.currentSubMode = "listen_pick";
@@ -599,8 +634,9 @@ function startDuelAllWords() {
 
 function startGrandExam() {
   cancelAllSpeechAndTimers();
+  resetBrothersAndOverlayState(true);
   state.currentLessonId = "grand_exam"; state.lastPlayedLessonId = "grand_exam"; state.currentSubMode = "listen_pick";
-  state.isExamMode = true; state.isHardWordsMode = false; state.isCoopDragonMode = false;
+  state.isExamMode = true; state.isHardWordsMode = false;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
 

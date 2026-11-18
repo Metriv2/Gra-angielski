@@ -14,10 +14,16 @@ function getActiveProfileLabel() {
 }
 
 function setShopChestHighlight(tiersArr) {
+  let scrolled = false;
   ["bronze", "silver", "gold"].forEach(t => {
     const el = document.getElementById(`avatarShopChest_${t}`);
     if (el) {
-      el.classList.toggle("tutorial-highlight", Array.isArray(tiersArr) && tiersArr.includes(t));
+      const active = Array.isArray(tiersArr) && tiersArr.includes(t);
+      el.classList.toggle("tutorial-highlight", active);
+      if (active && !scrolled) {
+        scrolled = true;
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
     }
   });
 }

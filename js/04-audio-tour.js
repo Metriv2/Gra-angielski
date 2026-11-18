@@ -8,6 +8,114 @@ function playEffect(type) {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === "suspended") audioCtx.resume();
     const now = audioCtx.currentTime;
+
+    if (type === "dragon_roar") {
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(520, now);
+      filter.frequency.exponentialRampToValueAtTime(220, now + 0.95);
+      filter.connect(audioCtx.destination);
+
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc1.type = "sawtooth";
+      osc2.type = "triangle";
+
+      osc1.frequency.setValueAtTime(145, now);
+      osc1.frequency.linearRampToValueAtTime(185, now + 0.25);
+      osc1.frequency.exponentialRampToValueAtTime(72, now + 0.95);
+
+      osc2.frequency.setValueAtTime(72, now);
+      osc2.frequency.exponentialRampToValueAtTime(42, now + 0.95);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.26, now + 0.14);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.98);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(filter);
+
+      osc1.start(now); osc2.start(now);
+      osc1.stop(now + 1.0); osc2.stop(now + 1.0);
+      return;
+    }
+
+    if (type === "sword_hit") {
+      // Świst miecza
+      const swoosh = audioCtx.createOscillator();
+      const swooshGain = audioCtx.createGain();
+      swoosh.type = "triangle";
+      swoosh.frequency.setValueAtTime(520, now);
+      swoosh.frequency.exponentialRampToValueAtTime(1450, now + 0.12);
+      swoosh.frequency.exponentialRampToValueAtTime(190, now + 0.28);
+      swooshGain.gain.setValueAtTime(0.22, now);
+      swooshGain.gain.exponentialRampToValueAtTime(0.001, now + 0.29);
+      swoosh.connect(swooshGain);
+      swooshGain.connect(audioCtx.destination);
+      swoosh.start(now);
+      swoosh.stop(now + 0.3);
+
+      // Uderzenie + bohaterski akord
+      [110, 523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = idx === 0 ? "sawtooth" : "triangle";
+        osc.frequency.setValueAtTime(freq, now + 0.14);
+        if (idx === 0) osc.frequency.exponentialRampToValueAtTime(45, now + 0.55);
+        g.gain.setValueAtTime(idx === 0 ? 0.25 : 0.15, now + 0.14);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(now + 0.14);
+        osc.stop(now + 0.66);
+      });
+      return;
+    }
+
+    if (type === "dragon_fire") {
+      // Szum ognia (biały szum przez filtr)
+      const bufferSize = Math.floor(audioCtx.sampleRate * 1.05);
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = noiseBuffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(850, now);
+      filter.frequency.exponentialRampToValueAtTime(240, now + 1.0);
+      filter.Q.value = 1.4;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.02, now);
+      gain.gain.linearRampToValueAtTime(0.32, now + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.02);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      noise.start(now);
+      noise.stop(now + 1.04);
+
+      // Niskie dudnienie płomieni
+      const rumble = audioCtx.createOscillator();
+      const rGain = audioCtx.createGain();
+      rumble.type = "sawtooth";
+      rumble.frequency.setValueAtTime(92, now);
+      rumble.frequency.exponentialRampToValueAtTime(44, now + 0.95);
+      rGain.gain.setValueAtTime(0.2, now);
+      rGain.gain.exponentialRampToValueAtTime(0.001, now + 0.96);
+      rumble.connect(rGain);
+      rGain.connect(audioCtx.destination);
+      rumble.start(now);
+      rumble.stop(now + 0.98);
+      return;
+    }
+
     const notes = type === "success" ? [523.25, 659.25, 783.99, 1046.5] : type === "wrong" ? [240, 180] : type === "beep" ? [880] : [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
     notes.forEach((freq, idx) => {
       const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();

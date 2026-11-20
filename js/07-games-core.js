@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/07-games-core.js
-   PASEK GRY, SEKWENCJA LEKTOR -> ANIMACJA SMOKA, LIMIT 3 SKRZYŃ, LEKARZ I QUIZ
+   PASEK GRY, WALKA ZE SMOKIEM I POJEDYNEK BRACI (PEŁNY EKRAN), LEKARZ I QUIZ
    ============================================================================ */
 
 (function ensureDragonFullscreenStyles() {
@@ -54,6 +54,11 @@
   document.head.appendChild(style);
 })();
 
+function formatHeartsHtml(currentHp, maxHp) {
+  const safeHp = Math.max(0, Math.min(maxHp, currentHp));
+  return "❤️".repeat(safeHp) + "💔".repeat(Math.max(0, maxHp - safeHp));
+}
+
 function clearAllDragonBattleTimers() {
   clearTimeout(window._dragonSpeechGuardTimer);
   clearTimeout(window._dragonStageTimer);
@@ -75,7 +80,7 @@ function hideDragonFullscreenClash() {
   }
 }
 
-function showDragonFullscreenClash(type) {
+function showBattleFullscreenClash(type, mode = "dragon") {
   hideDragonFullscreenClash();
 
   let ov = document.getElementById("dragonFullscreenOverlay");
@@ -85,42 +90,78 @@ function showDragonFullscreenClash(type) {
     document.body.appendChild(ov);
   }
 
-  const db = state.dragonBattle || { dragonHp: 10, maxDragonHp: 10, teamHp: 4, maxTeamHp: 4 };
   const isHit = type === "hit";
+  const isDuel = mode === "duel";
   const isIgor = state.duelTurn === "igor";
   const heroKey = isIgor ? "igor" : "hubert";
   const heroName = isIgor ? "IGOR" : "HUBERT";
+  const heroGenitive = isIgor ? "Igora" : "Huberta";
+  const defenderKey = isIgor ? "hubert" : "igor";
+  const defenderName = isIgor ? "HUBERT" : "IGOR";
+  const defenderGenitive = isIgor ? "Huberta" : "Igora";
 
-  const prevDragonHp = isHit ? Math.min(db.maxDragonHp, db.dragonHp + 1) : db.dragonHp;
-  const startDragonPct = Math.max(0, Math.round((prevDragonHp / db.maxDragonHp) * 100));
-  const endDragonPct = Math.max(0, Math.round((db.dragonHp / db.maxDragonHp) * 100));
+  let startHp, endHp, maxTargetHp, startHearts, endHearts, stageSpriteHtml, initialBadge, targetBarLabel, bottomLabel, initialNote;
 
-  const prevTeamHp = !isHit ? Math.min(db.maxTeamHp, db.teamHp + 1) : db.teamHp;
-  const startHearts = "❤️".repeat(Math.max(0, prevTeamHp)) + "🖤".repeat(Math.max(0, db.maxTeamHp - prevTeamHp));
-  const endHearts = "❤️".repeat(Math.max(0, db.teamHp)) + "💔".repeat(Math.max(0, db.maxTeamHp - db.teamHp));
+  if (isDuel) {
+    if (!state.duelBattle && typeof initDuelBattleState === "function") initDuelBattleState();
+    const dvb = state.duelBattle || { igorHp: 5, hubertHp: 5, maxHp: 5 };
+    maxTargetHp = dvb.maxHp || 5;
+    endHp = dvb[`${defenderKey}Hp`];
+    startHp = isHit ? Math.min(maxTargetHp, endHp + 1) : endHp;
 
-  if (typeof playEffect === "function") playEffect("dragon_roar");
+    const endHeroHp = dvb[`${heroKey}Hp`];
+    const startHeroHp = !isHit ? Math.min(maxTargetHp, endHeroHp + 1) : endHeroHp;
+    startHearts = formatHeartsHtml(startHeroHp, maxTargetHp);
+    endHearts = formatHeartsHtml(endHeroHp, maxTargetHp);
+
+    stageSpriteHtml = `<div id="dragonFsSprite" class="select-none dragon-fs-appear flex flex-col items-center">${typeof renderBoyAvatarSvg === "function" ? renderBoyAvatarSvg(defenderKey, 136) : ""}<span class="mt-1 px-3 py-0.5 rounded-full bg-white/15 text-xs font-extrabold tracking-wide">${defenderName}</span></div>`;
+    initialBadge = `⚔️ POJEDYNEK BRACI: ${heroName} VS ${defenderName}!`;
+    targetBarLabel = `🧑 Życie: ${defenderName}`;
+    bottomLabel = `Życie: ${heroName}`;
+    initialNote = isHit ? `⚔️ ${heroName} szykuje atak!` : `⚡ ${defenderName} szykuje kontratak!`;
+    if (typeof playEffect === "function") playEffect("beep");
+  } else {
+    const db = state.dragonBattle || { dragonHp: 10, maxDragonHp: 10, teamHp: 4, maxTeamHp: 4 };
+    maxTargetHp = db.maxDragonHp;
+    endHp = db.dragonHp;
+    startHp = isHit ? Math.min(maxTargetHp, endHp + 1) : endHp;
+
+    const endTeamHp = db.teamHp;
+    const startTeamHp = !isHit ? Math.min(db.maxTeamHp, endTeamHp + 1) : endTeamHp;
+    startHearts = formatHeartsHtml(startTeamHp, db.maxTeamHp);
+    endHearts = formatHeartsHtml(endTeamHp, db.maxTeamHp);
+
+    stageSpriteHtml = `<div id="dragonFsSprite" class="text-[126px] leading-none select-none dragon-fs-appear">🐉</div>`;
+    initialBadge = `🐉 GROŹNY SMOK POJAWIA SIĘ NA ARENIE!`;
+    targetBarLabel = `🐉 Życie Smoka`;
+    bottomLabel = `Życie Braci`;
+    initialNote = isHit ? `🛡️ ${heroName} szykuje atak!` : `⚠️ Uwaga! Smok bierze oddech!`;
+    if (typeof playEffect === "function") playEffect("dragon_roar");
+  }
+
+  const startPct = Math.max(0, Math.round((startHp / maxTargetHp) * 100));
+  const endPct = Math.max(0, Math.round((endHp / maxTargetHp) * 100));
 
   ov.className = "fixed inset-0 z-[70] flex flex-col items-center justify-center p-4 backdrop-blur-sm bg-gradient-to-b from-slate-950/94 via-purple-950/90 to-slate-950/96 transition-colors duration-500";
 
   ov.innerHTML = `
     <div id="dragonFsCard" class="max-w-md w-full rounded-3xl border-4 border-amber-400 bg-slate-900/90 p-5 text-center text-white shadow-2xl relative overflow-hidden transition-colors duration-500">
       <div id="dragonFsBadge" class="inline-block px-4 py-1.5 rounded-full font-extrabold text-xs uppercase tracking-wider mb-3 bg-amber-400 text-slate-950">
-        🐉 GROŹNY SMOK POJAWIA SIĘ NA ARENIE!
+        ${initialBadge}
       </div>
 
       <div class="relative my-3 flex items-center justify-center h-52">
-        <div id="dragonFsSprite" class="text-[126px] leading-none select-none dragon-fs-appear">🐉</div>
+        ${stageSpriteHtml}
         <div id="dragonFsWeaponFx" class="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
       </div>
 
       <div class="mb-3">
         <div class="flex justify-between text-xs font-extrabold text-amber-300 mb-1">
-          <span>🐉 Życie Smoka</span>
-          <span id="dragonFsHpText">${prevDragonHp} / ${db.maxDragonHp} HP</span>
+          <span>${targetBarLabel}</span>
+          <span id="dragonFsHpText">${startHp} / ${maxTargetHp} HP</span>
         </div>
         <div class="w-full h-4 bg-slate-800 rounded-full overflow-hidden border-2 border-amber-400">
-          <div id="dragonFsHpBar" class="h-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 transition-all duration-1000 ease-out" style="width:${startDragonPct}%"></div>
+          <div id="dragonFsHpBar" class="h-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 transition-all duration-1000 ease-out" style="width:${startPct}%"></div>
         </div>
       </div>
 
@@ -128,12 +169,12 @@ function showDragonFullscreenClash(type) {
         <div class="flex items-center gap-2">
           ${typeof renderBoyAvatarSvg === "function" ? renderBoyAvatarSvg(heroKey, 48) : ""}
           <div class="text-left">
-            <div class="text-[10px] font-bold text-slate-300 uppercase">Życie Braci</div>
+            <div class="text-[10px] font-bold text-slate-300 uppercase">${bottomLabel}</div>
             <div id="dragonFsHearts" class="text-base tracking-wider transition-all duration-500">${startHearts}</div>
           </div>
         </div>
         <div id="dragonFsActionNote" class="text-xs font-extrabold text-amber-300">
-          ${isHit ? `🛡️ ${heroName} szykuje atak!` : `⚠️ Uwaga! Smok bierze oddech!`}
+          ${initialNote}
         </div>
       </div>
     </div>
@@ -168,21 +209,22 @@ function showDragonFullscreenClash(type) {
       badge.className = `inline-block px-4 py-1.5 rounded-full font-extrabold text-xs uppercase tracking-wider mb-3 ${
         isHit ? "bg-emerald-500 text-slate-950" : "bg-red-600 text-white animate-pulse"
       }`;
-      badge.textContent = isHit
-        ? `⚔️ TRAFIENIE! ${heroName} UDERZA W SMOKA!`
-        : `🔥 SMOK ZIONIE OGNIEM NA DRUŻYNĘ!`;
+      badge.textContent = isDuel
+        ? (isHit ? `⚔️ TRAFIENIE! ${heroName} UDERZA ${defenderGenitive.toUpperCase()}!` : `⚡ KONTRATAK! ${defenderName} TRAFIA ${heroGenitive.toUpperCase()}!`)
+        : (isHit ? `⚔️ TRAFIENIE! ${heroName} UDERZA W SMOKA!` : `🔥 SMOK ZIONIE OGNIEM NA DRUŻYNĘ!`);
     }
     if (sprite) {
-      sprite.className = `text-[126px] leading-none select-none ${
-        isHit ? "dragon-fs-zoom-hit" : "dragon-fs-lunge-fire"
-      }`;
+      sprite.classList.remove("dragon-fs-appear");
+      sprite.classList.add(isHit ? "dragon-fs-zoom-hit" : "dragon-fs-lunge-fire");
     }
     if (weaponFx) {
-      weaponFx.innerHTML = `<span class="text-7xl dragon-weapon-slow">${isHit ? "⚔️💥" : "🔥🔥🔥"}</span>`;
+      weaponFx.innerHTML = `<span class="text-7xl dragon-weapon-slow">${isHit ? "⚔️💥" : (isDuel ? "⚡💥" : "🔥🔥🔥")}</span>`;
     }
     if (actionNote) {
       actionNote.className = `text-xs font-extrabold ${isHit ? "text-emerald-300" : "text-rose-300"}`;
-      actionNote.textContent = isHit ? "-1 HP Smoka!" : "-1 ❤️ Drużyny!";
+      actionNote.textContent = isDuel
+        ? (isHit ? `-1 HP (${defenderName})!` : `-1 ❤️ (${heroName})!`)
+        : (isHit ? "-1 HP Smoka!" : "-1 ❤️ Drużyny!");
     }
   }, 1450);
 
@@ -190,9 +232,9 @@ function showDragonFullscreenClash(type) {
     const bar = document.getElementById("dragonFsHpBar");
     const hpTxt = document.getElementById("dragonFsHpText");
     const heartsEl = document.getElementById("dragonFsHearts");
-    if (bar) bar.style.width = `${endDragonPct}%`;
-    if (hpTxt) hpTxt.textContent = `${db.dragonHp} / ${db.maxDragonHp} HP`;
-    if (heartsEl) heartsEl.textContent = endHearts;
+    if (bar) bar.style.width = `${endPct}%`;
+    if (hpTxt) hpTxt.textContent = `${endHp} / ${maxTargetHp} HP`;
+    if (heartsEl && !isHit) heartsEl.textContent = endHearts;
   }, 2050);
 
   window._dragonFsTimer = setTimeout(() => {
@@ -200,23 +242,29 @@ function showDragonFullscreenClash(type) {
   }, 4600);
 }
 
-function triggerDragonBattleAnimation(type) {
+function triggerBattleAnimation(type, mode = "dragon") {
   window._dragonAnimUntil = Date.now() + 4550;
-  showDragonFullscreenClash(type);
+  showBattleFullscreenClash(type, mode);
 }
 
-function playDragonAttackSequence(type, speechPl) {
+function triggerDragonBattleAnimation(type) {
+  triggerBattleAnimation(type, "dragon");
+}
+
+function playBattleAttackSequence(type, speechPl, mode = "dragon") {
   clearAllDragonBattleTimers();
   const capturedRoundIndex = state.roundIndex;
   let animStarted = false;
   let nextQuestionTriggered = false;
+
+  const isActiveBattle = () => (state.isCoopDragonMode || state.profile === "duel") && state.roundIndex === capturedRoundIndex;
 
   const finishAndGoNext = () => {
     if (nextQuestionTriggered) return;
     nextQuestionTriggered = true;
     clearAllDragonBattleTimers();
     hideDragonFullscreenClash();
-    if (state.isCoopDragonMode && state.roundIndex === capturedRoundIndex) {
+    if (isActiveBattle()) {
       advanceNextQuestion(true);
     }
   };
@@ -225,18 +273,16 @@ function playDragonAttackSequence(type, speechPl) {
     if (animStarted) return;
     animStarted = true;
     clearTimeout(window._dragonSpeechGuardTimer);
-    if (!state.isCoopDragonMode || state.roundIndex !== capturedRoundIndex) return;
+    if (!isActiveBattle()) return;
 
-    // Wyciszamy lektora na czas walki – teraz grają wyłącznie efekty dźwiękowe Smoka i miecza
     cancelAllSpeechAndTimers();
-    triggerDragonBattleAnimation(type);
+    triggerBattleAnimation(type, mode);
 
     window._dragonPostAnimTimer = setTimeout(() => {
       finishAndGoNext();
     }, 4650);
   };
 
-  // KROK 1: Najpierw lektor mówi o ataku (bez nakładki i bez efektów dźwiękowych w tle)
   if (typeof speakSequence === "function" && speechPl) {
     speakSequence([{ lang: "pl", text: speechPl }], () => {
       beginAnimationPhase();
@@ -245,15 +291,17 @@ function playDragonAttackSequence(type, speechPl) {
     beginAnimationPhase();
   }
 
-  // Zabezpieczenie na wypadek zablokowanego TTS w telefonie (np. po użyciu mikrofonu)
   window._dragonSpeechGuardTimer = setTimeout(() => {
     beginAnimationPhase();
   }, 2700);
 
-  // Twardy limit bezpieczeństwa całej sekwencji (lektor + animacja), gwarantujący przeskok do pytania
   window._dragonHardWatchdog = setTimeout(() => {
     finishAndGoNext();
   }, 7600);
+}
+
+function playDragonAttackSequence(type, speechPl) {
+  playBattleAttackSequence(type, speechPl, "dragon");
 }
 
 function renderTopGameBar(lesson) {
@@ -296,7 +344,7 @@ function renderTopGameBar(lesson) {
   let dragonHud = "";
   if (state.isCoopDragonMode) {
     const db = state.dragonBattle;
-    const hearts = "❤️".repeat(Math.max(0, db.teamHp)) + "🖤".repeat(Math.max(0, db.maxTeamHp - db.teamHp));
+    const hearts = formatHeartsHtml(db.teamHp, db.maxTeamHp);
     const dragonPct = Math.max(0, Math.round((db.dragonHp / db.maxDragonHp) * 100));
     const dailySt = getDailySpecialChestStatus("dragon");
     dragonHud = `
@@ -330,8 +378,42 @@ function renderTopGameBar(lesson) {
     `;
   }
 
+  let duelBar = "";
+  if (state.profile === "duel" && !state.isCoopDragonMode) {
+    if (!state.duelBattle && typeof initDuelBattleState === "function") initDuelBattleState();
+    const dvb = state.duelBattle || { igorHp: 5, hubertHp: 5, maxHp: 5, statusText: "" };
+    const duelDaily = getDailySpecialChestStatus("duel");
+    duelBar = `
+      <div id="duelBattleHudBox" class="mb-3 p-3 rounded-3xl bg-gradient-to-r from-amber-950 via-purple-950 to-sky-950 text-white border-4 border-purple-400 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-2xl ${state.duelTurn === 'igor' ? 'ring-2 ring-amber-400' : ''}">
+            ${typeof renderBoyAvatarSvg === "function" ? renderBoyAvatarSvg('igor', 42) : ""}
+            <div>
+              <div class="text-xs font-extrabold text-amber-300">👦 IGOR (${state.duelScores.igor} pkt)</div>
+              <div class="text-xs tracking-wider">${formatHeartsHtml(dvb.igorHp, dvb.maxHp)}</div>
+            </div>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <div class="px-3 py-1 rounded-xl font-extrabold text-xs ${state.duelTurn === 'igor' ? 'bg-amber-500 text-slate-950' : 'bg-sky-500 text-white'}">
+              ⚔️ Atakuje: ${state.duelTurn === 'igor' ? '👦 IGOR' : '🧑 HUBERT'}
+            </div>
+            <span class="text-[10px] font-bold text-purple-200">🎁 Skrzynie dziś: ${duelDaily.remaining}/${duelDaily.limit}</span>
+          </div>
+          <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-2xl ${state.duelTurn === 'hubert' ? 'ring-2 ring-sky-400' : ''}">
+            <div class="text-right">
+              <div class="text-xs font-extrabold text-sky-300">🧑 HUBERT (${state.duelScores.hubert} pkt)</div>
+              <div class="text-xs tracking-wider">${formatHeartsHtml(dvb.hubertHp, dvb.maxHp)}</div>
+            </div>
+            ${typeof renderBoyAvatarSvg === "function" ? renderBoyAvatarSvg('hubert', 42) : ""}
+          </div>
+        </div>
+        <div class="text-center text-xs font-extrabold text-amber-200 bg-black/30 py-1.5 px-3 rounded-xl">${dvb.statusText}</div>
+      </div>
+    `;
+  }
+
   let dotsHtml = "";
-  const maxDots = state.isCoopDragonMode ? 12 : totalQ;
+  const maxDots = (state.isCoopDragonMode || state.profile === "duel") ? 12 : totalQ;
   for (let i = 0; i < Math.min(totalQ, maxDots); i++) {
     let badgeTxt = `${i + 1}`; let bg = "bg-slate-200 text-slate-600 border-slate-300";
     if (i < state.roundIndex) {
@@ -347,8 +429,6 @@ function renderTopGameBar(lesson) {
     ? `<button onclick="toggleTataPreviewAge()" class="px-2.5 py-1 rounded-xl font-extrabold text-xs border-2 ${state.tataPreviewAsIgor ? 'bg-amber-400 text-amber-950 border-amber-600' : 'bg-sky-600 text-white border-sky-800'}">${state.tataPreviewAsIgor ? '👦 Widok: IGOR (4 l.) 🔄' : '🧑 Widok: HUBERT (6 l.) 🔄'}</button>`
     : "";
 
-  const duelDaily = getDailySpecialChestStatus("duel");
-  const duelBar = (state.profile === "duel" && !state.isCoopDragonMode) ? `<div class="mb-2 p-2.5 rounded-2xl bg-gradient-to-r from-amber-100 via-purple-100 to-sky-100 border-2 border-purple-400 flex flex-wrap justify-between items-center gap-1 font-extrabold text-[10px] md:text-xs"><div>👦 IGOR: ${state.duelScores.igor} pkt ⚡ VS ⚡ 🧑 HUBERT: ${state.duelScores.hubert} pkt</div><div class="px-2 py-0.5 rounded-lg bg-white/80 text-purple-900">🎁 Skrzynie dziś: ${duelDaily.remaining}/${duelDaily.limit}</div><div class="px-3 py-1 rounded-xl ${state.duelTurn === 'igor' ? 'bg-amber-500' : 'bg-sky-600'} text-white">Teraz: ${state.duelTurn === 'igor' ? 'IGOR' : 'HUBERT'}</div></div>` : "";
   const examBar = state.isExamMode ? `<div class="mb-2 p-2 rounded-2xl bg-orange-100 border-2 border-orange-400 text-orange-950 font-extrabold text-center text-xs shadow-sm uppercase">🎓 Wielki Sprawdzian (Pytanie ${state.roundIndex+1}/15)</div>` : "";
   const hardBar = state.isHardWordsMode ? `<div class="mb-2 p-2 rounded-2xl bg-rose-100 border-2 border-rose-400 text-rose-950 font-extrabold text-center text-xs shadow-sm uppercase">🎯 Trening Trudnych Słówek • Za odpowiedź bez błędu: +2 ⭐!</div>` : "";
   return `
@@ -377,20 +457,24 @@ function renderCurrentQuestion() {
   if (state.isCoopDragonMode && (state.dragonBattle.dragonHp <= 0 || state.dragonBattle.teamHp <= 0)) {
     return renderEndRoundScreen();
   }
+  if (state.profile === "duel" && state.duelBattle && (state.duelBattle.igorHp <= 0 || state.duelBattle.hubertHp <= 0)) {
+    return renderEndRoundScreen();
+  }
   if (state.roundIndex >= state.roundQuestions.length) return renderEndRoundScreen();
 
   if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelReadyWaiting) {
     const isIgor = state.duelTurn === "igor";
     const mc = document.getElementById("mainContainer");
     if (!mc) return;
+    const dvb = state.duelBattle || { igorHp: 5, hubertHp: 5, maxHp: 5 };
     const modeSub = state.isCoopDragonMode
-      ? `🐉 Smok ma jeszcze ${state.dragonBattle.dragonHp} HP • Drużyna ma ${state.dragonBattle.teamHp} ❤️`
-      : `Pytanie ${state.roundIndex + 1} z 16 • Masz tylko 1 szansę!`;
+      ? `🐉 Smok ma jeszcze ${state.dragonBattle.dragonHp} HP • Drużyna ma ${formatHeartsHtml(state.dragonBattle.teamHp, state.dragonBattle.maxTeamHp)}`
+      : `👦 IGOR: ${formatHeartsHtml(dvb.igorHp, dvb.maxHp)} &nbsp;⚔️&nbsp; 🧑 HUBERT: ${formatHeartsHtml(dvb.hubertHp, dvb.maxHp)}`;
     mc.innerHTML = `
       <div class="bg-white rounded-3xl shadow-xl border-4 ${isIgor ? 'border-amber-400 bg-amber-50' : 'border-sky-400 bg-sky-50'} p-6 text-center max-w-xl mx-auto flex flex-col items-center">
         ${renderBoyAvatarSvg(isIgor ? 'igor' : 'hubert', 115)}
         <h2 class="text-3xl font-extrabold mt-3 mb-1 text-slate-900">Teraz kolej: ${isIgor ? 'IGOR' : 'HUBERT'}!</h2>
-        <p class="text-sm font-bold text-slate-600 mb-5">${modeSub}</p>
+        <p class="text-sm font-bold text-slate-700 mb-5">${modeSub}</p>
         <button onclick="state.duelReadyWaiting=false;renderCurrentQuestion();" class="w-full py-4 rounded-2xl ${isIgor ? 'bg-amber-500 hover:bg-amber-600' : 'bg-sky-600 hover:bg-sky-700'} text-white font-extrabold text-xl shadow-lg">▶️ Gotowy do akcji!</button>
       </div>
     `;
@@ -426,7 +510,6 @@ function renderCurrentQuestion() {
   
   renderUniversalVisualQuiz(lesson);
 }
-
 function renderColorMixGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const choices = buildColorMixChoicesForQuestion(q);
@@ -810,6 +893,16 @@ function checkUniversalAnswer(idx, isShopCart = false) {
       fb.innerHTML = `<span class="text-emerald-600 font-extrabold">🛡️⚔️ Brawo! Zaraz zaatakujemy Smoka!</span>`;
       awardCorrectAnswer();
       playDragonAttackSequence("hit", "Super! Zaatakujemy teraz smoka!");
+    } else if (state.profile === "duel") {
+      if (!state.duelBattle && typeof initDuelBattleState === "function") initDuelBattleState();
+      const attackerName = state.duelTurn === "igor" ? "Igor" : "Hubert";
+      const defenderKey = state.duelTurn === "igor" ? "hubert" : "igor";
+      const defenderGenitive = state.duelTurn === "igor" ? "Huberta" : "Igora";
+      state.duelBattle[`${defenderKey}Hp`] = Math.max(0, state.duelBattle[`${defenderKey}Hp`] - 1);
+      state.duelBattle.statusText = `⚔️ TRAFIENIE! ${attackerName.toUpperCase()} zadaje cios i odbiera 1 serduszko!`;
+      fb.innerHTML = `<span class="text-emerald-600 font-extrabold">⚔️ Brawo ${attackerName}! Zaraz zaatakujesz ${defenderGenitive}!</span>`;
+      awardCorrectAnswer();
+      playBattleAttackSequence("hit", `Super ${attackerName}! Zaatakujesz teraz ${defenderGenitive}!`, "duel");
     } else {
       playEffect("success");
       fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! ${state.isHardWordsMode && state.currentQuestionMistakes === 0 ? 'Opanowano trudne słówko (+2 ⭐)!' : 'O to chodziło!'}</span>`;
@@ -827,10 +920,15 @@ function checkUniversalAnswer(idx, isShopCart = false) {
       fb.innerHTML = `<span class="text-rose-600 font-extrabold">🔥💥 O nie! Smok atakuje nas! Szukaliśmy: ${q.en} (${q.pl})</span>`;
       playDragonAttackSequence("fire", "Niestety, smok atakuje nas!");
     } else if (state.profile === "duel") {
-      playEffect("wrong");
+      if (!state.duelBattle && typeof initDuelBattleState === "function") initDuelBattleState();
       state.answeredCurrent = true;
-      fb.innerHTML = `<span class="text-rose-600">❌ Pudło w pojedynku (0 pkt)! Szukaliśmy: ${q.en}</span>`;
-      speakSequence([{ lang: "pl", text: "Pudło! Kolej brata!" }], () => advanceNextQuestion());
+      const attackerKey = state.duelTurn;
+      const attackerName = state.duelTurn === "igor" ? "Igor" : "Hubert";
+      const defenderName = state.duelTurn === "igor" ? "Hubert" : "Igor";
+      state.duelBattle[`${attackerKey}Hp`] = Math.max(0, state.duelBattle[`${attackerKey}Hp`] - 1);
+      state.duelBattle.statusText = `⚡ KONTRATAK! ${defenderName.toUpperCase()} odbiera 1 serduszko! Szukaliśmy: ${q.en} (${q.pl})`;
+      fb.innerHTML = `<span class="text-rose-600 font-extrabold">⚡ Pudło! ${defenderName} kontratakuje! Szukaliśmy: ${q.en} (${q.pl})</span>`;
+      playBattleAttackSequence("fire", `Niestety ${attackerName}! ${defenderName} kontratakuje!`, "duel");
     } else {
       playEffect("wrong");
       fb.innerHTML = `<span class="text-rose-600">❌ To jest ${chosen.pl}. Spróbuj jeszcze raz!</span>`;
@@ -858,7 +956,7 @@ function awardCorrectAnswer() {
 }
 
 function advanceNextQuestion(forceSkip = false) {
-  if (!forceSkip && state.isCoopDragonMode && window._dragonAnimUntil && Date.now() < window._dragonAnimUntil) {
+  if (!forceSkip && (state.isCoopDragonMode || state.profile === "duel") && window._dragonAnimUntil && Date.now() < window._dragonAnimUntil) {
     const waitMs = window._dragonAnimUntil - Date.now();
     clearTimeout(window._dragonPendingNextTimer);
     window._dragonPendingNextTimer = setTimeout(() => {
@@ -876,8 +974,12 @@ function advanceNextQuestion(forceSkip = false) {
   if (!state.answeredCurrent) {
     state.roundResults.push("wrong"); state.roundMistakes++;
     if (state.isCoopDragonMode) state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
+    if (state.profile === "duel" && state.duelBattle) {
+      state.duelBattle[`${state.duelTurn}Hp`] = Math.max(0, state.duelBattle[`${state.duelTurn}Hp`] - 1);
+    }
   }
   if (state.isCoopDragonMode && (state.dragonBattle.dragonHp <= 0 || state.dragonBattle.teamHp <= 0)) return renderEndRoundScreen();
+  if (state.profile === "duel" && state.duelBattle && (state.duelBattle.igorHp <= 0 || state.duelBattle.hubertHp <= 0)) return renderEndRoundScreen();
   if (state.profile === "duel" || state.isCoopDragonMode) {
     state.duelTurn = state.duelTurn === "igor" ? "hubert" : "igor";
     state.duelReadyWaiting = true;
@@ -941,7 +1043,7 @@ function renderEndRoundScreen() {
           <div class="bg-white rounded-3xl shadow-2xl border-4 border-emerald-400 p-6 text-center max-w-xl mx-auto">
             <div class="text-6xl mb-2">🐉🏳️🏆</div>
             <h2 class="text-3xl font-extrabold text-emerald-900 mb-2">SMOK POKONANY!</h2>
-            <p class="text-slate-700 font-bold mb-3">Wspólnymi siłami pokonaliście Groźnego Smoka! Zostało Wam ${state.dragonBattle.teamHp} ❤️!</p>
+            <p class="text-slate-700 font-bold mb-3">Wspólnymi siłami pokonaliście Groźnego Smoka! Zostało Wam ${formatHeartsHtml(state.dragonBattle.teamHp, state.dragonBattle.maxTeamHp)}!</p>
             <div class="mb-4 p-3 rounded-2xl bg-amber-50 border-2 border-amber-400 text-sm font-extrabold text-amber-950">
               🎁 Nagrody za zwycięstwo (Skrzynie dziś: ${updatedDragon.used}/${updatedDragon.limit}):<br>
               👦 IGOR otrzymuje: ${chestBadgeLabel}<br>
@@ -1001,20 +1103,29 @@ function renderEndRoundScreen() {
 
   playEffect("fanfare");
   let duelChestBannerHtml = "";
+  let duelWinner = "draw";
   if (state.profile === "duel") {
+    const dvb = state.duelBattle || { igorHp: 5, hubertHp: 5, maxHp: 5 };
+    if (dvb.igorHp <= 0 && dvb.hubertHp > 0) duelWinner = "hubert";
+    else if (dvb.hubertHp <= 0 && dvb.igorHp > 0) duelWinner = "igor";
+    else if (dvb.igorHp > dvb.hubertHp) duelWinner = "igor";
+    else if (dvb.hubertHp > dvb.igorHp) duelWinner = "hubert";
+    else if (state.duelScores.igor > state.duelScores.hubert) duelWinner = "igor";
+    else if (state.duelScores.hubert > state.duelScores.igor) duelWinner = "hubert";
+
     state.stats.igor.cups++; state.stats.hubert.cups++;
-    if (state.duelScores.igor > state.duelScores.hubert) state.stats.igor.duelsWon++;
-    else if (state.duelScores.hubert > state.duelScores.igor) state.stats.hubert.duelsWon++;
+    if (duelWinner === "igor") state.stats.igor.duelsWon++;
+    else if (duelWinner === "hubert") state.stats.hubert.duelsWon++;
     checkAndUnlockAchievements("igor"); checkAndUnlockAchievements("hubert");
 
     const dailyDuel = getDailySpecialChestStatus("duel");
     if (dailyDuel.canEarn) {
       recordDailySpecialChestAwarded("duel");
       const updatedDuel = getDailySpecialChestStatus("duel");
-      if (state.duelScores.igor > state.duelScores.hubert) {
+      if (duelWinner === "igor") {
         state.rewardQueue.push({ profKey: "igor", achievement: { name: "Zwycięzca Pojedynku (Igor)" }, chestType: "silver" });
         duelChestBannerHtml = `<div class="mt-2 p-2.5 rounded-xl bg-amber-100 border border-amber-400 text-xs font-extrabold text-amber-950">🎁 Nagroda za Pojedynek (${updatedDuel.used}/${updatedDuel.limit} dziś): 👦 IGOR zdobywa 🥈 Srebrną Skrzynię!</div>`;
-      } else if (state.duelScores.hubert > state.duelScores.igor) {
+      } else if (duelWinner === "hubert") {
         state.rewardQueue.push({ profKey: "hubert", achievement: { name: "Zwycięzca Pojedynku (Hubert)" }, chestType: "silver" });
         duelChestBannerHtml = `<div class="mt-2 p-2.5 rounded-xl bg-amber-100 border border-amber-400 text-xs font-extrabold text-amber-950">🎁 Nagroda za Pojedynek (${updatedDuel.used}/${updatedDuel.limit} dziś): 🧑 HUBERT zdobywa 🥈 Srebrną Skrzynię!</div>`;
       } else {
@@ -1046,8 +1157,18 @@ function renderEndRoundScreen() {
   }
 
   const isMemory = finishedLessonId === "memory_game";
+  const dvbFinal = state.duelBattle || { igorHp: 5, hubertHp: 5, maxHp: 5 };
   const duelInfo = state.profile === "duel"
-    ? `<div class="my-3 p-4 rounded-2xl bg-purple-50 border-2 border-purple-300 font-extrabold text-lg">${state.duelScores.igor > state.duelScores.hubert ? '🏆 Zwycięża IGOR!' : state.duelScores.hubert > state.duelScores.igor ? '🏆 Zwycięża HUBERT!' : '🤝 Zasłużony REMIS!'}<div class="text-sm mt-1">👦 Igor: ${state.duelScores.igor}/8 pkt &nbsp;|&nbsp; 🧑 Hubert: ${state.duelScores.hubert}/8 pkt</div>${duelChestBannerHtml}</div>`
+    ? `<div class="my-3 p-4 rounded-2xl bg-purple-50 border-2 border-purple-300 font-extrabold text-lg">
+        <div class="flex justify-center items-center gap-6 mb-2">
+          <div class="flex flex-col items-center">${renderBoyAvatarSvg('igor', 60)}<span class="text-xs mt-1">👦 Igor: ${formatHeartsHtml(dvbFinal.igorHp, dvbFinal.maxHp)}</span></div>
+          <span class="text-2xl">⚔️</span>
+          <div class="flex flex-col items-center">${renderBoyAvatarSvg('hubert', 60)}<span class="text-xs mt-1">🧑 Hubert: ${formatHeartsHtml(dvbFinal.hubertHp, dvbFinal.maxHp)}</span></div>
+        </div>
+        ${duelWinner === 'igor' ? '🏆 Zwycięża IGOR!' : duelWinner === 'hubert' ? '🏆 Zwycięża HUBERT!' : '🤝 Zasłużony REMIS!'}
+        <div class="text-xs text-slate-600 mt-1">Trafienia: Igor ${state.duelScores.igor} pkt &nbsp;|&nbsp; Hubert ${state.duelScores.hubert} pkt</div>
+        ${duelChestBannerHtml}
+       </div>`
     : (isMemory
         ? `<p class="text-slate-700 font-bold mb-4">Brawo! Znaleziono wszystkie pary (${state.memoryMatchedPairs}/${state.memoryMatchedPairs})! 🎉</p>`
         : `<p class="text-slate-600 mb-4">Wynik: <strong>${state.roundScore}/${state.roundQuestions.length}</strong> (Błędy: ${state.roundMistakes})</p>`);

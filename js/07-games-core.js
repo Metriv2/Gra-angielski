@@ -61,7 +61,8 @@ function isBrothersTestSandbox() {
 
 function formatHeartsHtml(currentHp, maxHp) {
   const safeHp = Math.max(0, Math.min(maxHp, currentHp));
-  return "❤️".repeat(safeHp) + "💔".repeat(Math.max(0, maxHp - safeHp));
+  const hearts = "❤️".repeat(safeHp) + "💔".repeat(Math.max(0, maxHp - safeHp));
+  return `<span class="inline-flex items-center whitespace-nowrap">${hearts}</span>`;
 }
 
 function clearAllDragonBattleTimers() {
@@ -473,19 +474,29 @@ function renderCurrentQuestion() {
   }
   if (state.roundIndex >= state.roundQuestions.length) return renderEndRoundScreen();
 
-  if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelReadyWaiting) {
+if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelReadyWaiting) {
     const isIgor = state.duelTurn === "igor";
     const mc = document.getElementById("mainContainer");
     if (!mc) return;
     const dvb = state.duelBattle || { igorHp: 7, hubertHp: 7, maxHp: 7 };
-    const modeSub = state.isCoopDragonMode
-      ? `🐉 Smok ma jeszcze ${state.dragonBattle.dragonHp} HP • Drużyna ma ${formatHeartsHtml(state.dragonBattle.teamHp, state.dragonBattle.maxTeamHp)}`
-      : `Pytanie ${state.roundIndex + 1}/12 • 👦 IGOR: ${formatHeartsHtml(dvb.igorHp, dvb.maxHp)} &nbsp;⚔️&nbsp; 🧑 HUBERT: ${formatHeartsHtml(dvb.hubertHp, dvb.maxHp)}`;
+    const modeSubHtml = state.isCoopDragonMode
+      ? `<p class="text-sm font-bold text-slate-700 mb-5">🐉 Smok ma jeszcze ${state.dragonBattle.dragonHp} HP • Drużyna: ${formatHeartsHtml(state.dragonBattle.teamHp, state.dragonBattle.maxTeamHp)}</p>`
+      : `<div class="mb-5 w-full space-y-2">
+          <div class="inline-block px-3 py-1 rounded-full bg-purple-100 text-purple-900 font-extrabold text-xs">Pytanie ${state.roundIndex + 1} z 12</div>
+          <div class="flex flex-wrap items-center justify-center gap-2.5 text-xs sm:text-sm font-extrabold text-slate-800">
+            <div class="px-3 py-1.5 rounded-2xl bg-white border-2 border-amber-300 shadow-sm flex items-center gap-1.5">
+              <span>👦 IGOR:</span> ${formatHeartsHtml(dvb.igorHp, dvb.maxHp)}
+            </div>
+            <div class="px-3 py-1.5 rounded-2xl bg-white border-2 border-sky-300 shadow-sm flex items-center gap-1.5">
+              <span>🧑 HUBERT:</span> ${formatHeartsHtml(dvb.hubertHp, dvb.maxHp)}
+            </div>
+          </div>
+        </div>`;
     mc.innerHTML = `
       <div class="bg-white rounded-3xl shadow-xl border-4 ${isIgor ? 'border-amber-400 bg-amber-50' : 'border-sky-400 bg-sky-50'} p-6 text-center max-w-xl mx-auto flex flex-col items-center">
         ${renderBoyAvatarSvg(isIgor ? 'igor' : 'hubert', 115)}
-        <h2 class="text-3xl font-extrabold mt-3 mb-1 text-slate-900">Teraz kolej: ${isIgor ? 'IGOR' : 'HUBERT'}!</h2>
-        <p class="text-sm font-bold text-slate-700 mb-5">${modeSub}</p>
+        <h2 class="text-3xl font-extrabold mt-3 mb-2 text-slate-900">Teraz kolej: ${isIgor ? 'IGOR' : 'HUBERT'}!</h2>
+        ${modeSubHtml}
         <button onclick="state.duelReadyWaiting=false;renderCurrentQuestion();" class="w-full py-4 rounded-2xl ${isIgor ? 'bg-amber-500 hover:bg-amber-600' : 'bg-sky-600 hover:bg-sky-700'} text-white font-extrabold text-xl shadow-lg">▶️ Gotowy do akcji!</button>
       </div>
     `;

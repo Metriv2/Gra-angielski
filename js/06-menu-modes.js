@@ -101,7 +101,17 @@ function collectAllWordsForBrothersModes() {
   return all;
 }
 
+function initDuelBattleState() {
+  state.duelBattle = {
+    igorHp: 5,
+    hubertHp: 5,
+    maxHp: 5,
+    statusText: "⚔️ Pojedynek Braci! Odpowiadaj poprawnie, aby atakować brata!"
+  };
+}
+
 function resetBrothersAndOverlayState(restoreSingleProfile = true) {
+  if (typeof clearAllDragonBattleTimers === "function") clearAllDragonBattleTimers();
   clearTimeout(window._dragonPendingNextTimer);
   window._dragonAnimUntil = 0;
   if (typeof hideDragonFullscreenClash === "function") hideDragonFullscreenClash();
@@ -212,6 +222,9 @@ function updateHeaderUI() {
   if (state.profile !== "duel") {
     badge.onclick = () => { if (typeof openAvatarModal === "function") openAvatarModal(); };
     badge.title = "Kliknij awatar, aby otworzyć Garderobę i Asystenta Gwiazdek!";
+  } else {
+    badge.onclick = null;
+    badge.title = "Tryb Pojedynku Braci";
   }
 
   if (state.profile === "igor") {
@@ -228,7 +241,7 @@ function updateHeaderUI() {
     const simTag = state.tataPreviewAsIgor ? "👦 Widok: IGOR (4 l.)" : "🧑 Widok: HUBERT (6 l.)";
     badge.innerHTML = `${renderBoyAvatarSvg('tata', 26)} 👨‍💻 TATA (${age} l.)${bday} • ⭐ ${state.stats.tata.stars} | 🏆 ${state.stats.tata.cups} | <span class="px-2 py-0.5 rounded-lg bg-indigo-600 text-white text-[11px] font-extrabold">${simTag}</span>`;
   } else {
-    badge.innerHTML = state.isCoopDragonMode ? `🐉 WSPÓLNA WALKA ZE SMOKIEM` : `⚔️ POJEDYNEK BRACI (16 pytań)`;
+    badge.innerHTML = state.isCoopDragonMode ? `🐉 WSPÓLNA WALKA ZE SMOKIEM` : `⚔️ POJEDYNEK BRACI (IGOR VS HUBERT)`;
   }
 }
 
@@ -498,6 +511,7 @@ function startHardWordsTraining() {
 
 function startCoopDragonBattle() {
   cancelAllSpeechAndTimers();
+  if (typeof clearAllDragonBattleTimers === "function") clearAllDragonBattleTimers();
   clearTimeout(window._dragonPendingNextTimer);
   window._dragonAnimUntil = 0;
   if (typeof hideDragonFullscreenClash === "function") hideDragonFullscreenClash();
@@ -577,13 +591,14 @@ function startLesson(lessonId, subMode = null) {
   state.shopCart = []; state.riddleHintShown = false; state.riddleHintStep = 0;
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0; state.roundResults = []; state.currentQuestionMistakes = 0;
   state.duelScores = { igor: 0, hubert: 0 }; state.duelTurn = "igor"; state.duelReadyWaiting = state.profile === "duel";
+  if (state.profile === "duel") initDuelBattleState();
 
   if (subMode === "pancake_cooking_game") {
     state.roundQuestions = [{ en: "Pancakes", pl: "Pankejksy", icon: "🥞" }];
     if (typeof startPancakeCookingGame === "function") return startPancakeCookingGame(lesson);
   }
 
-  const totalQ = state.profile === "duel" ? 16 : state.questionsPerRound;
+  const totalQ = state.profile === "duel" ? 20 : state.questionsPerRound;
   if (subMode === "color_mix_game") {
     state.roundQuestions = generateColorMixRoundQuestions(totalQ);
     return renderCurrentQuestion();
@@ -607,6 +622,7 @@ function startLesson(lessonId, subMode = null) {
 
 function startDuelAllWords() {
   cancelAllSpeechAndTimers();
+  if (typeof clearAllDragonBattleTimers === "function") clearAllDragonBattleTimers();
   clearTimeout(window._dragonPendingNextTimer);
   window._dragonAnimUntil = 0;
   if (typeof hideDragonFullscreenClash === "function") hideDragonFullscreenClash();
@@ -622,12 +638,13 @@ function startDuelAllWords() {
   state.roundIndex = 0; state.roundScore = 0; state.roundMistakes = 0;
   state.roundResults = []; state.currentQuestionMistakes = 0; state.duelScores = { igor: 0, hubert: 0 };
   state.duelTurn = "igor"; state.duelReadyWaiting = true;
+  initDuelBattleState();
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
 
   const all = collectAllWordsForBrothersModes();
   const shuffled = shuffleArray(all);
   state.roundQuestions = [];
-  for (let i = 0; i < 16; i++) state.roundQuestions.push(shuffled[i % shuffled.length]);
+  for (let i = 0; i < 20; i++) state.roundQuestions.push(shuffled[i % shuffled.length]);
   updateHeaderUI();
   renderCurrentQuestion();
 }

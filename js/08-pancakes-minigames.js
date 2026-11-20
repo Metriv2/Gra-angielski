@@ -699,7 +699,10 @@ function approveMicAnswer(msg) {
   stopActiveSpeechRecSafely();
 
   const q = state.roundQuestions[state.roundIndex];
-  const profKey = state.isCoopDragonMode ? "hubert" : ((state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor");
+  const isSandbox = typeof isBrothersTestSandbox === "function" && isBrothersTestSandbox();
+  const profKey = state.isCoopDragonMode
+    ? (isSandbox ? "tata" : "hubert")
+    : ((state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor");
   if (state.stats[profKey]) {
     state.stats[profKey].micCount = (state.stats[profKey].micCount || 0) + 1;
   }

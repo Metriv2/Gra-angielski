@@ -73,12 +73,17 @@ function buildColorMixChoicesForQuestion(q) {
   return shuffleArray(choices);
 }
 
+function isTataSandboxBrothersMode() {
+  return state.profile === "tata" || state.returnProfileAfterBrothers === "tata";
+}
+
 function getVisibleLessonItems(items, applyAgeFilter = true, lessonIdOverride = null) {
   if (state && state.lessons) {
     normalizePancakesIconsInLessons(state.lessons);
   }
   if (!Array.isArray(items)) return [];
-  let list = state.profile === "tata" ? [...items] : items.filter(it => !it.testOnly);
+  const isTataContext = state.profile === "tata" || state.returnProfileAfterBrothers === "tata";
+  let list = isTataContext ? [...items] : items.filter(it => !it.testOnly);
 
   if (applyAgeFilter) {
     if (isEffectiveIgorMode(lessonIdOverride)) {
@@ -91,7 +96,8 @@ function getVisibleLessonItems(items, applyAgeFilter = true, lessonIdOverride = 
 
 function collectAllWordsForBrothersModes() {
   let all = [];
-  state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
+  const isTataContext = isTataSandboxBrothersMode();
+  state.lessons.filter(l => !l.testOnly || isTataContext).forEach(l => {
     if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
       getVisibleLessonItems(l.items, false, l.id).forEach(it => {
         if (it && it.en) all.push(it);
@@ -103,10 +109,10 @@ function collectAllWordsForBrothersModes() {
 
 function initDuelBattleState() {
   state.duelBattle = {
-    igorHp: 5,
-    hubertHp: 5,
-    maxHp: 5,
-    statusText: "⚔️ Pojedynek Braci! Odpowiadaj poprawnie, aby atakować brata!"
+    igorHp: 7,
+    hubertHp: 7,
+    maxHp: 7,
+    statusText: "⚔️ Pojedynek Braci (12 pytań)! Każdy ma 7 ❤️ – trafiaj lub kontratakuj!"
   };
 }
 
@@ -219,15 +225,21 @@ function updateHeaderUI() {
   if (typeof updateWhatsNewButtonGlow === "function") updateWhatsNewButtonGlow();
   if (!badge || !state.profile) return;
 
-  if (state.profile !== "duel") {
+  if (state.profile !== "duel" && !state.isCoopDragonMode) {
     badge.onclick = () => { if (typeof openAvatarModal === "function") openAvatarModal(); };
     badge.title = "Kliknij awatar, aby otworzyć Garderobę i Asystenta Gwiazdek!";
   } else {
     badge.onclick = null;
-    badge.title = "Tryb Pojedynku Braci";
+    badge.title = "Tryb Braci";
   }
 
-  if (state.profile === "igor") {
+  const sandboxTag = isTataSandboxBrothersMode() ? `<span class="px-2 py-0.5 rounded-lg bg-emerald-600 text-white text-[10px] font-extrabold">🧪 TEST TATY</span> ` : "";
+
+  if (state.isCoopDragonMode) {
+    badge.innerHTML = `${sandboxTag}🐉 WSPÓLNA WALKA ZE SMOKIEM`;
+  } else if (state.profile === "duel") {
+    badge.innerHTML = `${sandboxTag}⚔️ POJEDYNEK BRACI (12 PYTAŃ)`;
+  } else if (state.profile === "igor") {
     const age = getPlayerAge("igor");
     const bday = isPlayerBirthdayToday("igor") ? " 🎂" : "";
     badge.innerHTML = `${renderBoyAvatarSvg('igor', 26)} 👦 IGOR (${age} l.)${bday} • ⭐ ${state.stats.igor.stars} | 🏆 ${state.stats.igor.cups} | 🔥 ${state.stats.igor.streakDays} dni`;
@@ -240,8 +252,6 @@ function updateHeaderUI() {
     const bday = isPlayerBirthdayToday("tata") ? " 🎂" : "";
     const simTag = state.tataPreviewAsIgor ? "👦 Widok: IGOR (4 l.)" : "🧑 Widok: HUBERT (6 l.)";
     badge.innerHTML = `${renderBoyAvatarSvg('tata', 26)} 👨‍💻 TATA (${age} l.)${bday} • ⭐ ${state.stats.tata.stars} | 🏆 ${state.stats.tata.cups} | <span class="px-2 py-0.5 rounded-lg bg-indigo-600 text-white text-[11px] font-extrabold">${simTag}</span>`;
-  } else {
-    badge.innerHTML = state.isCoopDragonMode ? `🐉 WSPÓLNA WALKA ZE SMOKIEM` : `⚔️ POJEDYNEK BRACI (IGOR VS HUBERT)`;
   }
 }
 
@@ -408,16 +418,17 @@ function showLessonMenu() {
     }
   }
 
+  const isTata = state.profile === "tata";
   const duelDaily = getDailySpecialChestStatus("duel");
   const dragonDaily = getDailySpecialChestStatus("dragon");
   const alwaysBrothersButtons = `
     <button id="btnDuelMenuAlways" onclick="startDuelAllWords()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-extrabold text-xs md:text-sm shadow-lg border-2 border-purple-300 flex items-center gap-1.5">
       <span>⚔️</span> Pojedynek Braci (VS)
-      <span class="px-1.5 py-0.5 rounded-lg bg-white/20 text-[10px]">🎁 ${duelDaily.remaining}/${duelDaily.limit}</span>
+      <span class="px-1.5 py-0.5 rounded-lg bg-white/20 text-[10px]">${isTata ? '🧪 TEST' : `🎁 ${duelDaily.remaining}/${duelDaily.limit}`}</span>
     </button>
     <button id="btnCoopDragonMenu" onclick="startCoopDragonBattle()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-xs md:text-sm shadow-lg border-2 border-emerald-300 flex items-center gap-1.5">
       <span>🐉🛡️</span> Walka ze Smokiem
-      <span class="px-1.5 py-0.5 rounded-lg bg-white/20 text-[10px]">🎁 ${dragonDaily.remaining}/${dragonDaily.limit}</span>
+      <span class="px-1.5 py-0.5 rounded-lg bg-white/20 text-[10px]">${isTata ? '🧪 TEST' : `🎁 ${dragonDaily.remaining}/${dragonDaily.limit}`}</span>
     </button>
   `;
 
@@ -598,7 +609,7 @@ function startLesson(lessonId, subMode = null) {
     if (typeof startPancakeCookingGame === "function") return startPancakeCookingGame(lesson);
   }
 
-  const totalQ = state.profile === "duel" ? 20 : state.questionsPerRound;
+  const totalQ = state.profile === "duel" ? 12 : state.questionsPerRound;
   if (subMode === "color_mix_game") {
     state.roundQuestions = generateColorMixRoundQuestions(totalQ);
     return renderCurrentQuestion();
@@ -644,7 +655,7 @@ function startDuelAllWords() {
   const all = collectAllWordsForBrothersModes();
   const shuffled = shuffleArray(all);
   state.roundQuestions = [];
-  for (let i = 0; i < 20; i++) state.roundQuestions.push(shuffled[i % shuffled.length]);
+  for (let i = 0; i < 12; i++) state.roundQuestions.push(shuffled[i % shuffled.length]);
   updateHeaderUI();
   renderCurrentQuestion();
 }

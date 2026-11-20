@@ -170,7 +170,8 @@ function startPancakeCookingGame(lesson) {
   state.lastPlayedSubMode = "pancake_cooking_game";
   state.pancakeState = {
     stage: "bakery_shop", shopIdx: 0, boughtItems: [],
-    addIdx: 0, addedIds: [], addedItems: [], mixClicks: 0,
+    addOrder: shuffleArray(PANCAKE_BASE_INGREDIENTS),
+    addIdx: 0, addedIds: [], addedItems: [], _addingLock: false, mixClicks: 0,
     addedToppings: [], selectedFruitForVoice: PANCAKE_TOPPING_FRUITS[0].id
   };
   renderPancakeCookingStage(lesson);
@@ -225,14 +226,18 @@ function renderPancakeCookingStage(lesson) {
   }
 
   if (ps.stage === "bowl_add") {
-    const targetIng = PANCAKE_BASE_INGREDIENTS[ps.addIdx];
+    ps._addingLock = false;
+    if (!Array.isArray(ps.addOrder) || ps.addOrder.length !== PANCAKE_BASE_INGREDIENTS.length) {
+      ps.addOrder = shuffleArray(PANCAKE_BASE_INGREDIENTS);
+    }
+    const targetIng = ps.addOrder[ps.addIdx];
     const cmdEn = `Add ${targetIng.en.toLowerCase()}!`;
     mc.innerHTML = `
       ${renderTopGameBar(activeLesson)}
       <div class="bg-white rounded-3xl shadow-xl border-4 border-sky-400 p-4 md:p-6 text-center max-w-3xl mx-auto">
         <div class="text-xs font-extrabold text-sky-800 uppercase mb-1">🥣 Etap 2/5: Dodajemy składniki do miski (${ps.addIdx + 1}/5)</div>
         <div class="bg-sky-50 p-3.5 rounded-2xl border-2 border-sky-200 mb-3 flex items-center justify-between gap-2">
-          <button onclick="speakSequence([{lang:'en',text:'${cmdEn}'}])" class="kid-card w-12 h-12 rounded-2xl bg-sky-500 text-white text-2xl shadow flex items-center justify-center">🔊</button>
+          <button onclick="speakSequence([{lang:'en',text:'${cmdEn}'},{lang:'pl',text:'Dodaj: ${targetIng.pl}!'}])" class="kid-card w-12 h-12 rounded-2xl bg-sky-500 text-white text-2xl shadow flex items-center justify-center">🔊</button>
           <div class="flex-1"><div class="text-xl md:text-3xl font-extrabold text-slate-900">"${cmdEn}"</div><div class="text-xs font-bold text-slate-600">Kliknij właściwy składnik, aby dodać go do miski!</div></div>
         </div>
         <div id="pancakeFeedback" class="min-h-[30px] font-extrabold text-sm mb-2"></div>
@@ -321,19 +326,53 @@ function renderPancakeCookingStage(lesson) {
   }
 }
 
-function psSkipToKitchen() { state.pancakeState.stage = "bowl_add"; renderPancakeCookingStage(); }
-function pickPancakeShopItem(idx) {
-  const ps = state.pancakeState, targetIng = PANCAKE_BASE_INGREDIENTS[ps.shopIdx], chosen = window._pancakeShopChoices[idx], fb = document.getElementById("pancakeFeedback");
+function psSkipToKitchen() {
+  state.pancakeState.addOrder = shuffleArray(PANCAKE_BASE_INGREDIENTS);
+  state.pancakeState.addIdx = 0;
+  state.pancakeState.stage = "bowl_add";
+  renderPancakeCookingStage();
+}
+
+function addIngredientToBowl(ingId) {
+  const ps = state.pancakeState;
+  if (ps._addingLock) return;
+  if (!Array.isArray(ps.addOrder) || ps.addOrder.length !== PANCAKE_BASE_INGREDIENTS.length) {
+    ps.addOrder = shuffleArray(PANCAKE_BASE_INGREDIENTS);
+  }
+  const targetIng = ps.addOrder[ps.addIdx];
+  const chosen = PANCAKE_BASE_INGREDIENTS.find(i => i.id === ingId);
+  const fb = document.getElementById("pancakeFeedback");
+  if (!chosen || !targetIng) return;
+
   if (chosen.id === targetIng.id) {
-    playEffect("success"); ps.boughtItems.push(chosen.smallIcon || chosen.icon);
-    if (fb) fb.innerHTML = `<span class="text-emerald-600">✅ Thank you! Masz: ${chosen.pl} (${chosen.en})!</span>`;
-    ps.shopIdx++;
-    if (ps.shopIdx >= PANCAKE_BASE_INGREDIENTS.length) speakSequence([{ lang: "en", text: "Thank you! Goodbye!" }, { lang: "pl", text: "Wszystkie składniki kupione! Idziemy do kuchni!" }], () => { ps.stage = "bowl_add"; renderPancakeCookingStage(); });
-    else speakSequence([{ lang: "en", text: "Thank you!" }], () => renderPancakeCookingStage());
+    ps._addingLock = true;
+    playEffect("success");
+    if (!ps.addedIds) ps.addedIds = [];
+    ps.addedIds.push(chosen.id);
+    ps.addedItems.push(chosen.smallIcon || chosen.icon);
+    ps.addIdx++;
+    if (fb) fb.innerHTML = `<span class="text-emerald-600">✅ Dodano: ${chosen.pl} (${chosen.en})!</span>`;
+
+    if (ps.addIdx >= ps.addOrder.length) {
+      speakSequence([
+        { lang: "en", text: chosen.en },
+        { lang: "pl", text: `Super! Dodano ${chosen.pl.toLowerCase()}. Wszystkie składniki są już w misce! Teraz czas na mieszanie!` }
+      ], () => {
+        ps.stage = "bowl_mix";
+        renderPancakeCookingStage();
+      });
+    } else {
+      speakSequence([
+        { lang: "en", text: chosen.en },
+        { lang: "pl", text: `Brawo! Dodajemy ${chosen.pl.toLowerCase()}!` }
+      ], () => {
+        renderPancakeCookingStage();
+      });
+    }
   } else {
     playEffect("wrong");
-    if (fb) fb.innerHTML = `<span class="text-rose-600">❌ To jest ${chosen.pl} (${chosen.en}). Poprosiliśmy o: ${targetIng.en}!</span>`;
-    speakSequence([{ lang: "pl", text: `Oj nie, to jest ${chosen.pl}. Poproś o:` }, { lang: "en", text: targetIng.en }]);
+    if (fb) fb.innerHTML = `<span class="text-rose-600">❌ Najpierw dodaj: ${targetIng.en} (${targetIng.pl})!</span>`;
+    speakSequence([{ lang: "pl", text: "Najpierw dodaj:" }, { lang: "en", text: targetIng.en }]);
   }
 }
 function addIngredientToBowl(ingId) {

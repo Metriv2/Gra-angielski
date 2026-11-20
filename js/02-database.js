@@ -172,7 +172,15 @@ const FULL_LESSONS_DATABASE = [
       { en: "Leg", pl: "Noga", phonetic: "leg", icon: "🦵", hurtPhrase: "Ouch! My leg hurts!", hurtPl: "Ała! Boli mnie noga!", age: [4,6] },
       { en: "Foot", pl: "Stopa", phonetic: "fut", icon: "🦶👟", hurtPhrase: "Ouch! My foot hurts!", hurtPl: "Ała! Boli mnie stopa!", age: [4,6] },
       { en: "Neck", pl: "Szyja", phonetic: "nek", icon: "🧣", hurtPhrase: "Ouch! My neck hurts!", hurtPl: "Ała! Boli mnie szyja!", age: [6] },
-      { en: "Tummy", pl: "Brzuch", phonetic: "tami", icon: "👕", hurtPhrase: "Ouch! My tummy hurts!", hurtPl: "Ała! Boli mnie brzuch!", age: [6] },
+      {
+        en: "Tummy",
+        pl: "Brzuch",
+        phonetic: "tami",
+        icon: `<svg width="1em" height="1em" viewBox="0 0 64 64" class="inline-block" aria-label="Tummy"><path d="M18 10 L18 54 C18 56 20 58 22 58 L42 58 C44 58 46 56 46 54 L46 10 Z" fill="#fed7aa" stroke="#ea580c" stroke-width="2.5"/><path d="M18 10 L46 10 L46 21 L18 21 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/><path d="M18 47 L46 47 L46 58 L18 58 Z" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2"/><ellipse cx="32" cy="34" rx="11" ry="9" fill="#ffedd5" stroke="#f97316" stroke-width="2"/><circle cx="32" cy="35" r="2.2" fill="#ea580c"/><path d="M8 34 L16 34 M13 30 L17 34 L13 38" stroke="#ef4444" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M56 34 L48 34 M51 30 L47 34 L51 38" stroke="#ef4444" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+        hurtPhrase: "Ouch! My tummy hurts!",
+        hurtPl: "Ała! Boli mnie brzuch!",
+        age: [6]
+      },
       { en: "Hand", pl: "Dłoń", phonetic: "hend", icon: "✋", hurtPhrase: "Ouch! My hand hurts!", hurtPl: "Ała! Boli mnie dłoń!", age: [6] },
       { en: "Knee", pl: "Kolano", phonetic: "ni", icon: "🦵", hurtPhrase: "Ouch! My knee hurts!", hurtPl: "Ała! Boli mnie kolano!", age: [6] }
     ]

@@ -3,7 +3,7 @@
    CENTRALNA KONFIGURACJA WERSJI ORAZ WŁASNE GRAFIKI SVG DLA PANKEJKÓW
    ============================================================================ */
 
-const CURRENT_GAME_VERSION = "14.1";
+const CURRENT_GAME_VERSION = "14.2";
 
 const APP_CONFIG = {
   version: CURRENT_GAME_VERSION,
@@ -12,19 +12,19 @@ const APP_CONFIG = {
   gasApiUrl: "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec",
   whatsNewItems: [
     {
+      icon: "🛠️✨",
+      title: "Nowy, czytelny Panel Rodzica i Generator Lekcji!",
+      desc: "Każda opcja w Panelu Rodzica ma teraz własny kafelek, a nową lekcję można wygenerować automatycznie z samego tytułu i krótkiego opisu!"
+    },
+    {
+      icon: "📘🦉",
+      title: "Pełna Instrukcja Gry i Przegląd Słówek!",
+      desc: "Uzupełniliśmy instrukcję wszystkich trybów oraz dodaliśmy podgląd trudnych słówek i edycję lekcji dla Taty."
+    },
+    {
       icon: "🐉🔥",
-      title: "Nowa, pełnoekranowa animacja Walki ze Smokiem!",
-      desc: "Teraz również na telefonie zobaczysz każdą akcję na całym ekranie: przy dobrej odpowiedzi zbliżenie i cios mieczem w Smoka, a przy błędzie Smok zieje ogniem i trzęsie całym ekranem!"
-    },
-    {
-      icon: "🎤✨",
-      title: "Ulepszony mikrofon w Walce ze Smokiem i Studio Wymowy!",
-      desc: "Mikrofon lepiej rozumie wymowę dzieci (w tym cyfry i podobne wyrazy) i daje Hubertowi 2 próby przed atakiem Smoka."
-    },
-    {
-      icon: "🎁🛡️",
-      title: "Dzienny limit 3 skrzyń u Smoka i w Pojedynku VS!",
-      desc: "Każdego dnia w Walce ze Smokiem oraz w Pojedynku Braci można zdobyć po 3 skrzynie z nagrodami. Po wykorzystaniu limitu nadal zdobywacie gwiazdki i puchary!"
+      title: "Pełnoekranowa animacja Walki ze Smokiem!",
+      desc: "Każde trafienie i zionięcie ogniem Smoka widać na całym ekranie z efektami dźwiękowymi i wsparciem mikrofonu."
     },
     {
       icon: "👑💬",

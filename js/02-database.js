@@ -171,20 +171,42 @@ const FULL_LESSONS_DATABASE = [
       { en: "Arm", pl: "Ramię", phonetic: "arm", icon: "💪", hurtPhrase: "Ouch! My arm hurts!", hurtPl: "Ała! Boli mnie ramię!", age: [4,6] },
       { en: "Leg", pl: "Noga", phonetic: "leg", icon: "🦵", hurtPhrase: "Ouch! My leg hurts!", hurtPl: "Ała! Boli mnie noga!", age: [4,6] },
       { en: "Foot", pl: "Stopa", phonetic: "fut", icon: "🦶👟", hurtPhrase: "Ouch! My foot hurts!", hurtPl: "Ała! Boli mnie stopa!", age: [4,6] },
-      { en: "Neck", pl: "Szyja", phonetic: "nek", icon: "🧣", hurtPhrase: "Ouch! My neck hurts!", hurtPl: "Ała! Boli mnie szyja!", age: [6] },
+      {
+        en: "Neck",
+        pl: "Szyja",
+        phonetic: "nek",
+        icon: `<svg width="1em" height="1em" viewBox="0 0 64 64" class="inline-block" aria-label="Neck"><path d="M10 60 C10 47 18 42 26 42 L38 42 C46 42 54 47 54 60 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="2.2"/><rect x="26.5" y="30" width="11" height="14" rx="4" fill="#fed7aa" stroke="#ea580c" stroke-width="2.2"/><circle cx="32" cy="19" r="13" fill="#fed7aa" stroke="#ea580c" stroke-width="2.2"/><path d="M19 17 C19 8 45 8 45 17 C42 12 22 12 19 17 Z" fill="#78350f"/><circle cx="27.5" cy="18" r="1.6" fill="#1e293b"/><circle cx="36.5" cy="18" r="1.6" fill="#1e293b"/><path d="M28 24 Q32 27 36 24" stroke="#9a3412" stroke-width="1.8" stroke-linecap="round" fill="none"/><ellipse cx="32" cy="37" rx="8.5" ry="4.5" fill="rgba(239,68,68,0.22)" stroke="#dc2626" stroke-width="2" stroke-dasharray="3 2"/><path d="M4 37 L20 37 M15 32 L21 37 L15 42" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M60 37 L44 37 M49 32 L43 37 L49 42" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+        hurtPhrase: "Ouch! My neck hurts!",
+        hurtPl: "Ała! Boli mnie szyja!",
+        age: [6]
+      },
       {
         en: "Tummy",
         pl: "Brzuch",
         phonetic: "tami",
-        icon: `<svg width="1em" height="1em" viewBox="0 0 64 64" class="inline-block" aria-label="Tummy"><path d="M18 10 L18 54 C18 56 20 58 22 58 L42 58 C44 58 46 56 46 54 L46 10 Z" fill="#fed7aa" stroke="#ea580c" stroke-width="2.5"/><path d="M18 10 L46 10 L46 21 L18 21 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/><path d="M18 47 L46 47 L46 58 L18 58 Z" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2"/><ellipse cx="32" cy="34" rx="11" ry="9" fill="#ffedd5" stroke="#f97316" stroke-width="2"/><circle cx="32" cy="35" r="2.2" fill="#ea580c"/><path d="M8 34 L16 34 M13 30 L17 34 L13 38" stroke="#ef4444" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M56 34 L48 34 M51 30 L47 34 L51 38" stroke="#ef4444" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+        icon: `<svg width="1em" height="1em" viewBox="0 0 64 64" class="inline-block" aria-label="Tummy"><circle cx="32" cy="11" r="7.5" fill="#fed7aa" stroke="#ea580c" stroke-width="2"/><path d="M24.5 10 C24.5 4.5 39.5 4.5 39.5 10 Z" fill="#78350f"/><circle cx="29.5" cy="10.5" r="1.1" fill="#1e293b"/><circle cx="34.5" cy="10.5" r="1.1" fill="#1e293b"/><path d="M29.5 14 Q32 16 34.5 14" stroke="#9a3412" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M20 21 L13 36 C12 38 15 39.5 16.5 37.5 L21 28" fill="#fed7aa" stroke="#ea580c" stroke-width="2" stroke-linejoin="round"/><path d="M44 21 L51 36 C52 38 49 39.5 47.5 37.5 L43 28" fill="#fed7aa" stroke="#ea580c" stroke-width="2" stroke-linejoin="round"/><path d="M20 21 C20 19 44 19 44 21 L43 48 L21 48 Z" fill="#fed7aa" stroke="#ea580c" stroke-width="2"/><path d="M19 21 C22 19 42 19 45 21 L44 29 L20 29 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/><path d="M21 46 L43 46 L45 60 L34 60 L32 52 L30 60 L19 60 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="2" stroke-linejoin="round"/><circle cx="32" cy="37.5" r="7.5" fill="rgba(239,68,68,0.2)" stroke="#dc2626" stroke-width="2" stroke-dasharray="3 2"/><circle cx="32" cy="38.5" r="1.6" fill="#c2410c"/><path d="M3 37.5 L21 37.5 M16 33 L22 37.5 L16 42" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M61 37.5 L43 37.5 M48 33 L42 37.5 L48 42" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
         hurtPhrase: "Ouch! My tummy hurts!",
         hurtPl: "Ała! Boli mnie brzuch!",
         age: [6]
       },
-      { en: "Hand", pl: "Dłoń", phonetic: "hend", icon: "✋", hurtPhrase: "Ouch! My hand hurts!", hurtPl: "Ała! Boli mnie dłoń!", age: [6] },
-      { en: "Knee", pl: "Kolano", phonetic: "ni", icon: "🦵", hurtPhrase: "Ouch! My knee hurts!", hurtPl: "Ała! Boli mnie kolano!", age: [6] }
-    ]
-  },
+      {
+        en: "Hand",
+        pl: "Dłoń",
+        phonetic: "hend",
+        icon: "✋",
+        hurtPhrase: "Ouch! My hand hurts!",
+        hurtPl: "Ała! Boli mnie dłoń!",
+        age: [6]
+      },
+      {
+        en: "Knee",
+        pl: "Kolano",
+        phonetic: "ni",
+        icon: `<svg width="1em" height="1em" viewBox="0 0 64 64" class="inline-block" aria-label="Knee"><path d="M14 12 L26 8 L43 27 C45 29.5 45 32.5 43 35 L35 53 L24 51 L31 32 L14 16 Z" fill="#fed7aa" stroke="#ea580c" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 13 L25 7 L30 13 L17 19 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="2" stroke-linejoin="round"/><path d="M23 50 L36 52 L44 56 C46 57 45 60 42 60 L22 60 C20 60 20 57 21 55 Z" fill="#ef4444" stroke="#991b1b" stroke-width="2" stroke-linejoin="round"/><circle cx="39" cy="31" r="7.5" fill="rgba(239,68,68,0.24)" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="3 2"/><path d="M61 31 L48 31 M53 26 L47 31 L53 36" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M13 35 L29 32 M23 28 L30 32 L25 37" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+        hurtPhrase: "Ouch! My knee hurts!",
+        hurtPl: "Ała! Boli mnie kolano!",
+        age: [6]
+      }
   {
     id: "jungle_animals", title: "5. Dżungla i Zwierzęta", subtitle: "Wielka baza zwierząt + Zagadki", icon: "🦁🐒", color: "from-lime-500 to-emerald-700", borderColor: "border-lime-500", type: "vocab",
     items: [

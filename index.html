@@ -1,75 +1,318 @@
-/* ============================================================================
-   PLIK: js/01-config.js
-   CENTRALNA KONFIGURACJA WERSJI ORAZ WŁASNE GRAFIKI SVG DLA PANKEJKÓW
-   ============================================================================ */
-
-const CURRENT_GAME_VERSION = "14.3";
-
-const APP_CONFIG = {
-  version: CURRENT_GAME_VERSION,
-  parentPin: "0608",
-  dailySpecialChestLimit: 3,
-  gasApiUrl: "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec",
-  whatsNewItems: [
-    {
-      icon: "🎧🔊",
-      title: "Nowe pytania ze słuchu (bez podpowiedzi obrazkowych)!",
-      desc: "W każdej lekcji (poza Memory), w Sprawdzianie, Pojedynku i u Smoka pojawiają się pytania, w których lektor pyta po polsku „Jak będzie po angielsku...”, a odpowiedzi odsłuchujesz z samych głośników!"
-    },
-    {
-      icon: "4️⃣👦",
-      title: "Igor ma teraz 4 odpowiedzi we wszystkich zadaniach!",
-      desc: "Zwiększyliśmy liczbę opcji dla Igora z 3 do 4 we wszystkich quizach, zagadkach, sklepie i układance literkowej."
-    },
-    {
-      icon: "⚔️🐉",
-      title: "Pojedynek Braci i Walka ze Smokiem na pełnym ekranie!",
-      desc: "Awatary braci walczą na arenie z efektami dźwiękowymi i paskiem życia, a konto testowe Taty jest w pełni oddzielone od kont synów."
-    },
-    {
-      icon: "🛠️✨",
-      title: "Kafelkowy Panel Rodzica i Generator Lekcji!",
-      desc: "Wszystkie opcje w Panelu Rodzica są pogrupowane w czytelne kafelki z automatycznym tworzeniem nowych lekcji."
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Akademia Angielskiego: Igor i Hubert</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Fredoka', sans-serif;
+      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 45%, #fef3c7 100%);
+      user-select: none;
+      -webkit-user-select: none;
+      overflow-x: hidden;
     }
-  ]
-};
+    .kid-card { transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .kid-card:hover { transform: translateY(-2px); }
+    .kid-card:active { transform: scale(0.95); }
 
-function syncVersionLabelsInDom() {
-  document.title = `Akademia Angielskiego: Igor i Hubert - Wersja ${CURRENT_GAME_VERSION}`;
-  document.querySelectorAll("[data-app-version]").forEach(el => {
-    el.textContent = `Wersja ${CURRENT_GAME_VERSION}`;
-  });
-}
+    @keyframes shakeError {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-12px) rotate(-2deg); }
+      40% { transform: translateX(12px) rotate(2deg); }
+      60% { transform: translateX(-10px) rotate(-1deg); }
+      80% { transform: translateX(10px) rotate(1deg); }
+    }
+    .shake-wrong { animation: shakeError 0.5s ease-in-out; border-color: #ef4444 !important; background-color: #fef2f2 !important; }
+    
+    @keyframes popSuccess { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+    .pop-correct { animation: popSuccess 0.5s ease-in-out; border-color: #22c55e !important; background-color: #f0fdf4 !important; }
 
-function getCustomPancakeSvg(type, sizePx = 58) {
-  if (type === "flour") {
-    return `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 64 64" class="inline-block drop-shadow-sm" aria-label="Flour">
-      <rect x="13" y="11" width="38" height="47" rx="5" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5"/>
-      <polygon points="13,11 19,4 45,4 51,11" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
-      <rect x="13" y="23" width="38" height="15" fill="#0284c7"/>
-      <text x="32" y="33.5" font-family="sans-serif" font-size="8.8" font-weight="900" fill="#ffffff" text-anchor="middle">FLOUR</text>
-      <path d="M24 49 Q32 42 40 49 Z" fill="#fef08a" stroke="#eab308" stroke-width="1.2"/>
-    </svg>`;
-  }
-  if (type === "yoghurt") {
-    return `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 64 64" class="inline-block drop-shadow-sm" aria-label="Natural Yoghurt">
-      <polygon points="14,19 50,19 45,55 19,55" fill="#ffffff" stroke="#64748b" stroke-width="2.5" stroke-linejoin="round"/>
-      <rect x="11" y="13" width="42" height="6" rx="3" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.8"/>
-      <polygon points="16,29 48,29 46,44 18,44" fill="#e0f2fe"/>
-      <text x="32" y="38.5" font-family="sans-serif" font-size="6.1" font-weight="900" fill="#0369a1" text-anchor="middle">YOGHURT</text>
-      <circle cx="32" cy="49" r="3" fill="#bae6fd"/>
-    </svg>`;
-  }
-  if (type === "oil") {
-    return `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 64 64" class="inline-block drop-shadow-sm" aria-label="Oil">
-      <rect x="26" y="4" width="12" height="6" rx="2" fill="#d97706" stroke="#92400e" stroke-width="1.5"/>
-      <path d="M27 10 L27 17 L18 26 L18 54 C18 57 20 59 23 59 L41 59 C44 59 46 57 46 54 L46 26 L37 17 L37 10 Z" fill="#fef9c3" stroke="#ca8a04" stroke-width="2.5"/>
-      <path d="M19.5 29 L44.5 29 L44.5 54 C44.5 56 43 57.5 41 57.5 L23 57.5 C21 57.5 19.5 56 19.5 54 Z" fill="#facc15"/>
-      <rect x="22" y="35" width="20" height="13" rx="2.5" fill="#ffffff" stroke="#ca8a04" stroke-width="1.5"/>
-      <text x="32" y="44.5" font-family="sans-serif" font-size="8" font-weight="900" fill="#92400e" text-anchor="middle">OIL</text>
-    </svg>`;
-  }
-  return "";
-}
+    @keyframes floatSlow { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+    .float-anim { animation: floatSlow 2.6s ease-in-out infinite; }
 
-document.addEventListener("DOMContentLoaded", syncVersionLabelsInDom);
+    @keyframes dragonHitAnim {
+      0%, 100% { transform: translateX(0) scale(1); filter: brightness(1); }
+      25% { transform: translateX(16px) rotate(8deg) scale(0.9); filter: brightness(2) hue-rotate(-40deg); }
+      50% { transform: translateX(-14px) rotate(-6deg) scale(1.1); filter: brightness(1.6); }
+      75% { transform: translateX(10px) rotate(4deg) scale(0.95); }
+    }
+    .dragon-hit-anim { animation: dragonHitAnim 0.65s ease-in-out; }
+
+    @keyframes dragonFireAnim {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(239, 68, 68, 0); }
+      30% { transform: scale(1.04) translateX(-6px); box-shadow: 0 0 35px rgba(239, 68, 68, 0.95); border-color: #ef4444 !important; }
+      60% { transform: scale(0.98) translateX(6px); box-shadow: 0 0 45px rgba(249, 115, 22, 0.95); }
+    }
+    .dragon-fire-anim { animation: dragonFireAnim 0.65s ease-in-out; }
+
+    @keyframes swordSlashAnim {
+      0% { opacity: 0; transform: scale(0.4) rotate(-45deg); }
+      50% { opacity: 1; transform: scale(1.35) rotate(15deg); }
+      100% { opacity: 0; transform: scale(1) rotate(35deg); }
+    }
+    .sword-slash-fx { animation: swordSlashAnim 0.65s ease-out forwards; }
+
+    @keyframes pulseGold {
+      0%, 100% { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.95), 0 0 28px rgba(245, 158, 11, 0.85); }
+      50% { transform: scale(1.13); box-shadow: 0 0 0 11px rgba(251, 191, 36, 1), 0 0 38px rgba(245, 158, 11, 1); }
+    }
+    .tutorial-highlight { animation: pulseGold 1.05s ease-in-out infinite !important; background-color: #fef3c7 !important; border-color: #f59e0b !important; z-index: 60 !important; position: relative; }
+    .word-glow { transform: scale(1.12) !important; border-color: #f59e0b !important; background-color: #fef3c7 !important; box-shadow: 0 0 25px rgba(245, 158, 11, 0.75) !important; }
+
+    @keyframes eqBar { 0%, 100% { height: 10px; } 50% { height: 38px; } }
+    .eq-bar-1 { animation: eqBar 0.45s ease-in-out infinite; }
+    .eq-bar-2 { animation: eqBar 0.35s ease-in-out 0.1s infinite; }
+    .eq-bar-3 { animation: eqBar 0.5s ease-in-out 0.2s infinite; }
+    .eq-bar-4 { animation: eqBar 0.38s ease-in-out 0.15s infinite; }
+    .eq-bar-5 { animation: eqBar 0.42s ease-in-out 0.05s infinite; }
+
+    .memory-card { perspective: 1000px; cursor: pointer; }
+    .memory-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.5s; transform-style: preserve-3d; }
+    .memory-card.flipped .memory-card-inner, .memory-card.matched .memory-card-inner { transform: rotateY(180deg); }
+    .memory-card-front, .memory-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; border-radius: 1rem; border-width: 4px; }
+    .memory-card-front { background-color: #f1f5f9; border-color: #cbd5e1; }
+    .memory-card-back { background-color: white; border-color: #38bdf8; transform: rotateY(180deg); }
+    .memory-card.matched .memory-card-back { border-color: #22c55e; background-color: #f0fdf4; opacity: 0.8; }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2 md:p-4 text-slate-800">
+
+  <header id="topHeader" class="max-w-6xl w-full mx-auto bg-white/95 backdrop-blur rounded-3xl shadow-lg border-4 border-sky-200 p-3 mb-3 hidden">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="showStartScreen()" class="kid-card flex items-center gap-1.5 px-3.5 py-2 rounded-2xl font-bold text-xs md:text-sm bg-slate-100 hover:bg-slate-200 text-slate-800 border-2 border-slate-300 shadow-sm">
+          <span>👤</span> Zmień profil
+        </button>
+        <div id="activeProfileBadge" onclick="speakAvatarGreeting()" class="cursor-pointer kid-card px-3.5 py-1.5 rounded-2xl font-bold text-xs md:text-sm bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-center gap-2 shadow-sm" title="Kliknij awatara!"></div>
+        <span data-app-version class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 14.0</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
+        <button id="navWhatsNewBtn" onclick="openWhatsNewModal(true)" class="kid-card px-3 py-2 rounded-2xl border-2 border-rose-400 bg-rose-50 hover:bg-rose-100 text-rose-900 font-extrabold text-xs md:text-sm flex items-center gap-1 shadow-sm">
+          <span>🆕</span> Co nowego?
+        </button>
+        <button id="navTutorialBtn" onclick="startKidVoiceTour()" class="kid-card px-3 py-2 rounded-2xl border-2 border-amber-400 bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold text-xs md:text-sm flex items-center gap-1 shadow-sm">
+          <span>🦉🔊</span> Co gdzie jest?
+        </button>
+        <button id="btnTurtle" onclick="toggleTurtle()" class="kid-card px-3 py-2 rounded-2xl border-2 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs md:text-sm flex items-center gap-1">
+          <span>🐢</span> <span id="turtleLabel">Normalnie</span>
+        </button>
+        <button id="navAvatarBtn" onclick="openAvatarModal()" class="kid-card px-3 py-2 rounded-2xl border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs md:text-sm flex items-center gap-1">
+          <span>👑</span> Awatar
+        </button>
+        <button id="navBadgesBtn" onclick="openBadgesModal()" class="kid-card px-3 py-2 rounded-2xl border-2 border-purple-300 bg-purple-50 hover:bg-purple-100 text-purple-900 font-bold text-xs md:text-sm flex items-center gap-1">
+          <span>🏅</span> Odznaki ( <span id="badgeCountTop">0</span> )
+        </button>
+        <button id="navStickersBtn" onclick="openStickersModal()" class="kid-card px-3 py-2 rounded-2xl border-2 border-pink-300 bg-pink-50 hover:bg-pink-100 text-pink-800 font-bold text-xs md:text-sm flex items-center gap-1">
+          <span>🎁</span> Naklejki
+        </button>
+        <button onclick="openParentPinModal('dashboard')" class="kid-card px-3 py-2 rounded-2xl border-2 border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs md:text-sm flex items-center gap-1">
+          <span>🔒</span> Rodzic
+        </button>
+        <button id="navLessonsBtn" onclick="showLessonMenu()" class="kid-card px-4 py-2 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs md:text-sm shadow flex items-center gap-1">
+          <span>🏠</span> Lekcje
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="mainContainer" class="max-w-6xl w-full mx-auto flex-1 flex flex-col justify-center">
+    <div class="text-center p-10"><div class="text-6xl mb-4 float-anim">🦉</div><h2 class="text-2xl font-extrabold text-slate-700">Łączenie z bazą danych...</h2></div>
+  </main>
+
+  <!-- MODAL: CO NOWEGO -->
+  <div id="whatsNewModal" class="fixed inset-0 bg-black/65 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+    <div class="bg-white rounded-3xl max-w-3xl w-full p-5 md:p-6 border-4 border-rose-400 shadow-2xl text-left max-h-[92vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-rose-100 mb-3">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-rose-600 flex items-center gap-2"><span>🦉🆕</span> Co nowego w <span data-app-version>Wersji 14.0</span>?</h2>
+        <button onclick="closeWhatsNewModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-600">✖</button>
+      </div>
+      <div id="whatsNewContentBox" class="space-y-3 overflow-y-auto pr-1 flex-1"></div>
+      <div class="pt-3 mt-3 border-t border-rose-100 flex flex-wrap justify-between gap-2">
+        <button onclick="speakWhatsNewTour()" class="kid-card px-5 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold text-sm shadow">🦉🔊 Posłuchaj Sówki jeszcze raz</button>
+        <button onclick="closeWhatsNewModal()" class="kid-card px-6 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-sm shadow">Super, zaczynamy! ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NAKLEJKI -->
+  <div id="stickersModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-5 md:p-6 border-4 border-pink-400 shadow-2xl text-center max-h-[92vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-pink-100 mb-3">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-pink-600 flex items-center gap-2"><span>🎁</span> Klaser Naklejek (<span id="stickerModalTotal">0</span>/100)</h2>
+        <button onclick="closeStickersModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-600">✖</button>
+      </div>
+      <div id="stickerCategoryTabs" class="flex flex-wrap justify-center gap-1.5 mb-3"></div>
+      <div id="stickersGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 overflow-y-auto p-3 bg-pink-50/60 rounded-2xl border-2 border-pink-100 flex-1"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: ODZNAKI -->
+  <div id="badgesModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+    <div class="bg-white rounded-3xl max-w-5xl w-full p-5 md:p-6 border-4 border-amber-400 shadow-2xl text-center max-h-[92vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-amber-100 mb-3">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-amber-700 flex items-center gap-2"><span>🏅</span> Osiągnięcia – <span id="badgesModalPlayerName" class="text-indigo-700"></span></h2>
+        <button onclick="closeBadgesModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-600">✖</button>
+      </div>
+      <div id="badgeCategoryTabs" class="flex flex-wrap justify-center gap-1.5 mb-3"></div>
+      <div id="badgesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto p-3 bg-amber-50/50 rounded-2xl border-2 border-amber-100 flex-1 text-left"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: AWATAR I GARDEROBA -->
+  <div id="avatarModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+    <div class="bg-white rounded-3xl max-w-5xl w-full p-5 md:p-6 border-4 border-indigo-400 shadow-2xl text-center max-h-[92vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-indigo-100 mb-3">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-indigo-900 flex items-center gap-2"><span>👕</span> Garderoba Bohatera – <span id="avatarModalPlayerName" class="text-amber-600"></span></h2>
+        <button onclick="closeAvatarModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-600">✖</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 p-1 overflow-hidden">
+        <div class="bg-gradient-to-b from-sky-100 via-indigo-50 to-amber-50 rounded-3xl border-3 border-indigo-200 p-4 flex flex-col items-center h-full shadow-inner overflow-y-auto">
+          <div class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-white text-indigo-800 border border-indigo-200 mb-2">Wygląd awatara (kliknij mnie!)</div>
+          <div id="avatarPreviewBox" class="flex flex-col items-center justify-center my-1 w-full"></div>
+        </div>
+        <div id="avatarItemsContainer" class="md:col-span-2 space-y-3 text-left overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NAGRODA / SKRZYNIA -->
+  <div id="rewardPopupModal" class="fixed inset-0 bg-black/75 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+    <div id="rewardPopupContent" class="bg-white rounded-3xl max-w-md w-full p-6 border-4 border-amber-400 shadow-2xl text-center"></div>
+  </div>
+
+  <!-- MODAL: INSTRUKCJA -->
+  <div id="guideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-6 border-4 border-sky-400 shadow-2xl text-left max-h-[92vh] overflow-y-auto">
+      <div class="flex justify-between items-center pb-3 border-b mb-4">
+        <h2 class="text-2xl font-extrabold text-sky-900">📘 Instrukcja Gry (<span data-app-version>Wersja 14.0</span>)</h2>
+        <button onclick="closeGuideModal()" class="text-2xl bg-slate-100 w-10 h-10 rounded-full font-bold">✖</button>
+      </div>
+      <div class="text-sm space-y-3 text-slate-700">Wszystkie moduły posiadają własną instrukcję głosową. Używaj przycisku "Posłuchaj Sówki" oraz przycisku "🆕 Co nowego?".</div>
+    </div>
+  </div>
+
+  <!-- MODAL: WPROWADZANIE PINU -->
+  <div id="parentPinModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 border-4 border-slate-400 shadow-2xl text-center">
+      <div class="text-5xl mb-2">🔒</div>
+      <h2 id="pinModalTitle" class="text-2xl font-extrabold text-slate-800 mb-1">Panel Rodzica</h2>
+      <p id="pinModalDesc" class="text-xs md:text-sm text-slate-500 mb-4">Wpisz 4-cyfrowy kod PIN:</p>
+      <input id="pinInputField" type="password" maxlength="4" placeholder="••••" class="w-44 text-center text-3xl font-extrabold tracking-widest py-2.5 px-4 rounded-2xl border-4 border-slate-300 focus:border-sky-500 outline-none mb-2 bg-slate-50" />
+      <div id="pinErrorMsg" class="text-rose-600 font-bold text-sm min-h-[22px] mb-2"></div>
+      <div id="pinKeyboardGrid" class="grid grid-cols-3 gap-2.5 max-w-xs mx-auto mb-4"></div>
+      <button onclick="closeParentPinModal()" class="text-sm font-bold text-slate-500 hover:text-slate-800 underline">Anuluj i wróć</button>
+    </div>
+  </div>
+
+  <!-- MODAL: PANEL RODZICA -->
+  <div id="parentDashboardModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 md:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-5 md:p-6 border-4 border-indigo-500 shadow-2xl text-left my-6 max-h-[93vh] overflow-y-auto">
+      <div class="flex justify-between items-center pb-3 border-b border-indigo-100 mb-4">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-indigo-950"><span>🛠️</span> Panel Rodzica (<span data-app-version>Wersja 14.0</span>)</h2>
+        <button onclick="closeParentDashboard()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-700">✖</button>
+      </div>
+      <div id="parentStatusMsg" class="hidden mb-4 p-3 rounded-2xl bg-emerald-100 border-2 border-emerald-400 text-emerald-900 font-bold text-sm text-center"></div>
+      
+      <!-- Sekcja 1: Dodawanie słówek -->
+      <div class="mb-5 p-4 rounded-3xl bg-emerald-50/90 border-2 border-emerald-300 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <h3 class="font-extrabold text-emerald-950 text-base">➕ Dodaj nowe słówko</h3>
+          <button onclick="parentAutoSuggestSimpleWord()" class="kid-card px-3.5 py-1.5 bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold rounded-xl text-xs border border-amber-600 shadow-sm">✨ Dodaj automatycznie (proste słówko)</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2.5">
+          <select id="parentSelectLesson" class="p-2.5 rounded-xl border border-emerald-300 bg-white font-bold text-sm"></select>
+          <select id="parentWordAge" class="p-2.5 rounded-xl border border-emerald-300 bg-white font-bold text-sm"><option value="4,6">Dla obu (4 i 6 lat)</option><option value="4">Tylko Igor (4 l.)</option><option value="6">Tylko Hubert (6 l.)</option></select>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2.5">
+          <input id="parentWordEn" type="text" placeholder="Angielski (np. Pear)" class="p-2.5 rounded-xl border border-emerald-300 text-sm font-bold" />
+          <input id="parentWordPl" type="text" placeholder="Polski (np. Gruszka)" class="p-2.5 rounded-xl border border-emerald-300 text-sm font-bold" />
+          <input id="parentWordPhonetic" type="text" placeholder="Wymowa (opcj.)" class="p-2.5 rounded-xl border border-emerald-300 text-sm" />
+          <input id="parentWordIcon" type="text" placeholder="Emoji (np. 🍐)" class="p-2.5 rounded-xl border border-emerald-300 text-sm" />
+        </div>
+        <button onclick="parentAddSingleWord()" class="kid-card px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-sm">Zapisz słówko</button>
+      </div>
+
+      <!-- Sekcja 2: Tworzenie nowej lekcji -->
+      <div class="mb-5 p-4 rounded-3xl bg-sky-50/90 border-2 border-sky-300 shadow-sm">
+        <h3 class="font-extrabold text-sky-950 text-base mb-2">📚 Stwórz nową lekcję (Lista)</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2.5">
+          <input id="newLessonTitle" type="text" placeholder="Tytuł (np. 11. Zabawki)" class="sm:col-span-2 p-2.5 rounded-xl border border-sky-300 text-sm font-bold" />
+          <input id="newLessonIcon" type="text" placeholder="Ikona (np. 🧸)" class="p-2.5 rounded-xl border border-sky-300 text-sm" />
+        </div>
+        <textarea id="newLessonLines" rows="3" placeholder="Car - Auto - 🚗" class="w-full p-3 rounded-xl border border-sky-300 text-xs font-mono mb-2 bg-white"></textarea>
+        <button onclick="parentCreateNewLesson()" class="kid-card px-5 py-2.5 bg-sky-600 text-white font-bold rounded-xl text-sm">Utwórz lekcję</button>
+      </div>
+
+      <!-- Sekcja 3: Skaner AI -->
+      <div class="mb-5 p-4 rounded-3xl bg-amber-50/90 border-2 border-amber-300 shadow-sm">
+        <h3 class="font-extrabold text-amber-950 text-base mb-2">📷 Skaner Zdjęć (Gemini AI)</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2.5">
+          <input id="parentGeminiKey" type="password" placeholder="Klucz Gemini API" class="sm:col-span-2 p-2.5 rounded-xl border border-amber-300 text-xs bg-white font-mono" />
+          <select id="parentAiTargetAge" class="p-2.5 rounded-xl border border-amber-300 bg-white font-bold text-xs"><option value="4 i 6 lat">Dla obu</option><option value="4 lata (Igor)">Pod Igora</option><option value="6 lat (Hubert)">Pod Huberta</option></select>
+        </div>
+        <input id="parentWorksheetFileInput" type="file" accept="image/*" onchange="parentScanWorksheetAI(this)" class="hidden" />
+        <button onclick="document.getElementById('parentWorksheetFileInput').click()" class="kid-card px-5 py-2.5 bg-amber-500 text-white font-bold rounded-xl text-sm">Wybierz / Zrób zdjęcie</button>
+      </div>
+
+      <!-- Sekcja 4: Kopia Zapasowa JSON -->
+      <div class="mb-5 p-4 rounded-3xl bg-indigo-50/90 border-2 border-indigo-300 shadow-sm">
+        <h3 class="font-extrabold text-indigo-950 text-base mb-2">💾 Kopia Zapasowa Postępów (JSON)</h3>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="parentExportBackupJson()" class="kid-card px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs">⬇️ Pobierz kopię zapasową (.json)</button>
+          <input id="parentBackupFileInput" type="file" accept=".json,application/json" onchange="parentImportBackupJson(this)" class="hidden" />
+          <button onclick="document.getElementById('parentBackupFileInput').click()" class="kid-card px-4 py-2.5 bg-white text-indigo-900 border-2 border-indigo-400 font-bold rounded-xl text-xs">⬆️ Wczytaj kopię z pliku (.json)</button>
+        </div>
+      </div>
+
+      <!-- Sekcja 5: Opcje systemowe i kolejka skrzyń dla synów -->
+      <div class="p-4 rounded-3xl bg-rose-50/90 border-2 border-rose-300 shadow-sm">
+        <h3 class="font-extrabold text-rose-950 text-base mb-2">⚙️ Ustawienia i Nagrody (Skrzynie do kolejki syna)</h3>
+        <div class="mb-3">
+          <div class="text-xs font-bold text-slate-700 mb-1.5">Liczba pytań w rundzie:</div>
+          <div id="roundLengthButtons" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div class="mb-3 p-3 rounded-2xl bg-amber-100/90 border-2 border-amber-400">
+          <div class="text-xs font-extrabold text-amber-950 mb-1.5">👕 Tester Garderoby:</div>
+          <button onclick="unlockAllOutfitsForTesting()" class="kid-card py-2 px-4 bg-emerald-600 text-white font-extrabold rounded-xl text-xs mr-2">🔓 Odblokuj wszystkie 131 przebrań</button>
+          <button onclick="lockAllOutfitsAfterTesting()" class="kid-card py-2 px-4 bg-slate-600 text-white font-bold rounded-xl text-xs">🔒 Zablokuj</button>
+        </div>
+        <div class="mb-3">
+          <div class="text-xs font-bold text-slate-700 mb-1.5">Wyślij Skrzynię do kolejki nagród syna (otworzy po wejściu na swój profil):</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+            <button onclick="parentGiveTestChest('igor','bronze')" class="kid-card py-2 px-3 bg-amber-700 text-white font-bold rounded-xl text-xs">📦 Brązowa ➔ Igor</button>
+            <button onclick="parentGiveTestChest('igor','silver')" class="kid-card py-2 px-3 bg-slate-500 text-white font-bold rounded-xl text-xs">🥈 Srebrna ➔ Igor</button>
+            <button onclick="parentGiveTestChest('igor','gold')" class="kid-card py-2 px-3 bg-amber-400 text-amber-950 font-bold rounded-xl text-xs">👑 Złota ➔ Igor</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button onclick="parentGiveTestChest('hubert','bronze')" class="kid-card py-2 px-3 bg-amber-700 text-white font-bold rounded-xl text-xs">📦 Brązowa ➔ Hubert</button>
+            <button onclick="parentGiveTestChest('hubert','silver')" class="kid-card py-2 px-3 bg-slate-500 text-white font-bold rounded-xl text-xs">🥈 Srebrna ➔ Hubert</button>
+            <button onclick="parentGiveTestChest('hubert','gold')" class="kid-card py-2 px-3 bg-amber-400 text-amber-950 font-bold rounded-xl text-xs">👑 Złota ➔ Hubert</button>
+          </div>
+        </div>
+        <div class="pt-3 border-t border-rose-200">
+          <button onclick="resetEverythingAll()" class="kid-card w-full py-3 rounded-2xl bg-rose-600 text-white font-extrabold text-sm">⚠️ PEŁNY RESET CAŁEJ GRY</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODUŁY JS (BEZ type="module" DLA GLOBALNEGO DOSTĘPU) -->
+  <script src="js/01-config.js"></script>
+  <script src="js/02-database.js"></script>
+  <script src="js/03-state-cloud.js"></script>
+  <script src="js/04-audio-tour.js"></script>
+  <script src="js/05-rewards-wardrobe.js"></script>
+  <script src="js/06-menu-modes.js"></script>
+  <script src="js/07-games-core.js"></script>
+  <script src="js/08-pancakes-minigames.js"></script>
+  <script src="js/09-parent-init.js"></script>
+</body>
+</html>

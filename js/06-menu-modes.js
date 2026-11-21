@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/06-menu-modes.js
-   EKRAN STARTOWY, MENU LEKCJI (LICZNIK SKRZYŃ 3/3), ZADANIE DNIA I START TRYBÓW
+   EKRAN STARTOWY, MENU LEKCJI, PYTANIA ZE SŁUCHU (PL->EN) I START TRYBÓW
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -60,17 +60,37 @@ function generateColorMixRoundQuestions(count) {
 }
 
 function buildColorMixChoicesForQuestion(q) {
+  const isIgor = isEffectiveIgorMode();
+  const numColors = isIgor ? 2 : 3;
   const targetColor = COLOR_MIX_COLORS.find(c => c.en === q.colorEn) || COLOR_MIX_COLORS[0];
   const targetObj = COLOR_MIX_OBJECTS.find(o => o.en === q.objEn) || COLOR_MIX_OBJECTS[0];
-  const otherColors = shuffleArray(COLOR_MIX_COLORS.filter(c => c.en !== targetColor.en)).slice(0, 2);
-  const threeColors = [targetColor, ...otherColors];
+  const otherColors = shuffleArray(COLOR_MIX_COLORS.filter(c => c.en !== targetColor.en)).slice(0, numColors - 1);
+  const selectedColors = [targetColor, ...otherColors];
   const otherObj = shuffleArray(COLOR_MIX_OBJECTS.filter(o => o.en !== targetObj.en))[0] || COLOR_MIX_OBJECTS[1];
   const twoObjects = [targetObj, otherObj];
   const choices = [];
   twoObjects.forEach(obj => {
-    threeColors.forEach(col => choices.push(buildColorMixEntry(col, obj)));
+    selectedColors.forEach(col => choices.push(buildColorMixEntry(col, obj)));
   });
   return shuffleArray(choices);
+}
+
+function injectAudioOnlyQuestionsIntoRound(questions, ratio = 0.35) {
+  if (!Array.isArray(questions) || questions.length === 0) return questions;
+  const eligibleIndices = [];
+  questions.forEach((q, idx) => {
+    if (q && q.en && q.pl && !q._dragonMicQuestion && q._examModeType !== "mic_game") {
+      eligibleIndices.push(idx);
+    }
+  });
+  if (eligibleIndices.length === 0) return questions;
+  const targetCount = Math.max(1, Math.round(eligibleIndices.length * ratio));
+  const picked = new Set(shuffleArray(eligibleIndices).slice(0, targetCount));
+  return questions.map((q, idx) => {
+    const copy = Object.assign({}, q);
+    if (picked.has(idx)) copy._audioOnlyQuestion = true;
+    return copy;
+  });
 }
 
 function isTataSandboxBrothersMode() {
@@ -437,7 +457,7 @@ function showLessonMenu() {
     topActionHtml = `<div class="flex flex-wrap gap-2 items-center">${alwaysBrothersButtons}</div>`;
   } else if (state.profile === "hubert" || state.profile === "tata") {
     const examLabel = state.profile === "tata" ? (state.tataPreviewAsIgor ? "🎓👑 Sprawdzian (Igor)" : "🎓👑 Sprawdzian (Hubert)") : "🎓👑 Sprawdzian Huberta";
-    const examSub = (state.profile === "tata" && state.tataPreviewAsIgor) ? "15 pytań obrazkowych!" : "10 pytań + 5 x Wymowa!";
+    const examSub = (state.profile === "tata" && state.tataPreviewAsIgor) ? "15 pytań + ze słuchu!" : "10 pytań + 5 x Wymowa!";
     topActionHtml = `<div class="flex flex-wrap gap-2 items-center">${hardWordsBtnHtml}${alwaysBrothersButtons}<button onclick="startGrandExam()" class="kid-card px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-xs md:text-sm shadow-lg flex flex-col"><span class="text-center">${examLabel}</span><span class="text-[10px] font-bold text-center text-amber-100">${examSub}</span></button></div>`;
   } else {
     topActionHtml = `<div class="flex flex-wrap gap-2 items-center">${hardWordsBtnHtml}${alwaysBrothersButtons}<button onclick="startGrandExam()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-xs md:text-sm shadow-lg flex items-center gap-1.5">🎓👑 Wielki Sprawdzian</button></div>`;
@@ -515,8 +535,9 @@ function startHardWordsTraining() {
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
   const shuffled = shuffleArray(hardList);
   const totalQ = Math.min(state.questionsPerRound, Math.max(shuffled.length, 5));
-  state.roundQuestions = [];
-  for (let i = 0; i < totalQ; i++) state.roundQuestions.push(shuffled[i % shuffled.length]);
+  const rawQuestions = [];
+  for (let i = 0; i < totalQ; i++) rawQuestions.push(shuffled[i % shuffled.length]);
+  state.roundQuestions = injectAudioOnlyQuestionsIntoRound(rawQuestions, 0.35);
   renderCurrentQuestion();
 }
 
@@ -552,23 +573,24 @@ function startCoopDragonBattle() {
 
   const all = collectAllWordsForBrothersModes();
   const shuffled = shuffleArray(all);
-  state.roundQuestions = [];
+  const rawQuestions = [];
   for (let i = 0; i < 24; i++) {
     const item = Object.assign({}, shuffled[i % shuffled.length]);
     item._dragonMicQuestion = false;
     item._dragonMicTries = 0;
-    state.roundQuestions.push(item);
+    rawQuestions.push(item);
   }
 
   const hubertTurnIndices = [1, 3, 5, 7, 9, 11];
   const pickedMicIndices = shuffleArray(hubertTurnIndices).slice(0, 2);
   pickedMicIndices.forEach(idx => {
-    if (state.roundQuestions[idx]) {
-      state.roundQuestions[idx]._dragonMicQuestion = true;
-      state.roundQuestions[idx]._dragonMicTries = 0;
+    if (rawQuestions[idx]) {
+      rawQuestions[idx]._dragonMicQuestion = true;
+      rawQuestions[idx]._dragonMicTries = 0;
     }
   });
 
+  state.roundQuestions = injectAudioOnlyQuestionsIntoRound(rawQuestions, 0.35);
   updateHeaderUI();
   renderCurrentQuestion();
 }
@@ -611,7 +633,7 @@ function startLesson(lessonId, subMode = null) {
 
   const totalQ = state.profile === "duel" ? 12 : state.questionsPerRound;
   if (subMode === "color_mix_game") {
-    state.roundQuestions = generateColorMixRoundQuestions(totalQ);
+    state.roundQuestions = injectAudioOnlyQuestionsIntoRound(generateColorMixRoundQuestions(totalQ), 0.35);
     return renderCurrentQuestion();
   }
 
@@ -626,8 +648,16 @@ function startLesson(lessonId, subMode = null) {
   if (!pool || !pool.length) pool = visibleItems.length ? visibleItems : lesson.items;
 
   const shuffled = shuffleArray(pool);
-  state.roundQuestions = [];
-  for (let i = 0; i < totalQ; i++) state.roundQuestions.push(shuffled[i % shuffled.length]);
+  const rawQuestions = [];
+  for (let i = 0; i < totalQ; i++) rawQuestions.push(Object.assign({}, shuffled[i % shuffled.length]));
+
+  if (subMode === "audio_only_quiz") {
+    state.roundQuestions = rawQuestions.map(q => ({ ...q, _audioOnlyQuestion: true }));
+  } else if (subMode === "prep_explain" || subMode === "letters_game" || subMode === "mic_game") {
+    state.roundQuestions = rawQuestions;
+  } else {
+    state.roundQuestions = injectAudioOnlyQuestionsIntoRound(rawQuestions, 0.35);
+  }
   renderCurrentQuestion();
 }
 
@@ -654,8 +684,9 @@ function startDuelAllWords() {
 
   const all = collectAllWordsForBrothersModes();
   const shuffled = shuffleArray(all);
-  state.roundQuestions = [];
-  for (let i = 0; i < 12; i++) state.roundQuestions.push(shuffled[i % shuffled.length]);
+  const rawQuestions = [];
+  for (let i = 0; i < 12; i++) rawQuestions.push(shuffled[i % shuffled.length]);
+  state.roundQuestions = injectAudioOnlyQuestionsIntoRound(rawQuestions, 0.35);
   updateHeaderUI();
   renderCurrentQuestion();
 }
@@ -676,16 +707,17 @@ function startGrandExam() {
   const pStudio = state.lessons.find(l => l.id === "pronunciation_studio");
   if (pStudio) getVisibleLessonItems(pStudio.items, true, pStudio.id).forEach(it => allMic.push(it));
 
-  state.roundQuestions = [];
+  let examList = [];
   const shuffledListen = shuffleArray(allListen);
   const shuffledMic = shuffleArray(allMic);
 
   if (!isEffectiveIgorMode()) {
-    for (let i = 0; i < 10; i++) { let q = Object.assign({}, shuffledListen[i % shuffledListen.length]); q._examModeType = "listen_pick"; state.roundQuestions.push(q); }
-    for (let i = 0; i < 5; i++) { let q = Object.assign({}, shuffledMic[i % shuffledMic.length]); q._examModeType = "mic_game"; state.roundQuestions.push(q); }
-    state.roundQuestions = shuffleArray(state.roundQuestions);
+    for (let i = 0; i < 10; i++) { let q = Object.assign({}, shuffledListen[i % shuffledListen.length]); q._examModeType = "listen_pick"; examList.push(q); }
+    for (let i = 0; i < 5; i++) { let q = Object.assign({}, shuffledMic[i % shuffledMic.length]); q._examModeType = "mic_game"; examList.push(q); }
+    examList = shuffleArray(examList);
   } else {
-    for (let i = 0; i < 15; i++) { let q = Object.assign({}, shuffledListen[i % shuffledListen.length]); q._examModeType = "listen_pick"; state.roundQuestions.push(q); }
+    for (let i = 0; i < 15; i++) { let q = Object.assign({}, shuffledListen[i % shuffledListen.length]); q._examModeType = "listen_pick"; examList.push(q); }
   }
+  state.roundQuestions = injectAudioOnlyQuestionsIntoRound(examList, 0.35);
   renderCurrentQuestion();
 }

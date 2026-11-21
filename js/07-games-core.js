@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/07-games-core.js
-   PASEK GRY, WALKA ZE SMOKIEM I POJEDYNEK BRACI (12 PYTAŃ / 7 ❤️), LEKARZ I QUIZ
+   PASEK GRY, PYTANIA ZE SŁUCHU (PL->EN), WALKA ZE SMOKIEM, POJEDYNEK I QUIZ
    ============================================================================ */
 
 (function ensureDragonFullscreenStyles() {
@@ -289,7 +289,6 @@ function playBattleAttackSequence(type, speechPl, mode = "dragon") {
     }, 4650);
   };
 
-  // Najpierw lektor kończy całe swoje zdanie, dopiero potem pojawia się okienko walki
   if (typeof speakSequence === "function" && speechPl) {
     speakSequence([{ lang: "pl", text: speechPl }], () => {
       beginAnimationPhase();
@@ -298,7 +297,6 @@ function playBattleAttackSequence(type, speechPl, mode = "dragon") {
     beginAnimationPhase();
   }
 
-  // Zabezpieczenie wyłącznie na wypadek zacięcia się syntezatora mowy w przeglądarce
   window._dragonSpeechGuardTimer = setTimeout(() => {
     beginAnimationPhase();
   }, 6500);
@@ -319,6 +317,9 @@ function renderTopGameBar(lesson) {
   if (!state.isExamMode && !state.isHardWordsMode && !state.isCoopDragonMode && lesson && state.profile !== "duel") {
     const micBtn = `<button onclick="startLesson('${lesson.id}','mic_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'mic_game' ? 'bg-rose-600 text-white' : 'bg-white text-slate-700'}">🎤 Wymowa</button>`;
     const flashBtn = `<button onclick="startFlashcards('${lesson.id}')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-indigo-50 text-indigo-800 border-indigo-300">🃏 Fiszki</button>`;
+    const audioOnlyBtn = (lesson.type !== "memory_game")
+      ? `<button onclick="startLesson('${lesson.id}','audio_only_quiz')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'audio_only_quiz' ? 'bg-teal-600 text-white border-teal-700' : 'bg-teal-50 text-teal-900 border-teal-300'}">🎧 Ze słuchu</button>`
+      : "";
     const lettersBtn = (lesson.type !== "prepositions" && lesson.type !== "mic_only")
       ? `<button id="subModeBtn_letters_game" onclick="startLesson('${lesson.id}','letters_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'letters_game' ? 'bg-purple-600 text-white border-purple-700' : 'bg-purple-50 text-purple-900 border-purple-300'}">🧩 Literki</button>`
       : "";
@@ -326,26 +327,32 @@ function renderTopGameBar(lesson) {
     if (lesson.type === "prepositions") {
       subModesHtml = `<button onclick="startPrepositionExplain(state.lessons.find(l=>l.id==='prepositions'))" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-amber-100 border-amber-400 text-amber-900">🦉 Wyjaśnienie</button>` +
                      `<button onclick="startLesson('prepositions','prep_choose_word')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'prep_choose_word' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">🤔 Słówka</button>` +
-                     `<button onclick="startLesson('prepositions','prep_choose_pic')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'prep_choose_pic' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">🖼️ Obrazki</button>` + flashBtn + micBtn;
+                     `<button onclick="startLesson('prepositions','prep_choose_pic')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'prep_choose_pic' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">🖼️ Obrazki</button>` + audioOnlyBtn + flashBtn + micBtn;
     } else if (lesson.type === "vocab_and_shop") {
       subModesHtml = flashBtn +
                      `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
+                     audioOnlyBtn +
                      `<button id="subModeBtn_shop_cart_game" onclick="startLesson('${lesson.id}','shop_cart_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'shop_cart_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">🛒 Koszyk</button>` +
                      `<button onclick="startLesson('${lesson.id}','shop_phrases_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'shop_phrases_game' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-emerald-50 text-emerald-900 border-emerald-300'}">👋 Zwroty</button>` + lettersBtn + micBtn;
     } else if (lesson.id === "body_hurts") {
       subModesHtml = flashBtn +
                      `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
+                     audioOnlyBtn +
                      `<button id="subModeBtn_doctor_game" onclick="startLesson('${lesson.id}','doctor_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'doctor_game' ? 'bg-rose-500 text-white border-rose-600' : 'bg-rose-50 text-rose-900 border-rose-300'}">🩺 Mały Lekarz</button>` + lettersBtn + micBtn;
     } else if (lesson.id === "jungle_animals") {
       subModesHtml = flashBtn +
                      `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
+                     audioOnlyBtn +
                      `<button id="subModeBtn_riddles_game" onclick="startLesson('${lesson.id}','riddles_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'riddles_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">🕵️‍♂️ Zagadki Sówki</button>` + lettersBtn + micBtn;
     } else if (lesson.id === "colors") {
       subModesHtml = flashBtn +
                      `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Kolory</button>` +
+                     audioOnlyBtn +
                      `<button id="subModeBtn_color_mix_game" onclick="startLesson('${lesson.id}','color_mix_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'color_mix_game' ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-indigo-50 text-indigo-900 border-indigo-300'}">🎨 Kolorowe Przedmioty</button>` + lettersBtn + micBtn;
+    } else if (lesson.type === "mic_only") {
+      subModesHtml = flashBtn + micBtn + audioOnlyBtn;
     } else {
-      subModesHtml = flashBtn + `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` + lettersBtn + micBtn;
+      subModesHtml = flashBtn + `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` + audioOnlyBtn + lettersBtn + micBtn;
     }
   }
 
@@ -474,7 +481,7 @@ function renderCurrentQuestion() {
   }
   if (state.roundIndex >= state.roundQuestions.length) return renderEndRoundScreen();
 
-if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelReadyWaiting) {
+  if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelReadyWaiting) {
     const isIgor = state.duelTurn === "igor";
     const mc = document.getElementById("mainContainer");
     if (!mc) return;
@@ -512,6 +519,10 @@ if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelReadyWaiti
 
   const lesson = state.lessons.find(l => l.id === state.currentLessonId) || { id: "mix", type: "vocab", items: state.roundQuestions };
 
+  if (q._audioOnlyQuestion || activeMode === "audio_only_quiz") {
+    return renderAudioOnlyQuiz(lesson);
+  }
+
   if (activeMode === "letters_game") {
     const rawTarget = (q.en || "").trim().toUpperCase();
     if (window._letterTargetWord !== rawTarget) {
@@ -532,10 +543,153 @@ if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelReadyWaiti
   
   renderUniversalVisualQuiz(lesson);
 }
+
+// ------------------------------------------------------------------------
+// PYTANIA ZE SŁUCHU (LEKTOR PO POLSKU -> WYBÓR Z SAMYCH GŁOŚNIKÓW BEZ IKON)
+// ------------------------------------------------------------------------
+function playAudioOnlyChoice(idx) {
+  const chosen = window._currentChoices && window._currentChoices[idx];
+  if (!chosen) return;
+  document.querySelectorAll(".audio-speaker-card").forEach(el => el.classList.remove("ring-4", "ring-amber-400", "bg-amber-50"));
+  const card = document.getElementById(`aCard_${idx}`);
+  if (card) card.classList.add("ring-4", "ring-amber-400", "bg-amber-50");
+  speakSequence([{ lang: "en", text: chosen.en }]);
+}
+
+function renderAudioOnlyQuiz(lesson) {
+  const q = state.roundQuestions[state.roundIndex];
+  const isIgorTurn = isEffectiveIgorMode();
+  const numChoices = !isIgorTurn ? 6 : 4;
+  const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
+
+  let allPool = [];
+  const isTataCtx = isBrothersTestSandbox();
+  state.lessons.filter(l => !l.testOnly || isTataCtx).forEach(l => {
+    if (l.type !== "memory_game") {
+      getVisibleLessonItems(l.items, true, l.id).forEach(it => {
+        if (it && it.en && it.pl) allPool.push(it);
+      });
+    }
+  });
+  const visLessonItems = getVisibleLessonItems(lesson.items || [], true, lesson.id).filter(it => it && it.en && it.pl);
+  let src = visLessonItems.length >= numChoices ? visLessonItems : allPool;
+  const uniqueOthers = [];
+  const seenEn = new Set([q.en.toLowerCase()]);
+  shuffleArray(src).forEach(it => {
+    const key = it.en.toLowerCase();
+    if (!seenEn.has(key)) {
+      seenEn.add(key);
+      uniqueOthers.push(it);
+    }
+  });
+  const choices = shuffleArray([q, ...uniqueOthers.slice(0, numChoices - 1)]);
+  window._currentChoices = choices;
+
+  const promptPl = q.pl.toLowerCase();
+  const mc = document.getElementById("mainContainer");
+  if (!mc) return;
+
+  mc.innerHTML = `
+    ${renderTopGameBar(lesson)}
+    <div class="bg-white rounded-3xl shadow-xl border-4 border-teal-400 p-4 md:p-6 text-center">
+      <div class="text-xs font-extrabold text-teal-800 uppercase mb-1">🎧 Pytanie ze słuchu • Odsłuchaj głośniki i wskaż poprawną odpowiedź!</div>
+      <div class="flex items-center justify-between bg-teal-50 p-3.5 rounded-2xl border-2 border-teal-200 mb-3 drop-shadow-sm">
+        <button onclick="speakSequence([{lang:'pl',text:'Jak będzie po angielsku: ${promptPl.replace(/'/g,"\\'")}?'}])" class="kid-card w-12 h-12 rounded-2xl bg-teal-600 text-white text-2xl shadow flex items-center justify-center shrink-0">🔊</button>
+        <div class="flex-1 px-2">
+          <div class="text-xs font-bold text-teal-800">Jak będzie po angielsku:</div>
+          <div class="text-xl md:text-3xl font-extrabold text-slate-900 tracking-wide">"${q.pl}"?</div>
+        </div>
+        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-teal-300 text-teal-900">${numChoices} głośniki</span>
+      </div>
+      <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
+      <div class="grid ${gridColsClass} gap-3.5">
+        ${choices.map((it, idx) => `
+          <div id="aCard_${idx}" class="audio-speaker-card kid-card rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-teal-400 p-4 shadow flex flex-col items-center justify-between">
+            <button onclick="playAudioOnlyChoice(${idx})" class="w-full py-3 rounded-2xl bg-gradient-to-b from-sky-400 to-blue-600 hover:from-sky-500 hover:to-blue-700 text-white shadow-md flex flex-col items-center justify-center gap-1">
+              <span class="text-5xl md:text-6xl drop-shadow">🔊</span>
+              <span class="text-xs font-extrabold uppercase tracking-wider">Posłuchaj #${idx + 1}</span>
+            </button>
+            <button id="aLabel_${idx}" onclick="checkAudioOnlyAnswer(${idx})" class="w-full py-2.5 px-2 mt-3 rounded-xl bg-white hover:bg-emerald-50 border-2 border-teal-400 font-extrabold text-teal-950 text-sm shadow-sm uppercase tracking-wide">
+              ✅ Wybierz
+            </button>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+  speakSequence([{ lang: "pl", text: `Jak będzie po angielsku: ${promptPl}? Odsłuchaj głośniki i wybierz!` }]);
+}
+
+function checkAudioOnlyAnswer(idx) {
+  if (state.answeredCurrent) return;
+  const q = state.roundQuestions[state.roundIndex];
+  const chosen = window._currentChoices[idx];
+  const card = document.getElementById(`aCard_${idx}`);
+  const lbl = document.getElementById(`aLabel_${idx}`);
+  const fb = document.getElementById("feedbackBanner");
+
+  if (chosen.en === q.en) {
+    state.answeredCurrent = true;
+    if (card) card.classList.add("pop-correct");
+    if (lbl) lbl.textContent = `✅ ${chosen.en} (${chosen.pl})`;
+
+    if (state.isCoopDragonMode) {
+      state.dragonBattle.dragonHp = Math.max(0, state.dragonBattle.dragonHp - 1);
+      state.dragonBattle.statusText = `🛡️⚔️ TARCZA I CIOS! Zablokowano ogień Smoka i zadano mu 1 obrażenie! (Smok ma ${state.dragonBattle.dragonHp} HP)`;
+      if (fb) fb.innerHTML = `<span class="text-emerald-600 font-extrabold">🛡️⚔️ Brawo! "${q.en}" = "${q.pl}"! Atakujemy Smoka!</span>`;
+      awardCorrectAnswer();
+      playDragonAttackSequence("hit", "Super! Zaatakujemy teraz smoka!");
+    } else if (state.profile === "duel") {
+      if (!state.duelBattle && typeof initDuelBattleState === "function") initDuelBattleState();
+      const attackerName = state.duelTurn === "igor" ? "Igor" : "Hubert";
+      const defenderKey = state.duelTurn === "igor" ? "hubert" : "igor";
+      const defenderGenitive = state.duelTurn === "igor" ? "Huberta" : "Igora";
+      state.duelBattle[`${defenderKey}Hp`] = Math.max(0, state.duelBattle[`${defenderKey}Hp`] - 1);
+      state.duelBattle.statusText = `⚔️ TRAFIENIE! ${attackerName.toUpperCase()} zadaje cios i odbiera 1 serduszko!`;
+      if (fb) fb.innerHTML = `<span class="text-emerald-600 font-extrabold">⚔️ Brawo ${attackerName}! "${q.en}" = "${q.pl}"!</span>`;
+      awardCorrectAnswer();
+      playBattleAttackSequence("hit", `Super ${attackerName}! Zaatakujesz teraz ${defenderGenitive}!`, "duel");
+    } else {
+      playEffect("success");
+      if (fb) fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! "${q.en}" znaczy "${q.pl}"!</span>`;
+      awardCorrectAnswer();
+      speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Brawo! ${q.pl} to po angielsku ${q.en}!` }], () => advanceNextQuestion());
+    }
+  } else {
+    state.roundMistakes++;
+    state.currentQuestionMistakes++;
+    if (card) card.classList.add("shake-wrong");
+    recordHardWordForActivePlayer(q);
+    if (lbl) lbl.textContent = `❌ ${chosen.pl}`;
+
+    if (state.isCoopDragonMode) {
+      state.answeredCurrent = true;
+      state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
+      state.dragonBattle.statusText = `🔥💥 ZIONIĘCIE OGNIEM! Smok trafia drużynę! Tracicie 1 serduszko! (Zostało: ${state.dragonBattle.teamHp} ❤️)`;
+      if (fb) fb.innerHTML = `<span class="text-rose-600 font-extrabold">🔥💥 O nie! Smok atakuje! "${q.pl}" to po angielsku "${q.en}"!</span>`;
+      playDragonAttackSequence("fire", "Niestety, smok atakuje nas!");
+    } else if (state.profile === "duel") {
+      if (!state.duelBattle && typeof initDuelBattleState === "function") initDuelBattleState();
+      state.answeredCurrent = true;
+      const attackerKey = state.duelTurn;
+      const attackerName = state.duelTurn === "igor" ? "Igor" : "Hubert";
+      const defenderName = state.duelTurn === "igor" ? "Hubert" : "Igor";
+      state.duelBattle[`${attackerKey}Hp`] = Math.max(0, state.duelBattle[`${attackerKey}Hp`] - 1);
+      state.duelBattle.statusText = `⚡ KONTRATAK! ${defenderName.toUpperCase()} odbiera 1 serduszko! "${q.pl}" to "${q.en}"`;
+      if (fb) fb.innerHTML = `<span class="text-rose-600 font-extrabold">⚡ Pudło! ${defenderName} kontratakuje! "${q.pl}" to "${q.en}"!</span>`;
+      playBattleAttackSequence("fire", `Niestety ${attackerName}! ${defenderName} kontratakuje!`, "duel");
+    } else {
+      playEffect("wrong");
+      if (fb) fb.innerHTML = `<span class="text-rose-600">❌ Ten głośnik mówił "${chosen.pl}". Posłuchaj pozostałych i znajdź "${q.pl}"!</span>`;
+      speakSequence([{ lang: "pl", text: `Oj nie! To znaczy ${chosen.pl}. Posłuchaj pozostałych głośników i znajdź jak będzie po angielsku: ${q.pl.toLowerCase()}!` }]);
+    }
+  }
+}
 function renderColorMixGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const choices = buildColorMixChoicesForQuestion(q);
   window._currentChoices = choices;
+  const gridColsClass = choices.length === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
 
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
@@ -547,10 +701,10 @@ function renderColorMixGame(lesson) {
       <div class="flex items-center justify-between bg-indigo-50 p-3 rounded-2xl border-2 border-indigo-200 mb-3 drop-shadow-sm">
         <button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-12 h-12 rounded-2xl bg-indigo-600 text-white text-2xl shadow flex items-center justify-center">🔊</button>
         <div class="text-xl md:text-3xl font-extrabold text-slate-900 flex-1 px-2 tracking-wide">"${q.en}"</div>
-        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-indigo-300 text-indigo-900">3 kolory × 2 przedmioty</span>
+        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-indigo-300 text-indigo-900">${choices.length === 4 ? '2 kolory × 2 przedmioty' : '3 kolory × 2 przedmioty'}</span>
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+      <div class="grid ${gridColsClass} gap-3.5">
         ${choices.map((it, idx) => `
           <div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-indigo-400 p-4 shadow flex flex-col items-center justify-between">
             <div class="w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center relative my-1 shadow-inner float-anim" style="background-color: ${it.colorBg}; border: 5px solid ${it.colorBorder};">
@@ -814,7 +968,9 @@ function handleRiddleHintClick() {
 function renderRiddlesGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const pool = typeof RIDDLES_POOL !== "undefined" ? RIDDLES_POOL : lesson.items;
-  const choices = shuffleArray([q, ...shuffleArray(pool.filter(it => it.en !== q.en)).slice(0, 2)]);
+  const numChoices = !isEffectiveIgorMode() ? 6 : 4;
+  const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
+  const choices = shuffleArray([q, ...shuffleArray(pool.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);
   window._currentChoices = choices; state.riddleHintStep = 0;
 
   const mc = document.getElementById("mainContainer"); if (!mc) return;
@@ -831,7 +987,7 @@ function renderRiddlesGame(lesson) {
         <div id="riddleHintBox" class="hidden mt-2.5 text-xs font-extrabold text-emerald-800 bg-emerald-100 py-1.5 px-3 rounded-xl inline-block border border-emerald-300"></div>
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+      <div class="grid ${gridColsClass} gap-3.5">
         ${choices.map((it, idx) => `<div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, false)" class="kid-card cursor-pointer rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-amber-400 p-4 shadow flex flex-col items-center justify-between"><div class="text-6xl md:text-7xl my-2 float-anim">${it.icon || '🐾'}</div><div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border font-bold text-slate-700 text-sm shadow-sm uppercase">To ja!</div></div>`).join("")}
       </div>
     </div>
@@ -842,7 +998,9 @@ function renderRiddlesGame(lesson) {
 function renderShopCartGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const products = getVisibleLessonItems(lesson.items, true, lesson.id).filter(i => i.isProduct);
-  const choices = shuffleArray([q, ...shuffleArray(products.filter(it => it.en !== q.en)).slice(0, 2)]);
+  const numChoices = !isEffectiveIgorMode() ? 5 : 4;
+  const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
+  const choices = shuffleArray([q, ...shuffleArray(products.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);
   window._currentChoices = choices;
   const cartIcons = (state.shopCart && state.shopCart.length > 0) ? state.shopCart.map(ic => `<span class="text-2xl pop-correct">${ic}</span>`).join(" ") : `<span class="text-xs text-amber-700">Koszyk jest jeszcze pusty...</span>`;
   const mc = document.getElementById("mainContainer"); if (!mc) return;
@@ -858,7 +1016,7 @@ function renderShopCartGame(lesson) {
         <div class="text-lg md:text-2xl font-extrabold text-slate-900 flex-1 px-2">Włóż do koszyka: <span class="text-amber-700">"${q.en}"</span></div>
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+      <div class="grid ${gridColsClass} gap-3.5">
         ${choices.map((it, idx) => `<div id="vCard_${idx}" onclick="checkUniversalAnswer(${idx}, true)" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-200 bg-amber-50/40 hover:border-amber-500 p-4 shadow flex flex-col items-center justify-between"><div class="text-6xl md:text-7xl my-2 float-anim drop-shadow-sm">${it.icon || '🥐'}</div><div id="vLabel_${idx}" class="w-full py-2 px-2 rounded-xl bg-white border border-amber-300 font-bold text-amber-950 text-sm shadow-sm uppercase">🛒 Do koszyka</div></div>`).join("")}
       </div>
     </div>
@@ -869,8 +1027,8 @@ function renderShopCartGame(lesson) {
 function renderUniversalVisualQuiz(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const isIgorTurn = isEffectiveIgorMode();
-  const numChoices = !isIgorTurn ? 6 : (state.isCoopDragonMode ? 4 : 3);
-  const gridColsClass = numChoices === 4 ? "grid-cols-2 sm:grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
+  const numChoices = !isIgorTurn ? 6 : 4;
+  const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
 
   let allPool = [];
   const isTataCtx = isBrothersTestSandbox();
@@ -888,7 +1046,7 @@ function renderUniversalVisualQuiz(lesson) {
       <div class="flex items-center justify-between bg-sky-50 p-3 rounded-2xl border border-sky-200 mb-3 drop-shadow-sm">
         <button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-12 h-12 rounded-2xl bg-sky-500 text-white text-2xl shadow flex items-center justify-center">🔊</button>
         <div class="text-xl md:text-3xl font-extrabold text-slate-900 flex-1 px-2 tracking-wide">"${q.en}" ${q.phonetic ? '[' + q.phonetic + ']' : ''}</div>
-        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-sky-300 text-slate-600">${!isIgorTurn ? '🧑 6 opcji' : `👦 ${numChoices} opcje`}</span>
+        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-sky-300 text-slate-600">${!isIgorTurn ? '🧑 6 opcji' : '👦 4 opcje'}</span>
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
       <div class="grid ${gridColsClass} gap-3.5">

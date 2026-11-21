@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/08-pancakes-minigames.js
-   KUCHNIA PANKEJKÓW (SVG), LITERKI, MEMORY, MIKROFON (POPRAWKA SMOKA) I PRZYIMKI
+   KUCHNIA PANKEJKÓW (4 OPCJE + LOSOWE DODAWANIE), LITERKI (4 OPCJE), MEMORY I MIKROFON
    ============================================================================ */
 
 const _origRenderTopGameBarV14 = typeof renderTopGameBar === "function" ? renderTopGameBar : null;
@@ -10,6 +10,7 @@ renderTopGameBar = function(lesson) {
     const totalQ = state.roundQuestions.length || 1;
     const micBtn = `<button onclick="startLesson('${lesson.id}','mic_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'mic_game' ? 'bg-rose-600 text-white' : 'bg-white text-slate-700'}">🎤 Wymowa</button>`;
     const flashBtn = `<button onclick="startFlashcards('${lesson.id}')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-indigo-50 text-indigo-800 border-indigo-300">🃏 Fiszki</button>`;
+    const audioOnlyBtn = `<button onclick="startLesson('${lesson.id}','audio_only_quiz')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'audio_only_quiz' ? 'bg-teal-600 text-white border-teal-700' : 'bg-teal-50 text-teal-900 border-teal-300'}">🎧 Ze słuchu</button>`;
     const lettersBtn = `<button id="subModeBtn_letters_game" onclick="startLesson('${lesson.id}','letters_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'letters_game' ? 'bg-purple-600 text-white border-purple-700' : 'bg-purple-50 text-purple-900 border-purple-300'}">🧩 Literki</button>`;
     const cookBtn = `<button id="subModeBtn_pancake_cooking_game" onclick="startLesson('${lesson.id}','pancake_cooking_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'pancake_cooking_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">👨‍🍳 Kuchnia Pankejków</button>`;
     const quizBtn = `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>`;
@@ -32,7 +33,7 @@ renderTopGameBar = function(lesson) {
     return `
       <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-amber-300 flex flex-col gap-2 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex flex-wrap gap-1.5 items-center">${flashBtn}${quizBtn}${cookBtn}${lettersBtn}${micBtn}${tataSwitchBar}</div>
+          <div class="flex flex-wrap gap-1.5 items-center">${flashBtn}${quizBtn}${audioOnlyBtn}${cookBtn}${lettersBtn}${micBtn}${tataSwitchBar}</div>
           <button onclick="showLessonMenu()" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Menu 🏠</button>
         </div>
         ${state.currentSubMode !== "pancake_cooking_game" ? `<div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100"><span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}</div>` : ""}
@@ -143,7 +144,7 @@ function isSpeechMatchForWord(heardRaw, targetRaw) {
 }
 
 // ------------------------------------------------------------------------
-// KUCHNIA PANKEJKÓW (5 ETAPÓW + IKONY SVG: FLOUR, YOGHURT, OIL)
+// KUCHNIA PANKEJKÓW (5 ETAPÓW + 4 WYBORY W SKLEPIE + LOSOWE DODAWANIE)
 // ------------------------------------------------------------------------
 const PANCAKE_BASE_INGREDIENTS = [
   { id: "flour",   en: "Flour",   pl: "Mąka",   icon: getCustomPancakeSvg("flour", 58),   smallIcon: getCustomPancakeSvg("flour", 28) },
@@ -186,7 +187,7 @@ function renderPancakeCookingStage(lesson) {
 
   if (ps.stage === "bakery_shop") {
     const targetIng = PANCAKE_BASE_INGREDIENTS[ps.shopIdx];
-    const choices = shuffleArray([targetIng, ...shuffleArray(PANCAKE_BASE_INGREDIENTS.filter(i => i.id !== targetIng.id)).slice(0, 2)]);
+    const choices = shuffleArray([targetIng, ...shuffleArray(PANCAKE_BASE_INGREDIENTS.filter(i => i.id !== targetIng.id)).slice(0, 3)]);
     window._pancakeShopChoices = choices;
     const askPhrase = ps.shopIdx === 0 ? `Good morning! Please give me ${targetIng.en.toLowerCase()}!` : `Please give me ${targetIng.en.toLowerCase()}!`;
 
@@ -211,7 +212,7 @@ function renderPancakeCookingStage(lesson) {
           ${ps.boughtItems.length ? ps.boughtItems.map(ic => `<span class="text-2xl pop-correct inline-flex items-center">${ic}</span>`).join("") : `<span class="text-slate-400">pusty</span>`}
         </div>
         <div id="pancakeFeedback" class="min-h-[30px] font-extrabold text-sm mb-2"></div>
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           ${choices.map((it, idx) => `
             <div onclick="pickPancakeShopItem(${idx})" class="kid-card cursor-pointer rounded-3xl border-4 border-amber-200 bg-amber-50/40 hover:border-amber-500 p-4 shadow flex flex-col items-center">
               <div class="text-6xl my-2 float-anim flex items-center justify-center h-16">${it.icon}</div>
@@ -333,6 +334,21 @@ function psSkipToKitchen() {
   renderPancakeCookingStage();
 }
 
+function pickPancakeShopItem(idx) {
+  const ps = state.pancakeState, targetIng = PANCAKE_BASE_INGREDIENTS[ps.shopIdx], chosen = window._pancakeShopChoices[idx], fb = document.getElementById("pancakeFeedback");
+  if (chosen.id === targetIng.id) {
+    playEffect("success"); ps.boughtItems.push(chosen.smallIcon || chosen.icon);
+    if (fb) fb.innerHTML = `<span class="text-emerald-600">✅ Thank you! Masz: ${chosen.pl} (${chosen.en})!</span>`;
+    ps.shopIdx++;
+    if (ps.shopIdx >= PANCAKE_BASE_INGREDIENTS.length) speakSequence([{ lang: "en", text: "Thank you! Goodbye!" }, { lang: "pl", text: "Wszystkie składniki kupione! Idziemy do kuchni!" }], () => { ps.stage = "bowl_add"; renderPancakeCookingStage(); });
+    else speakSequence([{ lang: "en", text: "Thank you!" }], () => renderPancakeCookingStage());
+  } else {
+    playEffect("wrong");
+    if (fb) fb.innerHTML = `<span class="text-rose-600">❌ To jest ${chosen.pl} (${chosen.en}). Poprosiliśmy o: ${targetIng.en}!</span>`;
+    speakSequence([{ lang: "pl", text: `Oj nie, to jest ${chosen.pl}. Poproś o:` }, { lang: "en", text: targetIng.en }]);
+  }
+}
+
 function addIngredientToBowl(ingId) {
   const ps = state.pancakeState;
   if (ps._addingLock) return;
@@ -375,18 +391,7 @@ function addIngredientToBowl(ingId) {
     speakSequence([{ lang: "pl", text: "Najpierw dodaj:" }, { lang: "en", text: targetIng.en }]);
   }
 }
-function addIngredientToBowl(ingId) {
-  const ps = state.pancakeState, targetIng = PANCAKE_BASE_INGREDIENTS[ps.addIdx], chosen = PANCAKE_BASE_INGREDIENTS.find(i => i.id === ingId), fb = document.getElementById("pancakeFeedback");
-  if (!chosen || !targetIng) return;
-  if (chosen.id === targetIng.id) {
-    playEffect("success"); if (!ps.addedIds) ps.addedIds = []; ps.addedIds.push(chosen.id); ps.addedItems.push(chosen.smallIcon || chosen.icon); ps.addIdx++;
-    if (ps.addIdx >= PANCAKE_BASE_INGREDIENTS.length) speakSequence([{ lang: "pl", text: "Super! Wszystkie składniki są już w misce! Teraz czas na mieszanie!" }], () => { ps.stage = "bowl_mix"; renderPancakeCookingStage(); });
-    else renderPancakeCookingStage();
-  } else {
-    playEffect("wrong"); if (fb) fb.innerHTML = `<span class="text-rose-600">❌ Najpierw dodaj: ${targetIng.en} (${targetIng.pl})!</span>`;
-    speakSequence([{ lang: "pl", text: "Najpierw dodaj:" }, { lang: "en", text: targetIng.en }]);
-  }
-}
+
 function clickMixBowl() { const ps = state.pancakeState; ps.mixClicks++; playEffect("beep"); if (ps.mixClicks >= 3) { playEffect("success"); speakSequence([{ lang: "en", text: "Mix, mix, mix!" }], () => renderPancakeCookingStage()); } else renderPancakeCookingStage(); }
 function fryPancakesOnPan() { playEffect("fanfare"); state.pancakeState.stage = "decorate_fruits"; renderPancakeCookingStage(); }
 function igorClickFruitTopping(fruitId) { const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId); if (!f) return; state.pancakeState.addedToppings.push(f.icon); playEffect("success"); renderPancakeCookingStage(); speakSequence([{ lang: "en", text: `Add ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Dodano: ${f.pl}!` }]); }
@@ -443,7 +448,7 @@ function servePancakesToPet() {
 }
 
 // ------------------------------------------------------------------------
-// UKŁADANKA LITERKOWA
+// UKŁADANKA LITERKOWA (4 LITERKI DO WYBORU DLA IGORA)
 // ------------------------------------------------------------------------
 function renderLettersGame(lesson) {
   const q = state.roundQuestions[state.roundIndex], rawWord = (q.en || "CAT").trim().toUpperCase(), isIgor = isEffectiveIgorMode();
@@ -451,7 +456,7 @@ function renderLettersGame(lesson) {
     window._letterTargetWord = rawWord; window._letterRoundIdx = state.roundIndex; window._letterModeIgor = isIgor;
     if (isIgor) {
       state.letterBuilt = ""; const firstChar = rawWord[0];
-      const distractors = shuffleArray("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").filter(c => c !== firstChar)).slice(0, 2);
+      const distractors = shuffleArray("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").filter(c => c !== firstChar)).slice(0, 3);
       state.letterPool = shuffleArray([firstChar, ...distractors]).map((ch, i) => ({ id: i, char: ch, used: false }));
     } else {
       state.letterBuilt = ""; state.letterPool = shuffleArray(rawWord.split("").map((ch, i) => ({ id: i, char: ch, used: false })));
@@ -462,7 +467,7 @@ function renderLettersGame(lesson) {
     ? `<div class="flex flex-wrap justify-center gap-1.5 my-3"><div class="w-12 h-14 md:w-14 md:h-16 rounded-2xl border-4 ${state.letterBuilt ? 'border-emerald-500 bg-emerald-50' : 'border-purple-500 bg-purple-50'} flex items-center justify-center text-2xl md:text-3xl font-extrabold shadow">${state.letterBuilt ? `<span class="text-emerald-700">${state.letterBuilt}</span>` : `<span class="text-purple-600 animate-pulse">?</span>`}</div>${rawWord.slice(1).split("").map(ch => `<div class="w-12 h-14 md:w-14 md:h-16 rounded-2xl border-2 ${state.letterBuilt ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-slate-300 bg-slate-100 text-slate-700'} flex items-center justify-center text-2xl md:text-3xl font-extrabold">${ch}</div>`).join("")}</div>`
     : `<div class="flex flex-wrap justify-center gap-1.5 my-3">${rawWord.split("").map((ch, idx) => ch === " " ? `<div class="w-6 h-14"></div>` : `<div class="w-11 h-14 md:w-13 md:h-16 rounded-2xl border-4 ${idx < state.letterBuilt.length ? 'border-emerald-500 bg-emerald-50 text-emerald-800' : idx === state.letterBuilt.length ? 'border-purple-500 bg-purple-50 text-purple-400 animate-pulse' : 'border-slate-300 bg-slate-50 text-slate-300'} flex items-center justify-center text-2xl md:text-3xl font-extrabold shadow-sm">${idx < state.letterBuilt.length ? rawWord[idx] : '_'}</div>`).join("")}</div>`;
 
-  mc.innerHTML = `${renderTopGameBar(lesson)}<div class="bg-white rounded-3xl shadow-xl border-4 border-purple-400 p-4 md:p-6 text-center max-w-2xl mx-auto w-full"><div class="text-xs font-extrabold text-purple-700 uppercase mb-1">🧩 Układanka Literkowa (${isIgor ? 'Wskaż brakującą pierwszą literę' : 'Posłuchaj i ułóż słowo'})</div><div class="flex items-center justify-center gap-4 my-2"><button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-14 h-14 rounded-2xl bg-purple-600 text-white text-3xl shadow flex items-center justify-center">🔊</button><div class="text-6xl md:text-7xl float-anim drop-shadow-sm">${q.icon || '⭐'}</div><div class="text-left"><div class="text-xl md:text-2xl font-extrabold text-slate-800">${q.pl}</div><div class="text-xs font-bold text-purple-600">Kliknij 🔊 aby usłyszeć po angielsku</div></div></div>${slotsHtml}<div id="feedbackBanner" class="min-h-[30px] font-bold text-sm mb-2 flex items-center justify-center"></div><div class="flex flex-wrap justify-center gap-2.5 mt-2">${state.letterPool.map((tile, idx) => `<button id="letTile_${idx}" onclick="pickLetterTile(${idx})" ${tile.used ? 'disabled' : ''} class="kid-card w-14 h-14 md:w-16 md:h-16 rounded-2xl border-4 ${tile.used ? 'border-slate-200 bg-slate-100 text-slate-300 opacity-40 cursor-not-allowed' : 'border-purple-400 bg-white hover:bg-purple-50 text-purple-950 shadow-md'} font-extrabold text-2xl md:text-3xl">${tile.char}</button>`).join("")}</div></div>`;
+  mc.innerHTML = `${renderTopGameBar(lesson)}<div class="bg-white rounded-3xl shadow-xl border-4 border-purple-400 p-4 md:p-6 text-center max-w-2xl mx-auto w-full"><div class="text-xs font-extrabold text-purple-700 uppercase mb-1">🧩 Układanka Literkowa (${isIgor ? 'Wskaż brakującą pierwszą literę (4 opcje)' : 'Posłuchaj i ułóż słowo'})</div><div class="flex items-center justify-center gap-4 my-2"><button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-14 h-14 rounded-2xl bg-purple-600 text-white text-3xl shadow flex items-center justify-center">🔊</button><div class="text-6xl md:text-7xl float-anim drop-shadow-sm">${q.icon || '⭐'}</div><div class="text-left"><div class="text-xl md:text-2xl font-extrabold text-slate-800">${q.pl}</div><div class="text-xs font-bold text-purple-600">Kliknij 🔊 aby usłyszeć po angielsku</div></div></div>${slotsHtml}<div id="feedbackBanner" class="min-h-[30px] font-bold text-sm mb-2 flex items-center justify-center"></div><div class="flex flex-wrap justify-center gap-2.5 mt-2">${state.letterPool.map((tile, idx) => `<button id="letTile_${idx}" onclick="pickLetterTile(${idx})" ${tile.used ? 'disabled' : ''} class="kid-card w-14 h-14 md:w-16 md:h-16 rounded-2xl border-4 ${tile.used ? 'border-slate-200 bg-slate-100 text-slate-300 opacity-40 cursor-not-allowed' : 'border-purple-400 bg-white hover:bg-purple-50 text-purple-950 shadow-md'} font-extrabold text-2xl md:text-3xl">${tile.char}</button>`).join("")}</div></div>`;
   if (state.letterBuilt.length === 0 && state.currentQuestionMistakes === 0) speakSequence([{ lang: "pl", text: isIgor ? `Posłuchaj i wskaż pierwszą literę słowa:` : `Posłuchaj i ułóż z liter słowo:` }, { lang: "en", text: q.en }]);
 }
 
@@ -535,7 +540,7 @@ function flipMemoryCard(idx) {
 }
 
 // ------------------------------------------------------------------------
-// STUDIO WYMOWY (BEZ LIMITU PRÓB + POMOC TATY OD 5. PRÓBY + LEKTOR -> ANIMACJA)
+// STUDIO WYMOWY
 // ------------------------------------------------------------------------
 function stopActiveSpeechRecSafely() {
   if (window._activeSpeechRec) {

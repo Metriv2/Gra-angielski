@@ -1,12 +1,30 @@
 /* ============================================================================
    PLIK: js/09-parent-init.js
-   PIN RODZICA, AUTOMATYCZNY GENERATOR LEKCJI, CENTRUM TESTOWE I INICJALIZACJA
+   PIN RODZICA, PRAWDZIWY GENERATOR LEKCJI GEMINI AI (DOWOLNY TEMAT + ZDJĘCIE)
    ============================================================================ */
 
 let _pendingPinAction = "dashboard";
 let _selectedManagerLessonId = null;
 
 const AUTO_LESSON_TOPICS_DB = [
+  {
+    keywords: ["chorob", "zdrow", "lekarz", "szpital", "przezięb", "gorączk", "kaszel", "katar", "ból", "illness", "sick", "health", "doctor"],
+    icon: "🤒🩺",
+    words: [
+      { en: "Fever", pl: "Gorączka", phonetic: "fiwer", icon: "🤒", age: [4, 6] },
+      { en: "Cough", pl: "Kaszel", phonetic: "kof", icon: "😷", age: [4, 6] },
+      { en: "Cold", pl: "Przeziębienie", phonetic: "kold", icon: "🤧", age: [4, 6] },
+      { en: "Doctor", pl: "Lekarz", phonetic: "doktor", icon: "🩺", age: [4, 6] },
+      { en: "Bandage", pl: "Plasterek", phonetic: "bandydż", icon: "🩹", age: [4, 6] },
+      { en: "Medicine", pl: "Lekarstwo", phonetic: "medisyn", icon: "💊", age: [4, 6] },
+      { en: "Thermometer", pl: "Termometr", phonetic: "fermometer", icon: "🌡️", age: [6] },
+      { en: "Headache", pl: "Ból głowy", phonetic: "hedejk", icon: "🤕", age: [6] },
+      { en: "Stomach ache", pl: "Ból brzucha", phonetic: "stamak ejk", icon: "🤢", age: [6] },
+      { en: "Hospital", pl: "Szpital", phonetic: "hospital", icon: "🏥", age: [4, 6] },
+      { en: "Ambulance", pl: "Karetka", phonetic: "ambjulans", icon: "🚑", age: [4, 6] },
+      { en: "Healthy", pl: "Zdrowy", phonetic: "helfi", icon: "💪", age: [6] }
+    ]
+  },
   {
     keywords: ["pojazd", "aut", "samoch", "maszyn", "transport", "vehicle", "car", "pociag", "pociąg", "samolot"],
     icon: "🚒🚜",
@@ -98,7 +116,7 @@ const AUTO_LESSON_TOPICS_DB = [
     ]
   },
   {
-    keywords: ["zawod", "prac", "straż", "policj", "lekarz", "job", "profession", "hero"],
+    keywords: ["zawod", "prac", "straż", "policj", "job", "profession", "hero"],
     icon: "🚒👨‍🚀",
     words: [
       { en: "Firefighter", pl: "Strażak", phonetic: "fajerfajter", icon: "🧑‍🚒", age: [4, 6] },
@@ -207,6 +225,40 @@ const AUTO_LESSON_TOPICS_DB = [
   }
 ];
 
+function getStoredGeminiApiKey() {
+  try {
+    const k1 = document.getElementById("parentGeminiKey")?.value?.trim();
+    const k2 = document.getElementById("quickGeminiKeyInput")?.value?.trim();
+    const saved = localStorage.getItem("akademia_gemini_key") || "";
+    return k1 || k2 || saved.trim();
+  } catch (e) {
+    return "";
+  }
+}
+
+function saveGeminiApiKeyEverywhere(val) {
+  const clean = String(val || "").trim();
+  try { localStorage.setItem("akademia_gemini_key", clean); } catch (e) {}
+  const f1 = document.getElementById("parentGeminiKey");
+  const f2 = document.getElementById("quickGeminiKeyInput");
+  if (f1 && f1.value !== clean) f1.value = clean;
+  if (f2 && f2.value !== clean) f2.value = clean;
+  updateAiKeyStatusBadge();
+}
+
+function updateAiKeyStatusBadge() {
+  const badge = document.getElementById("aiGeneratorModeBadge");
+  if (!badge) return;
+  const hasKey = Boolean(getStoredGeminiApiKey());
+  if (hasKey) {
+    badge.className = "px-2.5 py-1 rounded-xl bg-emerald-100 border border-emerald-400 text-xs font-extrabold text-emerald-900";
+    badge.textContent = "🤖 Gemini AI: AKTYWNY (dowolny temat!)";
+  } else {
+    badge.className = "px-2.5 py-1 rounded-xl bg-amber-100 border border-amber-400 text-xs font-extrabold text-amber-950";
+    badge.textContent = "📦 Tryb bez klucza AI (12 tematów)";
+  }
+}
+
 function openParentPinModal(action = "dashboard") {
   _pendingPinAction = action || "dashboard";
   const modal = document.getElementById("parentPinModal");
@@ -307,10 +359,8 @@ function showParentStatus(msg, isError = false) {
 function openParentDashboard() {
   const modal = document.getElementById("parentDashboardModal");
   if (!modal) return;
-  const keyInput = document.getElementById("parentGeminiKey");
-  if (keyInput) {
-    try { keyInput.value = localStorage.getItem("akademia_gemini_key") || ""; } catch (e) {}
-  }
+  const savedKey = getStoredGeminiApiKey();
+  saveGeminiApiKeyEverywhere(savedKey);
   const st = document.getElementById("parentStatusMsg");
   if (st) st.classList.add("hidden");
   backToParentMenu();
@@ -358,6 +408,7 @@ function refreshAllParentWidgets() {
   renderParentLessonsManager();
   renderParentHardWordsBox();
   renderRoundLengthButtons();
+  updateAiKeyStatusBadge();
 }
 
 function populateParentLessonSelect() {
@@ -378,7 +429,6 @@ function parseLessonLinesText(rawText) {
   const lines = String(rawText || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const parsed = [];
   lines.forEach(line => {
-    // Dzielimy wyłącznie po myślniku otoczonym spacjami, aby nie psuć słów typu "T-shirt" ani wymowy "ti-szert"
     const parts = line.split(/\s+[-–—]\s+/).map(p => p.trim()).filter(Boolean);
     if (parts.length < 2) return;
     const en = parts[0];
@@ -418,26 +468,135 @@ function formatWordsToLessonLines(wordsArr) {
   }).join("\n");
 }
 
-function parentAutoGenerateLesson() {
+function renderGeneratedLessonPreview(finalWords, sourceLabel = "Gemini AI") {
+  const previewBox = document.getElementById("generatedLessonPreviewBox");
+  if (!previewBox) return;
+  previewBox.classList.remove("hidden");
+  previewBox.innerHTML = `
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <span class="text-xs font-extrabold text-emerald-900">✅ Wygenerowano ${finalWords.length} słówek (${sourceLabel})! Gotowe do wszystkich trybów (Fiszki, Quiz, 🎧 Ze słuchu, Literki, Wymowa, Memory, Sprawdzian, VS i Smok):</span>
+    </div>
+    <div class="flex flex-wrap gap-1.5">
+      ${finalWords.map(w => `<span class="px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-300 text-xs font-bold text-slate-800">${w.icon} ${w.en} (${w.pl}) <span class="text-[10px] text-indigo-700">[${w.age.join(",")}]</span></span>`).join("")}
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+      <button onclick="parentCreateNewLesson(true)" class="kid-card py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow">🚀 Zapisz i udostępnij od razu synom</button>
+      <button onclick="parentCreateNewLesson(false)" class="kid-card py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-amber-950 font-extrabold rounded-xl text-xs shadow">🧪 Zapisz najpierw jako testową (tylko Tata)</button>
+    </div>
+  `;
+}
+
+function parseGeminiLessonJsonResponse(rawText) {
+  const cleaned = String(rawText || "").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+  const data = JSON.parse(cleaned);
+  if (!data || !Array.isArray(data.words)) return null;
+  const words = data.words
+    .filter(w => w && w.en && w.pl)
+    .map(w => {
+      let ageArr = [4, 6];
+      if (Array.isArray(w.age)) {
+        const filtered = w.age.map(Number).filter(n => n === 4 || n === 6);
+        if (filtered.length > 0) ageArr = filtered;
+      } else if (String(w.age || "").includes("6") && !String(w.age || "").includes("4")) {
+        ageArr = [6];
+      } else if (String(w.age || "").includes("4") && !String(w.age || "").includes("6")) {
+        ageArr = [4];
+      }
+      return {
+        en: String(w.en).trim(),
+        pl: String(w.pl).trim(),
+        phonetic: String(w.phonetic || "").trim(),
+        icon: String(w.icon || "⭐").trim(),
+        age: ageArr
+      };
+    });
+  return {
+    title: String(data.title || "").trim(),
+    icon: String(data.icon || "📚✨").trim(),
+    words
+  };
+}
+
+async function parentAutoGenerateLesson() {
   const titleInput = document.getElementById("newLessonTitle");
   const iconInput = document.getElementById("newLessonIcon");
   const descInput = document.getElementById("newLessonDesc");
   const ageSel = document.getElementById("newLessonTargetAge");
   const countSel = document.getElementById("newLessonWordCount");
   const linesArea = document.getElementById("newLessonLines");
-  const previewBox = document.getElementById("generatedLessonPreviewBox");
 
   const rawTitle = (titleInput && titleInput.value.trim()) || "";
   const rawDesc = (descInput && descInput.value.trim()) || "";
   if (!rawTitle && !rawDesc) {
-    showParentStatus("⚠️ Wpisz przynajmniej tytuł lub krótki opis nowej lekcji!", true);
+    showParentStatus("⚠️ Wpisz temat lub opis lekcji (np. „Stwórz lekcję o chorobach”)!", true);
     return;
   }
 
   const targetAgeMode = ageSel ? ageSel.value : "auto";
   const desiredCount = parseInt(countSel ? countSel.value : "8", 10) || 8;
-  const searchBlob = `${rawTitle} ${rawDesc}`.toLowerCase();
+  const apiKey = getStoredGeminiApiKey();
 
+  // 1. JEŚLI JEST KLUCZ GEMINI AI -> GENERUJEMY DOWOLNY TEMAT PRZEZ AI!
+  if (apiKey) {
+    showParentStatus("🤖 Gemini AI układa lekcję, dobiera słówka, wymowę i poziomy dla Igora (4 l.) i Huberta (6 l.)...");
+    const ageInstruction = targetAgeMode === "auto"
+      ? "Proste, konkretne słowa ustaw jako [4, 6] (dla obu braci), a trudniejsze lub bardziej abstrakcyjne jako [6] (tylko dla 6-letniego Huberta)."
+      : (targetAgeMode === "4,6" ? "Wszystkie słowa ustaw jako [4, 6]." : (targetAgeMode === "4" ? "Wszystkie słowa ustaw jako [4]." : "Wszystkie słowa ustaw jako [6]."));
+
+    const aiPrompt = `Jesteś nauczycielem języka angielskiego dla dwóch chłopców z Polski: Igora (4 lata) i Huberta (6 lat).
+Zadanie rodzica:
+Tytuł: "${rawTitle || "brak - wymyśl krótki polski tytuł z numerem " + (state.lessons.length + 1)}"
+Opis / polecenie: "${rawDesc || rawTitle}"
+Liczba słówek: ${desiredCount}.
+Reguły:
+- Wybierz ${desiredCount} najważniejszych, naturalnych słówek/wyrażeń angielskich dokładnie na temat podany przez rodzica.
+- ${ageInstruction}
+- Dla każdego słówka podaj:
+  * "en": słowo po angielsku (z wielkiej litery, np. "Fever"),
+  * "pl": tłumaczenie po polsku (np. "Gorączka"),
+  * "phonetic": uproszczony polski zapis wymowy dla dziecka (np. "fiwer"),
+  * "icon": 1 lub 2 pasujące emoji (np. "🤒"),
+  * "age": tablica [4, 6] lub [6] lub [4].
+Zwróć wyłącznie czysty obiekt JSON w formacie:
+{"title": "Tytuł lekcji po polsku", "icon": "2 emoji", "words": [{"en":"...", "pl":"...", "phonetic":"...", "icon":"...", "age":[4,6]}]}`;
+
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: aiPrompt }] }],
+          generationConfig: { responseMimeType: "application/json" }
+        })
+      });
+      const json = await res.json();
+      if (json.error) {
+        throw new Error(json.error.message || "Błąd klucza Gemini API");
+      }
+      const rawReply = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const parsed = parseGeminiLessonJsonResponse(rawReply);
+      if (parsed && parsed.words.length > 0) {
+        const finalWords = parsed.words.slice(0, desiredCount);
+        if (titleInput && !titleInput.value.trim()) {
+          titleInput.value = parsed.title || `${state.lessons.length + 1}. ${rawDesc.slice(0, 32)}`;
+        }
+        if (iconInput && !iconInput.value.trim()) {
+          iconInput.value = parsed.icon || "🤖📚";
+        }
+        if (linesArea) {
+          linesArea.value = formatWordsToLessonLines(finalWords);
+        }
+        renderGeneratedLessonPreview(finalWords, "🤖 Gemini AI");
+        showParentStatus(`🤖✨ Gemini AI wygenerowało ${finalWords.length} słówek dopasowanych do wieku Igora i Huberta!`);
+        return;
+      }
+    } catch (err) {
+      showParentStatus(`⚠️ Nie udało się połączyć z Gemini AI (${err.message}). Używam generatora wbudowanego...`, true);
+    }
+  }
+
+  // 2. FALLBACK OFFLINE (GDY BRAK KLUCZA GEMINI AI LUB BRAK INTERNETU)
+  const searchBlob = `${rawTitle} ${rawDesc}`.toLowerCase();
   let matchedTopic = null;
   let bestScore = 0;
   AUTO_LESSON_TOPICS_DB.forEach(topic => {
@@ -451,28 +610,16 @@ function parentAutoGenerateLesson() {
     }
   });
 
-  let candidateWords = [];
-  if (matchedTopic) {
-    candidateWords = [...matchedTopic.words];
-    if (iconInput && !iconInput.value.trim()) {
-      iconInput.value = matchedTopic.icon;
-    }
-  } else {
-    if (iconInput && !iconInput.value.trim()) iconInput.value = "📚✨";
-    const pool = [...AUTO_SIMPLE_WORDS_POOL];
-    state.lessons.forEach(l => {
-      if (l.type === "vocab" && Array.isArray(l.items)) {
-        l.items.forEach(it => {
-          if (it && it.en && it.pl && typeof it.icon === "string" && !it.icon.startsWith("<svg")) {
-            pool.push(it);
-          }
-        });
-      }
-    });
-    candidateWords = shuffleArray(pool);
+  if (!matchedTopic) {
+    showParentStatus("⚠️ Temat spoza 12 wbudowanych działów! Wklej darmowy klucz <strong>Gemini AI</strong> powyżej (AIza...), aby AI mogło stworzyć lekcję na dowolny temat (np. o chorobach, dinozaurach, kosmosie)!", true);
+    return;
   }
 
-  // Jeśli w opisie podano konkretne polskie nazwy z bazy, wysuń je na początek
+  let candidateWords = [...matchedTopic.words];
+  if (iconInput && !iconInput.value.trim()) {
+    iconInput.value = matchedTopic.icon;
+  }
+
   const prioritized = [];
   const rest = [];
   candidateWords.forEach(w => {
@@ -502,28 +649,14 @@ function parentAutoGenerateLesson() {
 
   const finalWords = uniqueList.slice(0, desiredCount);
   if (titleInput && !titleInput.value.trim()) {
-    titleInput.value = `${state.lessons.length + 1}. Nowa Lekcja`;
+    titleInput.value = `${state.lessons.length + 1}. ${rawDesc.slice(0, 32)}`;
   }
   if (linesArea) {
     linesArea.value = formatWordsToLessonLines(finalWords);
   }
 
-  if (previewBox) {
-    previewBox.classList.remove("hidden");
-    previewBox.innerHTML = `
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="text-xs font-extrabold text-emerald-900">✅ Wygenerowano ${finalWords.length} słówek! Gotowe do wszystkich trybów (Fiszki, Quiz, 🎧 Ze słuchu, Literki, Wymowa, Memory, Sprawdzian, VS i Smok):</span>
-      </div>
-      <div class="flex flex-wrap gap-1.5">
-        ${finalWords.map(w => `<span class="px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-300 text-xs font-bold text-slate-800">${w.icon} ${w.en} (${w.pl}) <span class="text-[10px] text-indigo-700">[${w.age.join(",")}]</span></span>`).join("")}
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-        <button onclick="parentCreateNewLesson(true)" class="kid-card py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow">🚀 Zapisz i udostępnij od razu synom</button>
-        <button onclick="parentCreateNewLesson(false)" class="kid-card py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-amber-950 font-extrabold rounded-xl text-xs shadow">🧪 Zapisz najpierw jako testową (tylko Tata)</button>
-      </div>
-    `;
-  }
-  showParentStatus(`✨ Gotowe! Wygenerowano ${finalWords.length} słówek. Kliknij zielony przycisk, aby od razu dodać lekcję dla chłopców.`);
+  renderGeneratedLessonPreview(finalWords, "📦 Baza wbudowana");
+  showParentStatus(`✅ Wygenerowano ${finalWords.length} słówek z bazy tematycznej! Kliknij zielony przycisk, aby udostępnić lekcję synom.`);
 }
 
 function parentCreateNewLesson(publishImmediately = false) {
@@ -542,7 +675,7 @@ function parentCreateNewLesson(publishImmediately = false) {
     return;
   }
   if (items.length === 0) {
-    showParentStatus("⚠️ Kliknij najpierw „Wygeneruj lekcję automatycznie” lub wpisz słówka!", true);
+    showParentStatus("⚠️ Kliknij najpierw „Wygeneruj lekcję” lub wpisz słówka!", true);
     return;
   }
 
@@ -858,19 +991,28 @@ function parentGiveTestChest(profKey, tier) {
 function parentScanWorksheetAI(inputEl) {
   const file = inputEl && inputEl.files && inputEl.files[0];
   if (!file) return;
-  let apiKey = "";
-  try { apiKey = (document.getElementById("parentGeminiKey")?.value || localStorage.getItem("akademia_gemini_key") || "").trim(); } catch (e) {}
+  const apiKey = getStoredGeminiApiKey();
   if (!apiKey) {
     showParentStatus("⚠️ Wklej najpierw swój klucz Gemini API!", true);
     return;
   }
   const targetAge = document.getElementById("parentAiTargetAge")?.value || "4 i 6 lat";
-  showParentStatus("⏳ Analizuję zdjęcie karty pracy przez Gemini AI...");
+  const customNote = document.getElementById("parentWorksheetCustomPrompt")?.value?.trim() || "";
+  showParentStatus("🤖📷 Analizuję zdjęcie karty pracy przez Gemini AI...");
 
   const reader = new FileReader();
   reader.onload = () => {
     const base64Data = String(reader.result || "").split(",")[1];
-    const prompt = `Wyciągnij słówka angielskie ze zdjęcia karty pracy dla dziecka (${targetAge}). Zwróć wyłącznie linie w formacie: Angielski - Polski - Emoji - 4,6 (bez nagłówków i markdown).`;
+    const prompt = `Jesteś nauczycielem angielskiego dla Igora (4 lata) i Huberta (6 lat).
+Przeanalizuj zdjęcie karty pracy / notatki oraz dodatkowe wskazówki rodzica: "${customNote || "brak dodatkowych uwag"}".
+Docelowy poziom: ${targetAge}.
+Reguły:
+- Wyciągnij słówka/wyrażenia angielskie ze zdjęcia (lub dopasuj je zgodnie ze wskazówkami rodzica).
+- Prostsze, obrazkowe słowa ustaw jako [4, 6], a trudniejsze jako [6].
+- Dla każdego słówka podaj uproszczoną polską wymowę ("phonetic") i pasujące emoji ("icon").
+Zwróć wyłącznie czysty obiekt JSON:
+{"title": "Tytuł lekcji po polsku", "icon": "2 emoji", "words": [{"en":"...", "pl":"...", "phonetic":"...", "icon":"...", "age":[4,6]}]}`;
+
     fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -880,22 +1022,33 @@ function parentScanWorksheetAI(inputEl) {
             { text: prompt },
             { inline_data: { mime_type: file.type || "image/jpeg", data: base64Data } }
           ]
-        }]
+        }],
+        generationConfig: { responseMimeType: "application/json" }
       })
     })
       .then(r => r.json())
       .then(data => {
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        if (!text.trim()) {
+        if (data.error) {
+          showParentStatus(`❌ Błąd Gemini AI: ${data.error.message}`, true);
+          return;
+        }
+        const rawReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const parsed = parseGeminiLessonJsonResponse(rawReply);
+        if (!parsed || parsed.words.length === 0) {
           showParentStatus("❌ Nie udało się odczytać słówek ze zdjęcia.", true);
           return;
         }
         openParentSection("new_lesson");
         const titleEl = document.getElementById("newLessonTitle");
+        const iconEl = document.getElementById("newLessonIcon");
+        const descEl = document.getElementById("newLessonDesc");
         const linesEl = document.getElementById("newLessonLines");
-        if (titleEl && !titleEl.value.trim()) titleEl.value = `${state.lessons.length + 1}. Karta pracy ze zdjęcia`;
-        if (linesEl) linesEl.value = text.trim();
-        showParentStatus("✅ Słówka odczytane ze zdjęcia! Sprawdź listę i zapisz lekcję.");
+        if (titleEl) titleEl.value = parsed.title || `${state.lessons.length + 1}. Karta pracy ze zdjęcia`;
+        if (iconEl) iconEl.value = parsed.icon || "📷📚";
+        if (descEl && customNote) descEl.value = customNote;
+        if (linesEl) linesEl.value = formatWordsToLessonLines(parsed.words);
+        renderGeneratedLessonPreview(parsed.words, "📷🤖 Skaner AI");
+        showParentStatus(`✅ Skaner AI rozpoznał ${parsed.words.length} słówek! Wybierz poniżej, czy od razu udostępnić je synom.`);
       })
       .catch(() => showParentStatus("❌ Błąd połączenia z Gemini API.", true));
   };

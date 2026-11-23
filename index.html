@@ -91,7 +91,7 @@
           <span>👤</span> Zmień profil
         </button>
         <div id="activeProfileBadge" onclick="speakAvatarGreeting()" class="cursor-pointer kid-card px-3.5 py-1.5 rounded-2xl font-bold text-xs md:text-sm bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-center gap-2 shadow-sm" title="Kliknij awatara!"></div>
-        <span data-app-version class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 14.3</span>
+        <span data-app-version class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 14.4</span>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
@@ -131,7 +131,7 @@
   <div id="whatsNewModal" class="fixed inset-0 bg-black/65 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-5 md:p-6 border-4 border-rose-400 shadow-2xl text-left max-h-[92vh] flex flex-col">
       <div class="flex justify-between items-center pb-3 border-b border-rose-100 mb-3">
-        <h2 class="text-2xl md:text-3xl font-extrabold text-rose-600 flex items-center gap-2"><span>🦉🆕</span> Co nowego w <span data-app-version>Wersji 14.3</span>?</h2>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-rose-600 flex items-center gap-2"><span>🦉🆕</span> Co nowego w <span data-app-version>Wersji 14.4</span>?</h2>
         <button onclick="closeWhatsNewModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-600">✖</button>
       </div>
       <div id="whatsNewContentBox" class="space-y-3 overflow-y-auto pr-1 flex-1"></div>
@@ -192,7 +192,7 @@
   <div id="guideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 md:p-4">
     <div class="bg-white rounded-3xl max-w-4xl w-full p-5 md:p-6 border-4 border-sky-400 shadow-2xl text-left max-h-[92vh] flex flex-col">
       <div class="flex justify-between items-center pb-3 border-b border-sky-100 mb-3">
-        <h2 class="text-2xl md:text-3xl font-extrabold text-sky-900 flex items-center gap-2"><span>📘🦉</span> Instrukcja Gry (<span data-app-version>Wersja 14.3</span>)</h2>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-sky-900 flex items-center gap-2"><span>📘🦉</span> Instrukcja Gry (<span data-app-version>Wersja 14.4</span>)</h2>
         <button onclick="closeGuideModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-700">✖</button>
       </div>
       <div class="space-y-4 overflow-y-auto pr-1 flex-1 text-sm text-slate-700">
@@ -201,7 +201,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs md:text-sm">
             <div class="bg-white p-3 rounded-xl border border-amber-300"><strong>👦 IGOR (4 lata):</strong> Quiz z 4 obrazkami (oraz 4 głośnikami w trybie ze słuchu), pierwsza brakująca litera spośród 4 w układance oraz łagodniejsze tempo i słówka dopasowane do wieku.</div>
             <div class="bg-white p-3 rounded-xl border border-sky-300"><strong>🧑 HUBERT (6 lat):</strong> Quiz z 6 opcjami, układanie całych wyrazów z liter, trudniejsze słówka (np. cyfry do 100) oraz zadania głosowe do mikrofonu.</div>
-            <div class="bg-white p-3 rounded-xl border border-purple-300"><strong>⚔️🐉 BRACIA RAZEM:</strong> Wspólna zabawa na jednym ekranie w <em>Pojedynku Braci (VS)</em> lub drużynowej <em>Walce ze Smokiem</em>.</div>
+            <div class="bg-white p-3 rounded-xl border border-purple-300"><strong>⚔️🐉 BRACIA RAZEM:</strong> Wspólna zabawa na jednym ekranie w <em>Pojedynku Braci (VS)</em> lub drużynowej <em>Walce ze Smokiem</em> (Igor ma 4 opcje, Hubert 6 opcji).</div>
             <div class="bg-white p-3 rounded-xl border border-emerald-300"><strong>🔒 TATA (Konto Testowe):</strong> Dostępne po wpisaniu kodu PIN rodziców. Posiada przełącznik podglądu <em>Igor / Hubert</em> oraz podgląd testowych lekcji bez wpływu na konta synów.</div>
           </div>
         </div>
@@ -220,18 +220,18 @@
         </div>
 
         <div class="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200">
-          <h3 class="font-extrabold text-emerald-950 text-base mb-2">3. Gwiazdki ⭐, Skrzynie 🎁, Garderoba 👕 i Zwierzaki 🐾</h3>
+          <h3 class="font-extrabold text-emerald-950 text-base mb-2">3. Koło Fortuny 🎡, Gwiazdki ⭐, Skrzynie 🎁 i Garderoba 👕</h3>
           <ul class="space-y-1.5 text-xs md:text-sm list-disc pl-5">
-            <li><strong>⭐ Gwiazdki i Sklepik:</strong> Za każdą poprawną odpowiedź wpada gwiazdka. W zakładce <strong>👑 Awatar</strong> można wymienić je na skrzynie: <strong>📦 Brązową (50 ⭐)</strong>, <strong>🥈 Srebrną (120 ⭐)</strong> lub <strong>👑 Złotą (250 ⭐)</strong>.</li>
+            <li><strong>🎡 Codzienne Koło Fortuny:</strong> Raz dziennie w menu lekcji każdy z chłopców może zakręcić kołem i wylosować za darmo <strong>10, 20, 50, 70, 100, 150 lub 200 ⭐</strong>!</li>
+            <li><strong>⭐ Gwiazdki i Sklepik:</strong> W zakładce <strong>👑 Awatar</strong> można wymienić gwiazdki na skrzynie: <strong>📦 Brązową (50 ⭐)</strong>, <strong>🥈 Srebrną (120 ⭐)</strong> lub <strong>👑 Złotą (250 ⭐)</strong>.</li>
             <li><strong>🎁 Zawartość Skrzyń:</strong> Ze skrzyń wypadają <strong>131 przebrań</strong> dla awatara, <strong>50 zwierzaków towarzyszy</strong>, <strong>100 naklejek</strong> do klasera oraz owoce i warzywa do <strong>🍎 Spiżarni Zwierzaka</strong> (karmienie podnosi poziom przyjaźni!).</li>
             <li><strong>🐉 Limit dzienny w Walce ze Smokiem i VS:</strong> Codziennie w tych dwóch trybach można zdobyć po <strong>3 skrzynie</strong> (po wykorzystaniu limitu nadal wpadają gwiazdki i puchary).</li>
-            <li><strong>🦉 Zadanie Dnia i Przewodnik Głosowy:</strong> Kliknij baner <em>Zadanie Dnia</em> lub przycisk <strong>🦉🔊 Co gdzie jest?</strong>, aby Sówka przeczytała wskazówki po polsku.</li>
           </ul>
         </div>
 
         <div class="p-4 rounded-2xl bg-indigo-50 border-2 border-indigo-200">
-          <h3 class="font-extrabold text-indigo-950 text-base mb-1">4. Panel Rodzica (🔒 Dostęp wyłącznie dla rodziców)</h3>
-          <p class="text-xs md:text-sm">W Panelu Rodzica (zabezpieczonym kodem PIN rodziców) możesz automatycznie generować nowe lekcje z samego tytułu i opisu, dodawać pojedyncze słówka, edytować istniejące lekcje, podejrzeć trudne słówka synów, wysyłać skrzynie w nagrodę oraz pobierać kopie zapasowe <code>.json</code>.</p>
+          <h3 class="font-extrabold text-indigo-950 text-base mb-1">4. Panel Rodzica i Generator Lekcji AI (🔒 PIN rodziców)</h3>
+          <p class="text-xs md:text-sm">Po wpisaniu klucza <strong>Gemini AI</strong> w Panelu Rodzica możesz wygenerować lekcję z <strong>dowolnego tematu</strong> (np. <em>„stwórz lekcję o chorobach”</em>) lub ze <strong>zdjęcia z własnym opisem</strong> — AI samo dobierze słówka, wymowę, ikony i poziomy dla 4-latka oraz 6-latka.</p>
         </div>
       </div>
       <div class="pt-3 mt-3 border-t border-sky-100 flex justify-between items-center gap-2">
@@ -260,7 +260,7 @@
       <div class="flex flex-wrap justify-between items-center gap-2 pb-3 border-b border-indigo-100 mb-3">
         <div class="flex items-center gap-2">
           <button id="parentBackToMenuBtn" onclick="backToParentMenu()" class="hidden kid-card px-3.5 py-2 rounded-2xl bg-indigo-100 hover:bg-indigo-200 text-indigo-950 font-extrabold text-xs md:text-sm border border-indigo-300">⬅️ Wszystkie opcje</button>
-          <h2 id="parentModalHeaderTitle" class="text-xl md:text-2xl font-extrabold text-indigo-950">🛠️ Panel Rodzica (<span data-app-version>Wersja 14.3</span>)</h2>
+          <h2 id="parentModalHeaderTitle" class="text-xl md:text-2xl font-extrabold text-indigo-950">🛠️ Panel Rodzica (<span data-app-version>Wersja 14.4</span>)</h2>
         </div>
         <button onclick="closeParentDashboard()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-700">✖</button>
       </div>
@@ -272,18 +272,27 @@
         <div id="parentMenuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <div onclick="openParentSection('new_lesson')" class="kid-card cursor-pointer p-4 rounded-3xl bg-gradient-to-br from-sky-50 to-indigo-100 border-3 border-sky-400 shadow-sm flex flex-col justify-between">
             <div>
-              <div class="text-3xl mb-1.5">✨📚</div>
-              <h3 class="font-extrabold text-sky-950 text-base">Stwórz nową lekcję (Automat)</h3>
-              <p class="text-xs text-slate-600 mt-1">Wpisz tytuł i krótki opis, a system sam dobierze słówka, ikony, wymowę i poziom wiekowy.</p>
+              <div class="text-3xl mb-1.5">🤖📚</div>
+              <h3 class="font-extrabold text-sky-950 text-base">Generator Lekcji AI (Dowolny temat)</h3>
+              <p class="text-xs text-slate-600 mt-1">Napisz np. „stwórz lekcję o chorobach”, a AI samo dobierze słówka, wymowę, ikony i poziomy wieku.</p>
             </div>
             <div class="mt-3 text-right"><span class="px-3 py-1 rounded-xl bg-sky-600 text-white font-bold text-xs">Otwórz ▶</span></div>
+          </div>
+
+          <div onclick="openParentSection('scanner_ai')" class="kid-card cursor-pointer p-4 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-100 border-3 border-amber-400 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="text-3xl mb-1.5">📷🤖</div>
+              <h3 class="font-extrabold text-amber-950 text-base">Lekcja ze Zdjęcia + Opis AI</h3>
+              <p class="text-xs text-slate-600 mt-1">Zrób zdjęcie karty pracy lub notatki, dopisz własne uwagi i wygeneruj gotową lekcję.</p>
+            </div>
+            <div class="mt-3 text-right"><span class="px-3 py-1 rounded-xl bg-amber-600 text-white font-bold text-xs">Otwórz ▶</span></div>
           </div>
 
           <div onclick="openParentSection('add_word')" class="kid-card cursor-pointer p-4 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-100 border-3 border-emerald-400 shadow-sm flex flex-col justify-between">
             <div>
               <div class="text-3xl mb-1.5">➕📝</div>
-              <h3 class="font-extrabold text-emerald-950 text-base">Dodaj nowe słówko</h3>
-              <p class="text-xs text-slate-600 mt-1">Dodaj pojedyncze słówko do wybranej lekcji ręcznie lub wylosuj automatycznie.</p>
+              <h3 class="font-extrabold text-emerald-950 text-base">Dodaj pojedyncze słówko</h3>
+              <p class="text-xs text-slate-600 mt-1">Dodaj nowe słówko do wybranej lekcji ręcznie lub wylosuj automatycznie.</p>
             </div>
             <div class="mt-3 text-right"><span class="px-3 py-1 rounded-xl bg-emerald-600 text-white font-bold text-xs">Otwórz ▶</span></div>
           </div>
@@ -318,15 +327,6 @@
             <div class="mt-3 text-right"><span class="px-3 py-1 rounded-xl bg-rose-600 text-white font-bold text-xs">Otwórz ▶</span></div>
           </div>
 
-          <div onclick="openParentSection('scanner_ai')" class="kid-card cursor-pointer p-4 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-100 border-3 border-amber-400 shadow-sm flex flex-col justify-between">
-            <div>
-              <div class="text-3xl mb-1.5">📷🤖</div>
-              <h3 class="font-extrabold text-amber-950 text-base">Klucz AI i Skaner Zdjęć</h3>
-              <p class="text-xs text-slate-600 mt-1">Skonfiguruj klucz Gemini API do automatycznego generatora lekcji oraz skanowania kart pracy.</p>
-            </div>
-            <div class="mt-3 text-right"><span class="px-3 py-1 rounded-xl bg-amber-600 text-white font-bold text-xs">Otwórz ▶</span></div>
-          </div>
-
           <div onclick="openParentSection('rewards_settings')" class="kid-card cursor-pointer p-4 rounded-3xl bg-gradient-to-br from-yellow-50 to-amber-100 border-3 border-yellow-500 shadow-sm flex flex-col justify-between">
             <div>
               <div class="text-3xl mb-1.5">🎁⚙️</div>
@@ -346,22 +346,26 @@
           </div>
         </div>
 
-        <!-- SEKCJA 1: AUTOMATYCZNE TWORZENIE NOWEJ LEKCJI -->
+        <!-- SEKCJA 1: AUTOMATYCZNE TWORZENIE NOWEJ LEKCJI (GEMINI AI + OFFLINE) -->
         <div id="parentSection_new_lesson" class="parent-sub-section hidden p-4 rounded-3xl bg-sky-50/90 border-2 border-sky-300 shadow-sm space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <h3 class="font-extrabold text-sky-950 text-lg">✨ Stwórz nową lekcję (Automat z Tytułu i Opisu)</h3>
-            <span class="px-2.5 py-1 rounded-xl bg-white border border-sky-300 text-xs font-bold text-sky-900">Ikony + wymowa + poziomy</span>
+            <h3 class="font-extrabold text-sky-950 text-lg">🤖 Generator Nowej Lekcji AI</h3>
+            <span id="aiGeneratorModeBadge" class="px-2.5 py-1 rounded-xl bg-amber-100 border border-amber-400 text-xs font-extrabold text-amber-950">📦 Tryb bez klucza AI</span>
+          </div>
+          <div class="p-2.5 rounded-2xl bg-white border border-sky-200 flex flex-col sm:flex-row items-center gap-2">
+            <span class="text-xs font-extrabold text-sky-950 shrink-0">🔑 Klucz Gemini AI:</span>
+            <input id="quickGeminiKeyInput" type="password" onchange="saveGeminiApiKeyEverywhere(this.value)" oninput="saveGeminiApiKeyEverywhere(this.value)" placeholder="Wklej klucz AIza... (odblokowuje tworzenie lekcji na dowolny temat!)" class="w-full p-2 rounded-xl border border-sky-300 text-xs font-mono bg-slate-50" />
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-            <input id="newLessonTitle" type="text" placeholder="Tytuł lekcji (np. 11. Pojazdy i maszyny)" class="sm:col-span-3 p-2.5 rounded-xl border border-sky-300 text-sm font-bold bg-white" />
+            <input id="newLessonTitle" type="text" placeholder="Tytuł lekcji (opcjonalny – AI samo wymyśli)" class="sm:col-span-3 p-2.5 rounded-xl border border-sky-300 text-sm font-bold bg-white" />
             <input id="newLessonIcon" type="text" placeholder="Ikona (auto)" class="p-2.5 rounded-xl border border-sky-300 text-sm text-center bg-white" />
           </div>
-          <textarea id="newLessonDesc" rows="2" placeholder="Opis (opcjonalnie): np. Wóz strażacki, koparka, pociąg, rakieta, rower – proste słówka dla dzieci..." class="w-full p-2.5 rounded-xl border border-sky-300 text-xs md:text-sm bg-white"></textarea>
+          <textarea id="newLessonDesc" rows="2" placeholder="Wpisz dowolny temat lub polecenie, np.: Stwórz lekcję o chorobach i wizycie u lekarza..." class="w-full p-2.5 rounded-xl border border-sky-300 text-xs md:text-sm bg-white"></textarea>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label class="block text-[11px] font-bold text-sky-900 mb-1">Poziom wiekowy słówek:</label>
               <select id="newLessonTargetAge" class="w-full p-2.5 rounded-xl border border-sky-300 bg-white font-bold text-xs">
-                <option value="auto">Automatycznie (mix 4 i 6 lat)</option>
+                <option value="auto">Automatycznie (proste 4 i 6 lat, trudniejsze 6 lat)</option>
                 <option value="4,6">Dla obu synów (4 i 6 lat)</option>
                 <option value="4">Głównie dla Igora (4 lata)</option>
                 <option value="6">Głównie dla Huberta (6 lat)</option>
@@ -378,14 +382,14 @@
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="parentAutoGenerateLesson()" class="kid-card flex-1 py-3 px-4 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white font-extrabold rounded-xl text-sm shadow">✨ Wygeneruj lekcję automatycznie</button>
+            <button onclick="parentAutoGenerateLesson()" class="kid-card flex-1 py-3 px-4 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white font-extrabold rounded-xl text-sm shadow">🤖✨ Wygeneruj lekcję automatycznie</button>
           </div>
           <div id="generatedLessonPreviewBox" class="hidden p-3 rounded-2xl bg-white border-2 border-emerald-400 space-y-2"></div>
           <details class="bg-white/80 rounded-2xl p-3 border border-sky-200">
-            <summary class="cursor-pointer text-xs font-extrabold text-sky-900">📝 Podgląd / ręczna edycja listy słówek (Format: Angielski - Polski - Ikona - Wiek)</summary>
-            <textarea id="newLessonLines" rows="5" placeholder="Fire truck - Wóz strażacki - 🚒 - 4,6" class="w-full p-2.5 mt-2 rounded-xl border border-sky-300 text-xs font-mono bg-white"></textarea>
+            <summary class="cursor-pointer text-xs font-extrabold text-sky-900">📝 Podgląd / ręczna edycja listy słówek (Format: Angielski - Polski - Wymowa - Ikona - Wiek)</summary>
+            <textarea id="newLessonLines" rows="5" placeholder="Fever - Gorączka - fiwer - 🤒 - 4,6" class="w-full p-2.5 mt-2 rounded-xl border border-sky-300 text-xs font-mono bg-white"></textarea>
           </details>
-          <button onclick="parentCreateNewLesson()" class="kid-card w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-sm shadow">✅ Zapisz nową lekcję</button>
+          <button onclick="parentCreateNewLesson(true)" class="kid-card w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-sm shadow">✅ Zapisz i udostępnij lekcję synom</button>
         </div>
 
         <!-- SEKCJA 2: DODAWANIE POJEDYNCZEGO SŁÓWKA -->
@@ -422,16 +426,17 @@
           <div id="parentHardWordsBox" class="p-4 rounded-3xl bg-rose-50/90 border-2 border-rose-300 shadow-sm"></div>
         </div>
 
-        <!-- SEKCJA 6: KLUCZ GEMINI AI I SKANER ZDJĘĆ -->
+        <!-- SEKCJA 6: SKANER ZDJĘĆ Z OPISEM AI -->
         <div id="parentSection_scanner_ai" class="parent-sub-section hidden p-4 rounded-3xl bg-amber-50/90 border-2 border-amber-300 shadow-sm space-y-3">
-          <h3 class="font-extrabold text-amber-950 text-lg">📷 Klucz Gemini AI i Skaner Zdjęć</h3>
-          <p class="text-xs text-slate-700">Klucz API służy zarówno do skanowania kart pracy ze zdjęcia, jak i do automatycznego generowania dowolnych lekcji z tytułu i opisu.</p>
+          <h3 class="font-extrabold text-amber-950 text-lg">📷🤖 Lekcja ze Zdjęcia + Opis AI</h3>
+          <p class="text-xs text-slate-700">Zrób zdjęcie karty pracy lub podręcznika, wpisz opcjonalny komentarz (np. <em>„wybierz tylko nazwy zwierząt i dostosuj do 4 i 6 lat”</em>), a AI stworzy kompletną lekcję.</p>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <input id="parentGeminiKey" type="password" onchange="try{localStorage.setItem('akademia_gemini_key',this.value.trim());}catch(e){}" placeholder="Wklej klucz Gemini API (AIza...)" class="sm:col-span-2 p-2.5 rounded-xl border border-amber-300 text-xs bg-white font-mono" />
-            <select id="parentAiTargetAge" class="p-2.5 rounded-xl border border-amber-300 bg-white font-bold text-xs"><option value="4 i 6 lat">Dla obu</option><option value="4 lata (Igor)">Pod Igora</option><option value="6 lat (Hubert)">Pod Huberta</option></select>
+            <input id="parentGeminiKey" type="password" onchange="saveGeminiApiKeyEverywhere(this.value)" oninput="saveGeminiApiKeyEverywhere(this.value)" placeholder="Wklej klucz Gemini API (AIza...)" class="sm:col-span-2 p-2.5 rounded-xl border border-amber-300 text-xs bg-white font-mono" />
+            <select id="parentAiTargetAge" class="p-2.5 rounded-xl border border-amber-300 bg-white font-bold text-xs"><option value="4 i 6 lat">Dla obu (4 i 6 lat)</option><option value="4 lata (Igor)">Pod Igora (4 l.)</option><option value="6 lat (Hubert)">Pod Huberta (6 l.)</option></select>
           </div>
+          <textarea id="parentWorksheetCustomPrompt" rows="2" placeholder="Dodatkowy opis / wskazówki do zdjęcia (opcjonalnie): np. Stwórz lekcję ze słówek na kartce, dodaj wymowę i ikony..." class="w-full p-2.5 rounded-xl border border-amber-300 text-xs md:text-sm bg-white"></textarea>
           <input id="parentWorksheetFileInput" type="file" accept="image/*" onchange="parentScanWorksheetAI(this)" class="hidden" />
-          <button onclick="document.getElementById('parentWorksheetFileInput').click()" class="kid-card px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl text-sm shadow">📷 Wybierz / Zrób zdjęcie karty pracy</button>
+          <button onclick="document.getElementById('parentWorksheetFileInput').click()" class="kid-card w-full sm:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl text-sm shadow">📷 Wybierz / Zrób zdjęcie i wygeneruj lekcję AI</button>
         </div>
 
         <!-- SEKCJA 7: SKRZYNIE, RUNDA I TESTER GARDEROBY -->

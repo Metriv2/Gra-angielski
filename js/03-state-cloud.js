@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/03-state-cloud.js
-   STAN GRY, KOŁO FORTUNY (TESTOWE U TATY -> ZATWIERDZANE DLA SYNÓW) I CHMURA GAS
+   STAN GRY, KOŁO FORTUNY (TESTOWE U TATY -> ZATWIERDZANE) I CHMURA GAS
    ============================================================================ */
 
 const PROFILE_META = {
@@ -414,7 +414,7 @@ function normalizePancakesIconsInLessons(lessonsArr) {
 
 function isLegacyDuplicateLesson(cl) {
   if (!cl) return true;
-  const legacyIds = ["shop", "shop_lesson", "bakery", "vehicles_world", "family_home"];
+  const legacyIds = ["shop", "shop_lesson", "bakery"];
   if (legacyIds.includes(cl.id)) return true;
   const titleClean = String(cl.title || "").toLowerCase();
   if (titleClean.includes("sklep i zakupy")) return true;

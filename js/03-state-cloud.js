@@ -377,9 +377,11 @@ function isEffectiveIgorMode(lessonIdOverride = null) {
   if (activeLid && eqList.includes(activeLid)) {
     return false;
   }
+  if (state.profile === "duel" || state.isCoopDragonMode) {
+    return state.duelTurn === "igor";
+  }
   if (state.profile === "igor") return true;
   if (state.profile === "tata" && state.tataPreviewAsIgor) return true;
-  if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelTurn === "igor") return true;
   return false;
 }
 

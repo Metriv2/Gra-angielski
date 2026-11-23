@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/09-parent-init.js
-   PIN RODZICA, PRAWDZIWY GENERATOR LEKCJI GEMINI AI (DOWOLNY TEMAT + ZDJĘCIE)
+   PIN RODZICA, GENERATOR LEKCJI GEMINI AI, CENTRUM TESTOWE (KOŁO FORTUNY + LEKCJE)
    ============================================================================ */
 
 let _pendingPinAction = "dashboard";
@@ -480,8 +480,8 @@ function renderGeneratedLessonPreview(finalWords, sourceLabel = "Gemini AI") {
       ${finalWords.map(w => `<span class="px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-300 text-xs font-bold text-slate-800">${w.icon} ${w.en} (${w.pl}) <span class="text-[10px] text-indigo-700">[${w.age.join(",")}]</span></span>`).join("")}
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+      <button onclick="parentCreateNewLesson(false)" class="kid-card py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-amber-950 font-extrabold rounded-xl text-xs shadow">🧪 Zapisz do testów na koncie TATA (Zalecane)</button>
       <button onclick="parentCreateNewLesson(true)" class="kid-card py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow">🚀 Zapisz i udostępnij od razu synom</button>
-      <button onclick="parentCreateNewLesson(false)" class="kid-card py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-amber-950 font-extrabold rounded-xl text-xs shadow">🧪 Zapisz najpierw jako testową (tylko Tata)</button>
     </div>
   `;
 }
@@ -536,7 +536,6 @@ async function parentAutoGenerateLesson() {
   const desiredCount = parseInt(countSel ? countSel.value : "8", 10) || 8;
   const apiKey = getStoredGeminiApiKey();
 
-  // 1. JEŚLI JEST KLUCZ GEMINI AI -> GENERUJEMY DOWOLNY TEMAT PRZEZ AI!
   if (apiKey) {
     showParentStatus("🤖 Gemini AI układa lekcję, dobiera słówka, wymowę i poziomy dla Igora (4 l.) i Huberta (6 l.)...");
     const ageInstruction = targetAgeMode === "auto"
@@ -587,7 +586,7 @@ Zwróć wyłącznie czysty obiekt JSON w formacie:
           linesArea.value = formatWordsToLessonLines(finalWords);
         }
         renderGeneratedLessonPreview(finalWords, "🤖 Gemini AI");
-        showParentStatus(`🤖✨ Gemini AI wygenerowało ${finalWords.length} słówek dopasowanych do wieku Igora i Huberta!`);
+        showParentStatus(`🤖✨ Gemini AI wygenerowało ${finalWords.length} słówek! Zapisz do testów na koncie TATA lub udostępnij od razu synom.`);
         return;
       }
     } catch (err) {
@@ -595,7 +594,6 @@ Zwróć wyłącznie czysty obiekt JSON w formacie:
     }
   }
 
-  // 2. FALLBACK OFFLINE (GDY BRAK KLUCZA GEMINI AI LUB BRAK INTERNETU)
   const searchBlob = `${rawTitle} ${rawDesc}`.toLowerCase();
   let matchedTopic = null;
   let bestScore = 0;
@@ -611,7 +609,7 @@ Zwróć wyłącznie czysty obiekt JSON w formacie:
   });
 
   if (!matchedTopic) {
-    showParentStatus("⚠️ Temat spoza 12 wbudowanych działów! Wklej darmowy klucz <strong>Gemini AI</strong> powyżej (AIza...), aby AI mogło stworzyć lekcję na dowolny temat (np. o chorobach, dinozaurach, kosmosie)!", true);
+    showParentStatus("⚠️ Temat spoza 12 wbudowanych działów! Wklej darmowy klucz <strong>Gemini AI</strong> powyżej (AIza...), aby AI mogło stworzyć lekcję na dowolny temat!", true);
     return;
   }
 
@@ -656,7 +654,7 @@ Zwróć wyłącznie czysty obiekt JSON w formacie:
   }
 
   renderGeneratedLessonPreview(finalWords, "📦 Baza wbudowana");
-  showParentStatus(`✅ Wygenerowano ${finalWords.length} słówek z bazy tematycznej! Kliknij zielony przycisk, aby udostępnić lekcję synom.`);
+  showParentStatus(`✅ Wygenerowano ${finalWords.length} słówek z bazy tematycznej! Zapisz najpierw na koncie TATA do testów lub udostępnij synom.`);
 }
 
 function parentCreateNewLesson(publishImmediately = false) {
@@ -723,7 +721,7 @@ function parentCreateNewLesson(publishImmediately = false) {
   if (publishImmediately) {
     showParentStatus(`✅ Lekcja „${title}” (${items.length} słówek) została zapisana i jest już widoczna we wszystkich trybach dla Igora i Huberta!`);
   } else {
-    showParentStatus(`🧪 Zapisano lekcję testową „${title}” (widoczna dla Taty). <button onclick="parentApproveTestLesson('${newId}')" class="ml-2 px-3 py-1 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow">🚀 Zatwierdź teraz dla chłopców</button>`);
+    showParentStatus(`🧪 Zapisano lekcję testową „${title}” (widoczna wyłącznie na koncie TATA). Po sprawdzeniu zatwierdź ją w Centrum Testowym. <button onclick="parentApproveTestLesson('${newId}')" class="ml-2 px-3 py-1 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow">🚀 Zatwierdź teraz dla chłopców</button>`);
   }
 }
 
@@ -772,7 +770,7 @@ function parentAddSingleWord() {
   if (!lesson) return;
   if (!Array.isArray(lesson.items)) lesson.items = [];
 
-  lesson.items.push({ en, pl, phonetic, icon, age });
+  lesson.items.push({ en, pl, phonetic, icon, age, testOnly: true });
   saveCloudData();
   refreshAllParentWidgets();
 
@@ -781,18 +779,31 @@ function parentAddSingleWord() {
   if (phEl) phEl.value = "";
   if (icEl) icEl.value = "";
   if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
-  showParentStatus(`✅ Dodano słówko „${en} (${pl})” do lekcji „${lesson.title}”! Działa we wszystkich trybach (w tym 🎧 Ze słuchu).`);
+  showParentStatus(`🧪 Dodano słówko testowe „${en} (${pl})” do lekcji „${lesson.title}” (widoczne najpierw tylko na koncie TATA).`);
 }
 
 function parentApproveTestLesson(lessonId) {
   const lesson = state.lessons.find(l => l.id === lessonId);
   if (!lesson) return;
   delete lesson.testOnly;
+  if (Array.isArray(lesson.items)) {
+    lesson.items.forEach(it => { if (it.testOnly) delete it.testOnly; });
+  }
   persistApprovedLessonIds([...(state.approvedLessonIds || []), lessonId]);
   saveCloudData();
   refreshAllParentWidgets();
   if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
   showParentStatus(`✅ Lekcja „${lesson.title}” została zatwierdzona i jest już dostępna dla Igora i Huberta!`);
+}
+
+function parentToggleFortuneWheelForKids() {
+  const nextVal = !isFortuneWheelPublishedForKids();
+  setFortuneWheelPublishedForKids(nextVal);
+  renderParentTestCenter();
+  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+  showParentStatus(nextVal
+    ? "✅ Koło Fortuny zostało zatwierdzone i jest już widoczne dla Igora i Huberta!"
+    : "🧪 Koło Fortuny zostało wycofane do trybu testowego (widoczne tylko na koncie TATA).");
 }
 
 function parentToggleEqualizeLessonForIgor(lessonId) {
@@ -811,7 +822,9 @@ function renderParentTestCenter() {
   const box = document.getElementById("parentTestCenterBox");
   const badge = document.getElementById("parentMenuPendingBadge");
   const testLessons = state.lessons.filter(l => l.testOnly);
-  if (badge) badge.textContent = `${testLessons.length} oczekujących`;
+  const fwPublished = isFortuneWheelPublishedForKids();
+  const pendingCount = testLessons.length + (fwPublished ? 0 : 1);
+  if (badge) badge.textContent = `${pendingCount} oczekujących`;
   if (!box) return;
 
   const eqSet = new Set(Array.isArray(state.equalizedLessonsForIgor) ? state.equalizedLessonsForIgor : []);
@@ -819,6 +832,20 @@ function renderParentTestCenter() {
 
   box.innerHTML = `
     <h3 class="font-extrabold text-teal-950 text-lg mb-2">🧪 Centrum Testowe i Poziomy</h3>
+
+    <div class="mb-4">
+      <div class="text-xs font-extrabold text-teal-900 uppercase mb-1.5">Nowe funkcje w testach (widoczne najpierw tylko u Taty):</div>
+      <div class="p-3 rounded-2xl bg-white border-2 ${fwPublished ? "border-emerald-300" : "border-amber-300"} flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div class="font-extrabold text-sm text-slate-900">🎡 Codzienne Koło Fortuny (10–200 ⭐ raz dziennie)</div>
+          <div class="text-[11px] text-slate-500">${fwPublished ? "✅ Zatwierdzone i aktywne dla Igora oraz Huberta" : "🧪 Obecnie widoczne wyłącznie na koncie TATA"}</div>
+        </div>
+        <button onclick="parentToggleFortuneWheelForKids()" class="kid-card px-3.5 py-1.5 rounded-xl font-extrabold text-xs ${fwPublished ? "bg-slate-200 text-slate-800" : "bg-emerald-600 text-white"}">
+          ${fwPublished ? "Cofnij do testów Taty" : "✅ Zatwierdź dla synów"}
+        </button>
+      </div>
+    </div>
+
     <div class="mb-4">
       <div class="text-xs font-extrabold text-teal-900 uppercase mb-1.5">Lekcje testowe (widoczne tylko na koncie Taty):</div>
       ${testLessons.length === 0
@@ -836,6 +863,7 @@ function renderParentTestCenter() {
             </div>
           `).join("")}</div>`}
     </div>
+
     <div>
       <div class="text-xs font-extrabold text-teal-900 uppercase mb-1.5">Zrównanie poziomu Igora (4 l.) do Huberta (6 l.) w wybranych lekcjach:</div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1048,7 +1076,7 @@ Zwróć wyłącznie czysty obiekt JSON:
         if (descEl && customNote) descEl.value = customNote;
         if (linesEl) linesEl.value = formatWordsToLessonLines(parsed.words);
         renderGeneratedLessonPreview(parsed.words, "📷🤖 Skaner AI");
-        showParentStatus(`✅ Skaner AI rozpoznał ${parsed.words.length} słówek! Wybierz poniżej, czy od razu udostępnić je synom.`);
+        showParentStatus(`✅ Skaner AI rozpoznał ${parsed.words.length} słówek! Zapisz do testów na koncie TATA lub udostępnij synom.`);
       })
       .catch(() => showParentStatus("❌ Błąd połączenia z Gemini API.", true));
   };
@@ -1106,9 +1134,11 @@ function resetEverythingAll() {
   localStorage.removeItem("akademia_save_v12");
   localStorage.removeItem("akademia_save_v10");
   localStorage.removeItem("akademia_approved_lessons_v1");
+  localStorage.removeItem("akademia_fw_published_v1");
   state.lessons = JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE));
   state.approvedLessonIds = [];
   state.equalizedLessonsForIgor = [];
+  state.fortuneWheelPublishedForKids = false;
   state.stats = {
     igor: createDefaultPlayerStats(),
     hubert: createDefaultPlayerStats(),

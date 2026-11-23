@@ -1,532 +1,723 @@
 /* ============================================================================
    PLIK: js/09-parent-init.js
-   PIN, KAFELKOWY PANEL RODZICA, GENERATOR LEKCJI, EDYCJA SŁÓWEK I START
+   PIN RODZICA, AUTOMATYCZNY GENERATOR LEKCJI, CENTRUM TESTOWE I INICJALIZACJA
    ============================================================================ */
 
-const BUILT_IN_TOPIC_BANK = [
+let _pendingPinAction = "dashboard";
+let _selectedManagerLessonId = null;
+
+const AUTO_LESSON_TOPICS_DB = [
   {
-    keywords: ["pojazd", "auto", "samoch", "maszyn", "transport", "vehicle", "car", "straż", "pociąg", "rakiet"],
-    icon: "🚒🚀",
+    keywords: ["pojazd", "aut", "samoch", "maszyn", "transport", "vehicle", "car", "pociag", "pociąg", "samolot"],
+    icon: "🚒🚜",
     words: [
       { en: "Car", pl: "Samochód", phonetic: "kar", icon: "🚗", age: [4, 6] },
-      { en: "Fire truck", pl: "Wóz strażacki", phonetic: "fajer trak", icon: "🚒", age: [4, 6] },
-      { en: "Police car", pl: "Radiowóz", phonetic: "polis kar", icon: "🚓", age: [4, 6] },
+      { en: "Bus", pl: "Autobus", phonetic: "bas", icon: "🚌", age: [4, 6] },
       { en: "Train", pl: "Pociąg", phonetic: "trejn", icon: "🚂", age: [4, 6] },
       { en: "Airplane", pl: "Samolot", phonetic: "erplejn", icon: "✈️", age: [4, 6] },
-      { en: "Helicopter", pl: "Helikopter", phonetic: "helikopter", icon: "🚁", age: [4, 6] },
+      { en: "Fire truck", pl: "Wóz strażacki", phonetic: "fajer trak", icon: "🚒", age: [4, 6] },
+      { en: "Police car", pl: "Radiowóz", phonetic: "polis kar", icon: "🚓", age: [4, 6] },
       { en: "Tractor", pl: "Traktor", phonetic: "traktor", icon: "🚜", age: [4, 6] },
-      { en: "Rocket", pl: "Rakieta", phonetic: "rokit", icon: "🚀", age: [4, 6] },
-      { en: "Bicycle", pl: "Rower", phonetic: "bajsikl", icon: "🚲", age: [6] },
-      { en: "Ambulance", pl: "Karetka", phonetic: "ambjulans", icon: "🚑", age: [6] },
-      { en: "Bus", pl: "Autobus", phonetic: "bas", icon: "🚌", age: [4, 6] },
-      { en: "Boat", pl: "Łódka", phonetic: "bołt", icon: "⛵", age: [4, 6] }
+      { en: "Bicycle", pl: "Rower", phonetic: "bajsykl", icon: "🚲", age: [4, 6] },
+      { en: "Helicopter", pl: "Helikopter", phonetic: "helikopter", icon: "🚁", age: [6] },
+      { en: "Rocket", pl: "Rakieta", phonetic: "roket", icon: "🚀", age: [4, 6] },
+      { en: "Boat", pl: "Łódka", phonetic: "bołt", icon: "⛵", age: [4, 6] },
+      { en: "Ambulance", pl: "Karetka", phonetic: "ambjulans", icon: "🚑", age: [6] }
     ]
   },
   {
-    keywords: ["zabawk", "toy", "klock", "miś", "lalk", "piłk", "robot"],
-    icon: "🧸🤖",
-    words: [
-      { en: "Ball", pl: "Piłka", phonetic: "bol", icon: "⚽", age: [4, 6] },
-      { en: "Teddy bear", pl: "Pluszowy miś", phonetic: "tedi ber", icon: "🧸", age: [4, 6] },
-      { en: "Robot", pl: "Robot", phonetic: "robot", icon: "🤖", age: [4, 6] },
-      { en: "Blocks", pl: "Klocki", phonetic: "bloks", icon: "🧱", age: [4, 6] },
-      { en: "Doll", pl: "Lalka", phonetic: "dol", icon: "🪆", age: [4, 6] },
-      { en: "Puzzle", pl: "Puzzle", phonetic: "pazl", icon: "🧩", age: [4, 6] },
-      { en: "Kite", pl: "Latawiec", phonetic: "kajt", icon: "🪁", age: [6] },
-      { en: "Drum", pl: "Bębenek", phonetic: "dram", icon: "🥁", age: [4, 6] },
-      { en: "Balloon", pl: "Balon", phonetic: "balun", icon: "🎈", age: [4, 6] },
-      { en: "Skateboard", pl: "Deskorolka", phonetic: "skejtbord", icon: "🛹", age: [6] }
-    ]
-  },
-  {
-    keywords: ["ubran", "odzież", "ciuch", "garderob", "clothe", "czapk", "kurtk", "buty"],
-    icon: "👕🧢",
+    keywords: ["ubran", "odzie", "ciuch", "garderob", "clothe", "shirt", "czapk", "but"],
+    icon: "👕👟",
     words: [
       { en: "T-shirt", pl: "Koszulka", phonetic: "ti-szert", icon: "👕", age: [4, 6] },
-      { en: "Cap", pl: "Czapka z daszkiem", phonetic: "kap", icon: "🧢", age: [4, 6] },
       { en: "Trousers", pl: "Spodnie", phonetic: "trałzers", icon: "👖", age: [4, 6] },
-      { en: "Shorts", pl: "Krótkie spodenki", phonetic: "szorts", icon: "🩳", age: [4, 6] },
       { en: "Shoes", pl: "Buty", phonetic: "szuz", icon: "👟", age: [4, 6] },
+      { en: "Cap", pl: "Czapka", phonetic: "kap", icon: "🧢", age: [4, 6] },
+      { en: "Jacket", pl: "Kurtka", phonetic: "dżaket", icon: "🧥", age: [4, 6] },
       { en: "Socks", pl: "Skarpetki", phonetic: "soks", icon: "🧦", age: [4, 6] },
-      { en: "Jacket", pl: "Kurtka", phonetic: "dżakit", icon: "🧥", age: [4, 6] },
-      { en: "Hat", pl: "Kapelusz / Czapka", phonetic: "hat", icon: "🎩", age: [4, 6] },
+      { en: "Dress", pl: "Sukienka", phonetic: "dres", icon: "👗", age: [4, 6] },
+      { en: "Shorts", pl: "Krótkie spodenki", phonetic: "szorts", icon: "🩳", age: [4, 6] },
       { en: "Gloves", pl: "Rękawiczki", phonetic: "glaws", icon: "🧤", age: [6] },
-      { en: "Scarf", pl: "Szalik", phonetic: "skarf", icon: "🧣", age: [6] }
+      { en: "Scarf", pl: "Szalik", phonetic: "skarf", icon: "🧣", age: [6] },
+      { en: "Glasses", pl: "Okulary", phonetic: "glases", icon: "👓", age: [4, 6] },
+      { en: "Crown", pl: "Korona", phonetic: "krałn", icon: "👑", age: [4, 6] }
     ]
   },
   {
-    keywords: ["pogod", "weather", "słońc", "deszcz", "śnieg", "wiatr", "pory roku"],
+    keywords: ["dom", "poko", "pokó", "mebl", "kuchn", "łazien", "house", "home", "room"],
+    icon: "🏠🛋️",
+    words: [
+      { en: "House", pl: "Dom", phonetic: "hałs", icon: "🏠", age: [4, 6] },
+      { en: "Bed", pl: "Łóżko", phonetic: "bed", icon: "🛏️", age: [4, 6] },
+      { en: "Chair", pl: "Krzesło", phonetic: "czer", icon: "🪑", age: [4, 6] },
+      { en: "Door", pl: "Drzwi", phonetic: "dor", icon: "🚪", age: [4, 6] },
+      { en: "Window", pl: "Okno", phonetic: "łindoł", icon: "🪟", age: [4, 6] },
+      { en: "Lamp", pl: "Lampa", phonetic: "lamp", icon: "🛋️", age: [4, 6] },
+      { en: "Clock", pl: "Zegar", phonetic: "klok", icon: "⏰", age: [4, 6] },
+      { en: "Key", pl: "Klucz", phonetic: "ki", icon: "🗝️", age: [4, 6] },
+      { en: "Mirror", pl: "Lustro", phonetic: "miror", icon: "🪞", age: [6] },
+      { en: "Bathtub", pl: "Wanna", phonetic: "baftab", icon: "🛁", age: [6] },
+      { en: "Sofa", pl: "Kanapa", phonetic: "sofa", icon: "🛋️", age: [4, 6] },
+      { en: "Television", pl: "Telewizor", phonetic: "telewiżyn", icon: "📺", age: [6] }
+    ]
+  },
+  {
+    keywords: ["pogod", "pory roku", "wiosn", "lato", "jesie", "zima", "weather", "season", "deszcz", "śnieg"],
     icon: "☀️🌈",
     words: [
       { en: "Sun", pl: "Słońce", phonetic: "san", icon: "☀️", age: [4, 6] },
       { en: "Rain", pl: "Deszcz", phonetic: "rejn", icon: "🌧️", age: [4, 6] },
       { en: "Snow", pl: "Śnieg", phonetic: "snoł", icon: "❄️", age: [4, 6] },
       { en: "Cloud", pl: "Chmura", phonetic: "klałd", icon: "☁️", age: [4, 6] },
-      { en: "Wind", pl: "Wiatr", phonetic: "łind", icon: "💨", age: [4, 6] },
       { en: "Rainbow", pl: "Tęcza", phonetic: "rejnboł", icon: "🌈", age: [4, 6] },
+      { en: "Wind", pl: "Wiatr", phonetic: "łind", icon: "💨", age: [4, 6] },
       { en: "Storm", pl: "Burza", phonetic: "storm", icon: "⛈️", age: [6] },
-      { en: "Snowman", pl: "Bałwan", phonetic: "snołmen", icon: "⛄", age: [4, 6] },
+      { en: "Snowman", pl: "Bałwanek", phonetic: "snołmen", icon: "⛄", age: [4, 6] },
       { en: "Umbrella", pl: "Parasol", phonetic: "ambrela", icon: "☂️", age: [6] },
+      { en: "Star", pl: "Gwiazda", phonetic: "star", icon: "⭐", age: [4, 6] },
+      { en: "Moon", pl: "Księżyc", phonetic: "mun", icon: "🌙", age: [4, 6] },
       { en: "Lightning", pl: "Błyskawica", phonetic: "lajtning", icon: "⚡", age: [6] }
     ]
   },
   {
-    keywords: ["dom", "pokój", "mieszkan", "house", "home", "room", "kuchn", "łazien"],
-    icon: "🏠🛋️",
+    keywords: ["rodzin", "ludzi", "mama", "tata", "brat", "siostr", "family", "people"],
+    icon: "👨‍👩‍👦‍👦",
     words: [
-      { en: "House", pl: "Dom", phonetic: "hałs", icon: "🏠", age: [4, 6] },
-      { en: "Door", pl: "Drzwi", phonetic: "dor", icon: "🚪", age: [4, 6] },
-      { en: "Window", pl: "Okno", phonetic: "łindoł", icon: "🪟", age: [4, 6] },
-      { en: "Bed", pl: "Łóżko", phonetic: "bed", icon: "🛏️", age: [4, 6] },
-      { en: "Chair", pl: "Krzesło", phonetic: "czer", icon: "🪑", age: [4, 6] },
-      { en: "Table", pl: "Stół", phonetic: "tejbl", icon: "🪵", age: [4, 6] },
-      { en: "Kitchen", pl: "Kuchnia", phonetic: "kiczen", icon: "🍳", age: [6] },
-      { en: "Bathroom", pl: "Łazienka", phonetic: "bafrum", icon: "🛁", age: [6] },
-      { en: "Bedroom", pl: "Sypialnia", phonetic: "bedrum", icon: "🛌", age: [6] },
-      { en: "Lamp", pl: "Lampa", phonetic: "lamp", icon: "💡", age: [4, 6] }
-    ]
-  },
-  {
-    keywords: ["rodzin", "family", "mama", "tata", "brat", "siostr", "babci", "dziad"],
-    icon: "👨‍👩‍👦‍👦❤️",
-    words: [
-      { en: "Mom", pl: "Mama", phonetic: "mam", icon: "👩", age: [4, 6] },
-      { en: "Dad", pl: "Tata", phonetic: "dad", icon: "👨", age: [4, 6] },
-      { en: "Brother", pl: "Brat", phonetic: "brafer", icon: "👦", age: [4, 6] },
+      { en: "Mother", pl: "Mama", phonetic: "mader", icon: "👩", age: [4, 6] },
+      { en: "Father", pl: "Tata", phonetic: "fader", icon: "👨", age: [4, 6] },
+      { en: "Brother", pl: "Brat", phonetic: "brader", icon: "👦", age: [4, 6] },
       { en: "Sister", pl: "Siostra", phonetic: "sister", icon: "👧", age: [4, 6] },
       { en: "Baby", pl: "Dzidziuś", phonetic: "bejbi", icon: "👶", age: [4, 6] },
       { en: "Grandma", pl: "Babcia", phonetic: "granma", icon: "👵", age: [4, 6] },
       { en: "Grandpa", pl: "Dziadek", phonetic: "granpa", icon: "👴", age: [4, 6] },
-      { en: "Family", pl: "Rodzina", phonetic: "famili", icon: "👨‍👩‍👦‍👦", age: [6] }
+      { en: "Family", pl: "Rodzina", phonetic: "famili", icon: "👨‍👩‍👦‍👦", age: [4, 6] },
+      { en: "Friend", pl: "Przyjaciel", phonetic: "frend", icon: "🤝", age: [6] },
+      { en: "Boy", pl: "Chłopiec", phonetic: "boj", icon: "🧑", age: [4, 6] },
+      { en: "Girl", pl: "Dziewczynka", phonetic: "gerl", icon: "👧", age: [4, 6] },
+      { en: "Twins", pl: "Bliźniaki", phonetic: "tłins", icon: "👯", age: [6] }
     ]
   },
   {
-    keywords: ["kosmos", "space", "planet", "gwiazd", "księżyc", "astronaut", "ufo"],
+    keywords: ["zawod", "prac", "straż", "policj", "lekarz", "job", "profession", "hero"],
+    icon: "🚒👨‍🚀",
+    words: [
+      { en: "Firefighter", pl: "Strażak", phonetic: "fajerfajter", icon: "🧑‍🚒", age: [4, 6] },
+      { en: "Police officer", pl: "Policjant", phonetic: "polis ofiser", icon: "👮", age: [4, 6] },
+      { en: "Doctor", pl: "Lekarz", phonetic: "doktor", icon: "🩺", age: [4, 6] },
+      { en: "Astronaut", pl: "Astronauta", phonetic: "astronot", icon: "👨‍🚀", age: [4, 6] },
+      { en: "Cook", pl: "Kucharz", phonetic: "kuk", icon: "👨‍🍳", age: [4, 6] },
+      { en: "Teacher", pl: "Nauczyciel", phonetic: "ticzer", icon: "👩‍🏫", age: [4, 6] },
+      { en: "Builder", pl: "Budowniczy", phonetic: "bilder", icon: "👷", age: [6] },
+      { en: "Pilot", pl: "Pilot", phonetic: "pajlot", icon: "👨‍✈️", age: [6] },
+      { en: "Farmer", pl: "Rolnik", phonetic: "farmer", icon: "🧑‍🌾", age: [4, 6] },
+      { en: "Knight", pl: "Rycerz", phonetic: "najt", icon: "🛡️", age: [4, 6] },
+      { en: "Artist", pl: "Malarz", phonetic: "artist", icon: "🧑‍🎨", age: [6] },
+      { en: "Singer", pl: "Piosenkarz", phonetic: "singer", icon: "🧑‍🎤", age: [6] }
+    ]
+  },
+  {
+    keywords: ["sport", "zabaw", "piłk", "toy", "game", "ball"],
+    icon: "⚽🧸",
+    words: [
+      { en: "Ball", pl: "Piłka", phonetic: "bol", icon: "⚽", age: [4, 6] },
+      { en: "Teddy bear", pl: "Pluszowy miś", phonetic: "tedi ber", icon: "🧸", age: [4, 6] },
+      { en: "Doll", pl: "Lalka", phonetic: "dol", icon: "🪆", age: [4, 6] },
+      { en: "Blocks", pl: "Klocki", phonetic: "bloks", icon: "🧱", age: [4, 6] },
+      { en: "Kite", pl: "Latawiec", phonetic: "kajt", icon: "🪁", age: [4, 6] },
+      { en: "Puzzle", pl: "Puzzle", phonetic: "pazl", icon: "🧩", age: [4, 6] },
+      { en: "Drum", pl: "Bębenek", phonetic: "dram", icon: "🥁", age: [4, 6] },
+      { en: "Robot", pl: "Robot", phonetic: "robot", icon: "🤖", age: [4, 6] },
+      { en: "Basketball", pl: "Koszykówka", phonetic: "basketbol", icon: "🏀", age: [6] },
+      { en: "Tennis", pl: "Tenis", phonetic: "tenis", icon: "🎾", age: [6] },
+      { en: "Skateboard", pl: "Deskorolka", phonetic: "skejt-bord", icon: "🛹", age: [6] },
+      { en: "Balloon", pl: "Balon", phonetic: "balun", icon: "🎈", age: [4, 6] }
+    ]
+  },
+  {
+    keywords: ["kosmos", "planet", "gwiazd", "space", "ufo", "rakiet"],
     icon: "🚀🪐",
     words: [
-      { en: "Rocket", pl: "Rakieta", phonetic: "rokit", icon: "🚀", age: [4, 6] },
+      { en: "Rocket", pl: "Rakieta", phonetic: "roket", icon: "🚀", age: [4, 6] },
+      { en: "Planet", pl: "Planeta", phonetic: "planet", icon: "🪐", age: [4, 6] },
       { en: "Star", pl: "Gwiazda", phonetic: "star", icon: "⭐", age: [4, 6] },
       { en: "Moon", pl: "Księżyc", phonetic: "mun", icon: "🌕", age: [4, 6] },
       { en: "Sun", pl: "Słońce", phonetic: "san", icon: "☀️", age: [4, 6] },
-      { en: "Planet", pl: "Planeta", phonetic: "planet", icon: "🪐", age: [4, 6] },
-      { en: "Astronaut", pl: "Astronauta", phonetic: "astronot", icon: "👨‍🚀", age: [6] },
-      { en: "Earth", pl: "Ziemia", phonetic: "erf", icon: "🌍", age: [6] },
       { en: "Alien", pl: "Kosmita", phonetic: "ejlien", icon: "👽", age: [4, 6] },
+      { en: "Astronaut", pl: "Astronauta", phonetic: "astronot", icon: "👨‍🚀", age: [4, 6] },
+      { en: "Spaceship", pl: "Statek kosmiczny", phonetic: "spejsszip", icon: "🛸", age: [6] },
+      { en: "Earth", pl: "Ziemia", phonetic: "erf", icon: "🌍", age: [6] },
+      { en: "Comet", pl: "Kometa", phonetic: "komet", icon: "☄️", age: [6] },
       { en: "Telescope", pl: "Teleskop", phonetic: "teleskop", icon: "🔭", age: [6] },
-      { en: "Comet", pl: "Kometa", phonetic: "komet", icon: "☄️", age: [6] }
+      { en: "Galaxy", pl: "Galaktyka", phonetic: "galaksi", icon: "🌌", age: [6] }
     ]
   },
   {
-    keywords: ["emocj", "uczuci", "nastr", "feeling", "wesoł", "smutn", "głodn"],
-    icon: "😊🤩",
+    keywords: ["jedzen", "pic", "słodycz", "deser", "obiad", "śniad", "food", "drink", "sweet"],
+    icon: "🍕🍦",
     words: [
-      { en: "Happy", pl: "Wesoły / Szczęśliwy", phonetic: "hapi", icon: "😊", age: [4, 6] },
-      { en: "Sad", pl: "Smutny", phonetic: "sad", icon: "😢", age: [4, 6] },
-      { en: "Angry", pl: "Zły", phonetic: "angri", icon: "😠", age: [4, 6] },
-      { en: "Sleepy", pl: "Śpiący", phonetic: "slipi", icon: "😴", age: [4, 6] },
-      { en: "Hungry", pl: "Głodny", phonetic: "hangri", icon: "😋", age: [4, 6] },
-      { en: "Scared", pl: "Wystraszony", phonetic: "skerd", icon: "😱", age: [6] },
-      { en: "Surprised", pl: "Zaskoczony", phonetic: "serprajzd", icon: "😲", age: [6] },
-      { en: "Tired", pl: "Zmęczony", phonetic: "tajerd", icon: "🥱", age: [6] }
+      { en: "Pizza", pl: "Pizza", phonetic: "pica", icon: "🍕", age: [4, 6] },
+      { en: "Ice cream", pl: "Lody", phonetic: "ajs krim", icon: "🍦", age: [4, 6] },
+      { en: "Cake", pl: "Tort", phonetic: "kejk", icon: "🎂", age: [4, 6] },
+      { en: "Water", pl: "Woda", phonetic: "łoter", icon: "💧", age: [4, 6] },
+      { en: "Juice", pl: "Sok", phonetic: "dżus", icon: "🧃", age: [4, 6] },
+      { en: "Soup", pl: "Zupa", phonetic: "sup", icon: "🍲", age: [4, 6] },
+      { en: "Sandwich", pl: "Kanapka", phonetic: "sandłicz", icon: "🥪", age: [4, 6] },
+      { en: "Egg", pl: "Jajko", phonetic: "eg", icon: "🥚", age: [4, 6] },
+      { en: "Cheese", pl: "Ser", phonetic: "cziz", icon: "🧀", age: [4, 6] },
+      { en: "Cookie", pl: "Ciastko", phonetic: "kuki", icon: "🍪", age: [4, 6] },
+      { en: "Donut", pl: "Pączek", phonetic: "donat", icon: "🍩", age: [4, 6] },
+      { en: "Pasta", pl: "Makaron", phonetic: "pasta", icon: "🍝", age: [6] }
+    ]
+  },
+  {
+    keywords: ["szkoł", "przedszkol", "książk", "kredk", "school", "book", "pen"],
+    icon: "🎒✏️",
+    words: [
+      { en: "Book", pl: "Książka", phonetic: "buk", icon: "📘", age: [4, 6] },
+      { en: "Pencil", pl: "Ołówek", phonetic: "pensyl", icon: "✏️", age: [4, 6] },
+      { en: "Backpack", pl: "Plecak", phonetic: "bakpak", icon: "🎒", age: [4, 6] },
+      { en: "Scissors", pl: "Nożyczki", phonetic: "sizors", icon: "✂️", age: [4, 6] },
+      { en: "Ruler", pl: "Linijka", phonetic: "ruler", icon: "📏", age: [6] },
+      { en: "Crayon", pl: "Kredka", phonetic: "krejon", icon: "🖍️", age: [4, 6] },
+      { en: "Glue", pl: "Klej", phonetic: "glu", icon: "🧴", age: [4, 6] },
+      { en: "School", pl: "Szkoła", phonetic: "skul", icon: "🏫", age: [4, 6] },
+      { en: "Notebook", pl: "Zeszyt", phonetic: "nołtbuk", icon: "📓", age: [6] },
+      { en: "Paintbrush", pl: "Pędzel", phonetic: "pejntbrasz", icon: "🖌️", age: [6] },
+      { en: "Globe", pl: "Globus", phonetic: "glob", icon: "🌐", age: [6] },
+      { en: "Bell", pl: "Dzwonek", phonetic: "bel", icon: "🔔", age: [4, 6] }
+    ]
+  },
+  {
+    keywords: ["natur", "las", "drzew", "kwiat", "morz", "nature", "forest", "tree", "flower"],
+    icon: "🌲🌻",
+    words: [
+      { en: "Tree", pl: "Drzewo", phonetic: "tri", icon: "🌳", age: [4, 6] },
+      { en: "Flower", pl: "Kwiat", phonetic: "flałer", icon: "🌻", age: [4, 6] },
+      { en: "Leaf", pl: "Liść", phonetic: "lif", icon: "🍃", age: [4, 6] },
+      { en: "Mushroom", pl: "Grzyb", phonetic: "maszrum", icon: "🍄", age: [4, 6] },
+      { en: "Mountain", pl: "Góra", phonetic: "małntin", icon: "⛰️", age: [4, 6] },
+      { en: "Sea", pl: "Morze", phonetic: "si", icon: "🌊", age: [4, 6] },
+      { en: "Fire", pl: "Ogień", phonetic: "fajer", icon: "🔥", age: [4, 6] },
+      { en: "Stone", pl: "Kamień", phonetic: "stołn", icon: "🪨", age: [4, 6] },
+      { en: "Forest", pl: "Las", phonetic: "forest", icon: "🌲", age: [6] },
+      { en: "River", pl: "Rzeka", phonetic: "riwer", icon: "🏞️", age: [6] },
+      { en: "Island", pl: "Wyspa", phonetic: "ajland", icon: "🏝️", age: [6] },
+      { en: "Grass", pl: "Trawa", phonetic: "gras", icon: "🌱", age: [4, 6] }
     ]
   }
 ];
 
-function initPinKeyboard() {
-  const grid = document.getElementById("pinKeyboardGrid");
-  if (!grid) return;
-  grid.innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, "C", 0, "OK"].map(k => `
-    <button onclick="handlePinKey('${k}')" class="kid-card h-14 rounded-2xl bg-slate-100 border-2 border-slate-300 font-extrabold text-xl text-slate-800 hover:bg-slate-200 active:bg-slate-300 shadow-sm">${k}</button>
-  `).join("");
-}
-
-function handlePinKey(k) {
-  const inp = document.getElementById("pinInputField");
+function openParentPinModal(action = "dashboard") {
+  _pendingPinAction = action || "dashboard";
+  const modal = document.getElementById("parentPinModal");
+  const titleEl = document.getElementById("pinModalTitle");
+  const descEl = document.getElementById("pinModalDesc");
+  const input = document.getElementById("pinInputField");
   const err = document.getElementById("pinErrorMsg");
-  if (!inp) return;
-  err.textContent = "";
-  if (k === "C") inp.value = "";
-  else if (k === "OK") verifyParentPin();
-  else {
-    if (inp.value.length < 4) inp.value += k;
-    if (inp.value.length === 4) verifyParentPin();
-  }
-}
+  const kb = document.getElementById("pinKeyboardGrid");
+  if (!modal || !input) return;
 
-function openParentPinModal(target = "dashboard") {
-  cancelAllSpeechAndTimers();
-  window._pinModalTarget = target;
-  const title = document.getElementById("pinModalTitle");
-  const desc = document.getElementById("pinModalDesc");
-  if (title && desc) {
-    if (target === "mic_approve") {
-      title.textContent = "Zatwierdź Wymowę";
-      desc.textContent = "Tato, wpisz PIN, aby uznać słowo za zaliczone:";
-    } else if (target === "tata_login") {
-      title.textContent = "🔒 Profil: TATA (Konto Testowe)";
-      desc.textContent = "Wpisz 4-cyfrowy kod PIN, aby wejść na profil Taty:";
-    } else {
-      title.textContent = "Panel Rodzica";
-      desc.textContent = "Wpisz 4-cyfrowy kod PIN:";
-    }
+  if (titleEl) {
+    titleEl.textContent = _pendingPinAction === "tata_login"
+      ? "🔒 Konto Testowe TATA"
+      : (_pendingPinAction === "mic_approve" ? "🔒 Zatwierdzenie Wymowy" : "🔒 Panel Rodzica");
   }
-  const inp = document.getElementById("pinInputField");
-  if (inp) inp.value = "";
-  const err = document.getElementById("pinErrorMsg");
+  if (descEl) {
+    descEl.textContent = "Wpisz 4-cyfrowy kod PIN rodziców:";
+  }
+  input.value = "";
   if (err) err.textContent = "";
-  initPinKeyboard();
-  const m = document.getElementById("parentPinModal");
-  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-}
 
-function verifyParentPin() {
-  const inp = document.getElementById("pinInputField");
-  if (!inp) return;
-  if (inp.value === PARENT_PIN) {
-    closeParentPinModal();
-    if (window._pinModalTarget === "mic_approve") approveMicAnswer("Tata potwierdza!");
-    else if (window._pinModalTarget === "tata_login") chooseProfile("tata");
-    else openParentDashboard();
-  } else {
-    playEffect("wrong");
-    const err = document.getElementById("pinErrorMsg");
-    if (err) err.textContent = "❌ Błędny PIN! Spróbuj ponownie.";
-    inp.value = "";
+  if (kb) {
+    const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "OK"];
+    kb.innerHTML = keys.map(k => {
+      const cls = k === "OK"
+        ? "bg-emerald-600 text-white border-emerald-700"
+        : (k === "C" ? "bg-rose-100 text-rose-800 border-rose-300" : "bg-slate-100 hover:bg-sky-100 text-slate-900 border-slate-300");
+      return `<button type="button" onclick="handlePinKeypadPress('${k}')" class="kid-card py-3 rounded-2xl border-2 font-extrabold text-xl shadow-sm ${cls}">${k === "OK" ? "✓" : k}</button>`;
+    }).join("");
   }
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  setTimeout(() => input.focus(), 80);
 }
 
 function closeParentPinModal() {
-  const m = document.getElementById("parentPinModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
+  const modal = document.getElementById("parentPinModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
 }
 
-function getPendingTestItemsCount() {
-  let total = state.lessons.filter(l => l.testOnly).length;
-  state.lessons.forEach(l => {
-    if (!l.testOnly && Array.isArray(l.items)) {
-      total += l.items.filter(it => it.testOnly).length;
+function handlePinKeypadPress(key) {
+  const input = document.getElementById("pinInputField");
+  const err = document.getElementById("pinErrorMsg");
+  if (!input) return;
+  if (err) err.textContent = "";
+
+  if (key === "C") {
+    input.value = "";
+    return;
+  }
+  if (key === "OK") {
+    verifyParentPinAndProceed();
+    return;
+  }
+  if (input.value.length < 4) {
+    input.value += key;
+  }
+  if (input.value.length === 4) {
+    verifyParentPinAndProceed();
+  }
+}
+
+function verifyParentPinAndProceed() {
+  const input = document.getElementById("pinInputField");
+  const err = document.getElementById("pinErrorMsg");
+  if (!input) return;
+  const val = input.value.trim();
+  if (val === String(PARENT_PIN)) {
+    closeParentPinModal();
+    if (_pendingPinAction === "tata_login") {
+      chooseProfile("tata");
+    } else if (_pendingPinAction === "mic_approve") {
+      approveMicAnswer("Zatwierdzone przez Rodzica!");
+    } else {
+      openParentDashboard();
     }
-  });
-  return total;
+  } else {
+    playEffect("wrong");
+    if (err) err.textContent = "❌ Nieprawidłowy kod PIN!";
+    input.value = "";
+  }
+}
+
+function showParentStatus(msg, isError = false) {
+  const box = document.getElementById("parentStatusMsg");
+  if (!box) return;
+  box.className = `mb-3 p-3 rounded-2xl border-2 font-bold text-sm text-center ${
+    isError ? "bg-rose-100 border-rose-400 text-rose-900" : "bg-emerald-100 border-emerald-400 text-emerald-900"
+  }`;
+  box.innerHTML = msg;
+  box.classList.remove("hidden");
+}
+
+function openParentDashboard() {
+  const modal = document.getElementById("parentDashboardModal");
+  if (!modal) return;
+  const keyInput = document.getElementById("parentGeminiKey");
+  if (keyInput) {
+    try { keyInput.value = localStorage.getItem("akademia_gemini_key") || ""; } catch (e) {}
+  }
+  const st = document.getElementById("parentStatusMsg");
+  if (st) st.classList.add("hidden");
+  backToParentMenu();
+  refreshAllParentWidgets();
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+function closeParentDashboard() {
+  const modal = document.getElementById("parentDashboardModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+  if (state.profile && typeof showLessonMenu === "function") {
+    showLessonMenu();
+  }
 }
 
 function backToParentMenu() {
-  document.querySelectorAll(".parent-sub-section").forEach(el => el.classList.add("hidden"));
   const menu = document.getElementById("parentMenuGrid");
-  if (menu) menu.classList.remove("hidden");
   const backBtn = document.getElementById("parentBackToMenuBtn");
+  const titleEl = document.getElementById("parentModalHeaderTitle");
+  document.querySelectorAll(".parent-sub-section").forEach(el => el.classList.add("hidden"));
+  if (menu) menu.classList.remove("hidden");
   if (backBtn) backBtn.classList.add("hidden");
-  const hdr = document.getElementById("parentModalHeaderTitle");
-  if (hdr) hdr.innerHTML = `🛠️ Panel Rodzica (<span data-app-version>Wersja ${CURRENT_GAME_VERSION}</span>)`;
-  const badge = document.getElementById("parentMenuPendingBadge");
-  if (badge) badge.textContent = `${getPendingTestItemsCount()} oczekujących`;
-  syncVersionLabelsInDom();
+  if (titleEl) titleEl.innerHTML = `🛠️ Panel Rodzica (<span data-app-version>Wersja ${CURRENT_GAME_VERSION}</span>)`;
+  refreshAllParentWidgets();
 }
 
 function openParentSection(sectionKey) {
   const menu = document.getElementById("parentMenuGrid");
-  if (menu) menu.classList.add("hidden");
+  const backBtn = document.getElementById("parentBackToMenuBtn");
   document.querySelectorAll(".parent-sub-section").forEach(el => el.classList.add("hidden"));
-
+  if (menu) menu.classList.add("hidden");
+  if (backBtn) backBtn.classList.remove("hidden");
   const target = document.getElementById(`parentSection_${sectionKey}`);
   if (target) target.classList.remove("hidden");
-  const backBtn = document.getElementById("parentBackToMenuBtn");
-  if (backBtn) backBtn.classList.remove("hidden");
-
-  const titlesMap = {
-    new_lesson: "✨ Nowa Lekcja (Automat)",
-    add_word: "➕ Dodaj Nowe Słówko",
-    test_center: "🧪 Centrum Testowe i Poziomy",
-    manage_lessons: "🗂️ Przegląd i Edycja Lekcji",
-    hard_words: "🎯 Trudne Słówka Synów",
-    scanner_ai: "📷 Klucz AI i Skaner Zdjęć",
-    rewards_settings: "🎁 Skrzynie, Runda i Tester",
-    backup_reset: "💾 Kopia Zapasowa i Reset"
-  };
-  const hdr = document.getElementById("parentModalHeaderTitle");
-  if (hdr) hdr.textContent = titlesMap[sectionKey] || "🛠️ Panel Rodzica";
-
-  if (sectionKey === "test_center") renderParentTestCenter();
-  if (sectionKey === "manage_lessons") renderParentLessonsManager();
-  if (sectionKey === "hard_words") renderParentHardWordsView();
-  if (sectionKey === "add_word") populateParentLessonSelect("parentSelectLesson");
+  refreshAllParentWidgets();
 }
 
-function populateParentLessonSelect(selectId) {
-  const sel = document.getElementById(selectId);
+function refreshAllParentWidgets() {
+  populateParentLessonSelect();
+  renderParentTestCenter();
+  renderParentLessonsManager();
+  renderParentHardWordsBox();
+  renderRoundLengthButtons();
+}
+
+function populateParentLessonSelect() {
+  const sel = document.getElementById("parentSelectLesson");
   if (!sel) return;
-  sel.innerHTML = state.lessons
-    .filter(l => l.type !== "memory_game")
-    .map(l => `<option value="${l.id}">${l.title}${l.testOnly ? ' (🧪 TEST)' : ''}</option>`)
-    .join("");
+  const editableLessons = state.lessons.filter(l => l.type !== "memory_game");
+  sel.innerHTML = editableLessons.map(l => `<option value="${l.id}">${l.title}${l.testOnly ? " (🧪 Testowa)" : ""}</option>`).join("");
 }
 
-function openParentDashboard() {
-  const m = document.getElementById("parentDashboardModal");
-  if (m) { m.classList.remove("hidden"); m.classList.add("flex"); }
-  backToParentMenu();
-
-  const keyInput = document.getElementById("parentGeminiKey");
-  if (keyInput && !keyInput.value) {
-    try { keyInput.value = localStorage.getItem("akademia_gemini_key") || ""; } catch (e) {}
-  }
-
-  populateParentLessonSelect("parentSelectLesson");
-  const lenBox = document.getElementById("roundLengthButtons");
-  if (lenBox) {
-    lenBox.innerHTML = [5, 8, 10, 15, 20].map(v => `
-      <button onclick="parentSetQuestionsPerRound(${v})" class="px-3.5 py-2 rounded-xl text-xs font-extrabold border-2 ${state.questionsPerRound === v ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white text-slate-700 border-slate-300'}">${v} pytań</button>
-    `).join("");
-  }
+function parseAgeSpecToArray(ageStr) {
+  const clean = String(ageStr || "4,6").replace(/\s+/g, "");
+  if (clean === "4") return [4];
+  if (clean === "6") return [6];
+  return [4, 6];
 }
 
-function closeParentDashboard() {
-  const m = document.getElementById("parentDashboardModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
+function parseLessonLinesText(rawText) {
+  const lines = String(rawText || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const parsed = [];
+  lines.forEach(line => {
+    // Dzielimy wyłącznie po myślniku otoczonym spacjami, aby nie psuć słów typu "T-shirt" ani wymowy "ti-szert"
+    const parts = line.split(/\s+[-–—]\s+/).map(p => p.trim()).filter(Boolean);
+    if (parts.length < 2) return;
+    const en = parts[0];
+    const pl = parts[1];
+    let phonetic = "";
+    let icon = "⭐";
+    let age = [4, 6];
+
+    if (parts.length === 3) {
+      if (/^[46,\s]+$/.test(parts[2])) age = parseAgeSpecToArray(parts[2]);
+      else icon = parts[2];
+    } else if (parts.length === 4) {
+      if (/^[46,\s]+$/.test(parts[3])) {
+        icon = parts[2];
+        age = parseAgeSpecToArray(parts[3]);
+      } else {
+        phonetic = parts[2];
+        icon = parts[3];
+      }
+    } else if (parts.length >= 5) {
+      phonetic = parts[2];
+      icon = parts[3];
+      age = parseAgeSpecToArray(parts[4]);
+    }
+
+    parsed.push({ en, pl, phonetic, icon, age });
+  });
+  return parsed;
 }
 
-function showParentMsg(txt, isErr = false) {
-  const m = document.getElementById("parentStatusMsg");
-  if (!m) return;
-  m.textContent = txt;
-  m.className = `mb-3 p-3 rounded-2xl border-2 font-bold text-sm text-center ${isErr ? 'bg-rose-100 border-rose-400 text-rose-900' : 'bg-emerald-100 border-emerald-400 text-emerald-900'}`;
-  m.classList.remove("hidden");
-  setTimeout(() => m.classList.add("hidden"), 5000);
+function formatWordsToLessonLines(wordsArr) {
+  return (wordsArr || []).map(w => {
+    const ageStr = Array.isArray(w.age) ? w.age.join(",") : "4,6";
+    return w.phonetic
+      ? `${w.en} - ${w.pl} - ${w.phonetic} - ${w.icon || "⭐"} - ${ageStr}`
+      : `${w.en} - ${w.pl} - ${w.icon || "⭐"} - ${ageStr}`;
+  }).join("\n");
 }
 
-// ------------------------------------------------------------------------
-// AUTOMATYCZNY GENERATOR LEKCJI Z TYTUŁU I OPISU
-// ------------------------------------------------------------------------
-async function parentAutoGenerateLesson() {
-  const titleEl = document.getElementById("newLessonTitle");
-  const descEl = document.getElementById("newLessonDesc");
-  const iconEl = document.getElementById("newLessonIcon");
-  const ageMode = document.getElementById("newLessonTargetAge").value;
-  const wordCount = parseInt(document.getElementById("newLessonWordCount").value) || 8;
-  const linesEl = document.getElementById("newLessonLines");
+function parentAutoGenerateLesson() {
+  const titleInput = document.getElementById("newLessonTitle");
+  const iconInput = document.getElementById("newLessonIcon");
+  const descInput = document.getElementById("newLessonDesc");
+  const ageSel = document.getElementById("newLessonTargetAge");
+  const countSel = document.getElementById("newLessonWordCount");
+  const linesArea = document.getElementById("newLessonLines");
   const previewBox = document.getElementById("generatedLessonPreviewBox");
 
-  const title = (titleEl ? titleEl.value : "").trim();
-  const desc = (descEl ? descEl.value : "").trim();
-  if (!title && !desc) {
-    return showParentMsg("Wpisz chociaż tytuł lub krótki opis nowej lekcji!", true);
+  const rawTitle = (titleInput && titleInput.value.trim()) || "";
+  const rawDesc = (descInput && descInput.value.trim()) || "";
+  if (!rawTitle && !rawDesc) {
+    showParentStatus("⚠️ Wpisz przynajmniej tytuł lub krótki opis nowej lekcji!", true);
+    return;
   }
 
-  let apiKey = "";
-  try { apiKey = (document.getElementById("parentGeminiKey")?.value || localStorage.getItem("akademia_gemini_key") || "").trim(); } catch (e) {}
+  const targetAgeMode = ageSel ? ageSel.value : "auto";
+  const desiredCount = parseInt(countSel ? countSel.value : "8", 10) || 8;
+  const searchBlob = `${rawTitle} ${rawDesc}`.toLowerCase();
 
-  let generatedWords = [];
-  let suggestedIcon = (iconEl ? iconEl.value : "").trim();
-
-  if (apiKey) {
-    showParentMsg("✨ Generuję lekcję przez Gemini AI (słówka, ikony, wymowa i poziomy)...", false);
-    try {
-      const prompt = `Stwórz zestaw ${wordCount} słówek do nauki angielskiego dla dzieci (Igor 4 lata, Hubert 6 lat).
-Tytuł lekcji: "${title}". Opis tematu: "${desc}". Preferencja wieku: "${ageMode}".
-Zwróć wynik WYŁĄCZNIE jako czysty obiekt JSON bez markdowna:
-{"lessonIcon":"2 emoji","items":[{"en":"English word","pl":"Polskie tłumaczenie","phonetic":"zapis fonetyczny po polsku","icon":"1 emoji","age":[4,6]}]}`;
-
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-      });
-      const data = await resp.json();
-      const rawText = data.candidates[0].content.parts[0].text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(rawText);
-      if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {
-        if (!suggestedIcon && parsed.lessonIcon) suggestedIcon = parsed.lessonIcon;
-        generatedWords = parsed.items.slice(0, wordCount).map((it, idx) => ({
-          en: String(it.en || "").trim(),
-          pl: String(it.pl || "").trim(),
-          phonetic: String(it.phonetic || "").trim(),
-          icon: String(it.icon || "📘").trim(),
-          age: ageMode === "4" ? [4] : ageMode === "6" ? [6] : ageMode === "4,6" ? [4, 6] : (Array.isArray(it.age) ? it.age : (idx >= Math.ceil(wordCount * 0.7) ? [6] : [4, 6]))
-        }));
-      }
-    } catch (e) {
-      generatedWords = [];
-    }
-  }
-
-  // Fallback / tryb bez klucza API – dopasowanie z wbudowanej bazy tematycznej + wszystkich słów
-  if (generatedWords.length === 0) {
-    const query = `${title} ${desc}`.toLowerCase();
-    let matchedTopic = BUILT_IN_TOPIC_BANK.find(t => t.keywords.some(kw => query.includes(kw)));
-
-    if (!matchedTopic) {
-      matchedTopic = BUILT_IN_TOPIC_BANK[Math.floor(Math.random() * BUILT_IN_TOPIC_BANK.length)];
-    }
-
-    if (!suggestedIcon) suggestedIcon = matchedTopic.icon;
-
-    // Jeśli użytkownik wymienił konkretne polskie słowa w opisie, sortujemy je na początek
-    const prioritized = [...matchedTopic.words].sort((a, b) => {
-      const aHit = query.includes(a.pl.toLowerCase().slice(0, 4)) ? -1 : 0;
-      const bHit = query.includes(b.pl.toLowerCase().slice(0, 4)) ? -1 : 0;
-      return aHit - bHit;
+  let matchedTopic = null;
+  let bestScore = 0;
+  AUTO_LESSON_TOPICS_DB.forEach(topic => {
+    let score = 0;
+    topic.keywords.forEach(kw => {
+      if (searchBlob.includes(kw)) score += 2;
     });
+    if (score > bestScore) {
+      bestScore = score;
+      matchedTopic = topic;
+    }
+  });
 
-    generatedWords = prioritized.slice(0, wordCount).map((w, idx) => ({
-      en: w.en,
-      pl: w.pl,
-      phonetic: w.phonetic || "",
-      icon: w.icon || "📘",
-      age: ageMode === "4" ? [4] : ageMode === "6" ? [6] : ageMode === "4,6" ? [4, 6] : (w.age || (idx >= Math.ceil(wordCount * 0.7) ? [6] : [4, 6]))
-    }));
+  let candidateWords = [];
+  if (matchedTopic) {
+    candidateWords = [...matchedTopic.words];
+    if (iconInput && !iconInput.value.trim()) {
+      iconInput.value = matchedTopic.icon;
+    }
+  } else {
+    if (iconInput && !iconInput.value.trim()) iconInput.value = "📚✨";
+    const pool = [...AUTO_SIMPLE_WORDS_POOL];
+    state.lessons.forEach(l => {
+      if (l.type === "vocab" && Array.isArray(l.items)) {
+        l.items.forEach(it => {
+          if (it && it.en && it.pl && typeof it.icon === "string" && !it.icon.startsWith("<svg")) {
+            pool.push(it);
+          }
+        });
+      }
+    });
+    candidateWords = shuffleArray(pool);
   }
 
-  if (iconEl && !iconEl.value.trim()) iconEl.value = suggestedIcon || "📚✨";
-  if (titleEl && !titleEl.value.trim()) titleEl.value = `${state.lessons.length + 1}. Nowa lekcja`;
+  // Jeśli w opisie podano konkretne polskie nazwy z bazy, wysuń je na początek
+  const prioritized = [];
+  const rest = [];
+  candidateWords.forEach(w => {
+    if (rawDesc && searchBlob.includes(w.pl.toLowerCase())) prioritized.push(w);
+    else rest.push(w);
+  });
 
-  if (linesEl) {
-    linesEl.value = generatedWords.map(w => `${w.en} - ${w.pl} - ${w.icon} - ${w.age.join(",")} - ${w.phonetic}`).join("\n");
+  const uniqueList = [];
+  const seenEn = new Set();
+  [...prioritized, ...rest].forEach(w => {
+    const key = w.en.toLowerCase();
+    if (!seenEn.has(key)) {
+      seenEn.add(key);
+      let finalAge = Array.isArray(w.age) ? [...w.age] : [4, 6];
+      if (targetAgeMode === "4,6") finalAge = [4, 6];
+      else if (targetAgeMode === "4") finalAge = [4];
+      else if (targetAgeMode === "6") finalAge = [6];
+      uniqueList.push({
+        en: w.en,
+        pl: w.pl,
+        phonetic: w.phonetic || "",
+        icon: w.icon || "⭐",
+        age: finalAge
+      });
+    }
+  });
+
+  const finalWords = uniqueList.slice(0, desiredCount);
+  if (titleInput && !titleInput.value.trim()) {
+    titleInput.value = `${state.lessons.length + 1}. Nowa Lekcja`;
+  }
+  if (linesArea) {
+    linesArea.value = formatWordsToLessonLines(finalWords);
   }
 
   if (previewBox) {
     previewBox.classList.remove("hidden");
     previewBox.innerHTML = `
-      <div class="flex items-center justify-between border-b border-emerald-200 pb-1.5">
-        <span class="text-xs font-extrabold text-emerald-900">✅ Wygenerowano ${generatedWords.length} słówek (${suggestedIcon}):</span>
-        <span class="text-[10px] font-bold text-slate-500">Gotowe do zapisu!</span>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs font-extrabold text-emerald-900">✅ Wygenerowano ${finalWords.length} słówek! Gotowe do wszystkich trybów (Fiszki, Quiz, 🎧 Ze słuchu, Literki, Wymowa, Memory, Sprawdzian, VS i Smok):</span>
       </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-        ${generatedWords.map(w => `
-          <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2 text-left">
-            <span class="text-2xl">${w.icon}</span>
-            <div class="min-w-0">
-              <div class="font-extrabold text-xs text-slate-900 truncate">${w.en}</div>
-              <div class="text-[10px] text-slate-600 truncate">${w.pl}</div>
-              <span class="text-[9px] font-bold px-1.5 rounded bg-indigo-100 text-indigo-800">${w.age.length > 1 ? '4 i 6 l.' : w.age[0] + ' l.'}</span>
-            </div>
-          </div>
-        `).join("")}
+      <div class="flex flex-wrap gap-1.5">
+        ${finalWords.map(w => `<span class="px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-300 text-xs font-bold text-slate-800">${w.icon} ${w.en} (${w.pl}) <span class="text-[10px] text-indigo-700">[${w.age.join(",")}]</span></span>`).join("")}
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+        <button onclick="parentCreateNewLesson(true)" class="kid-card py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow">🚀 Zapisz i udostępnij od razu synom</button>
+        <button onclick="parentCreateNewLesson(false)" class="kid-card py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-amber-950 font-extrabold rounded-xl text-xs shadow">🧪 Zapisz najpierw jako testową (tylko Tata)</button>
       </div>
     `;
   }
-
-  playEffect("success");
-  showParentMsg(`✨ Wygenerowano automatycznie ${generatedWords.length} słówek! Sprawdź podgląd i kliknij „Zapisz nową lekcję”.`);
+  showParentStatus(`✨ Gotowe! Wygenerowano ${finalWords.length} słówek. Kliknij zielony przycisk, aby od razu dodać lekcję dla chłopców.`);
 }
 
-function parentCreateNewLesson() {
-  const t = document.getElementById("newLessonTitle").value.trim();
-  const ic = document.getElementById("newLessonIcon").value.trim();
-  const text = document.getElementById("newLessonLines").value.trim();
-  if (!t || !text) return showParentMsg("Wpisz tytuł i kliknij „Wygeneruj lekcję automatycznie”!", true);
+function parentCreateNewLesson(publishImmediately = false) {
+  const titleEl = document.getElementById("newLessonTitle");
+  const iconEl = document.getElementById("newLessonIcon");
+  const descEl = document.getElementById("newLessonDesc");
+  const linesEl = document.getElementById("newLessonLines");
 
-  const lines = text.split("\n").filter(l => l.trim().length > 0);
-  const items = [];
-  lines.forEach(l => {
-    const p = l.split("-").map(x => x.trim());
-    if (p.length >= 2) {
-      const rawAge = p[3] || "4,6";
-      const ageArr = rawAge === "4" ? [4] : rawAge === "6" ? [6] : [4, 6];
-      items.push({ en: p[0], pl: p[1], icon: p[2] || "📝", age: ageArr, phonetic: p[4] || "" });
-    }
-  });
-  if (items.length === 0) return showParentMsg("Nie rozpoznałem słówek. Użyj generatora lub formatu: En - Pl - Ikona", true);
+  const title = (titleEl && titleEl.value.trim()) || "";
+  const icon = (iconEl && iconEl.value.trim()) || "📚✨";
+  const desc = (descEl && descEl.value.trim()) || "Własna lekcja utworzona przez Rodzica";
+  const items = parseLessonLinesText(linesEl ? linesEl.value : "");
 
-  const nid = "custom_" + Date.now();
-  state.lessons.push({
-    id: nid,
-    title: t,
-    subtitle: `${items.length} słówek • Dodano przez Rodzica`,
-    icon: ic || "📚✨",
-    color: "from-sky-400 to-indigo-500",
-    borderColor: "border-sky-400",
+  if (!title) {
+    showParentStatus("⚠️ Podaj tytuł nowej lekcji!", true);
+    return;
+  }
+  if (items.length === 0) {
+    showParentStatus("⚠️ Kliknij najpierw „Wygeneruj lekcję automatycznie” lub wpisz słówka!", true);
+    return;
+  }
+
+  const palettes = [
+    { color: "from-sky-400 to-indigo-600", borderColor: "border-sky-400" },
+    { color: "from-emerald-400 to-teal-600", borderColor: "border-emerald-400" },
+    { color: "from-amber-400 to-orange-500", borderColor: "border-amber-400" },
+    { color: "from-purple-400 to-pink-600", borderColor: "border-purple-400" }
+  ];
+  const pal = palettes[state.lessons.length % palettes.length];
+  const newId = "custom_" + Date.now();
+
+  const newLessonObj = {
+    id: newId,
+    title,
+    subtitle: desc.slice(0, 64),
+    icon,
+    color: pal.color,
+    borderColor: pal.borderColor,
     type: "vocab",
-    testOnly: true,
     items
-  });
+  };
+
+  if (publishImmediately) {
+    persistApprovedLessonIds([...(state.approvedLessonIds || []), newId]);
+  } else {
+    newLessonObj.testOnly = true;
+  }
+
+  state.lessons.push(newLessonObj);
   saveCloudData();
-  playEffect("success");
-  showParentMsg(`✓ Utworzono lekcję "${t}" (${items.length} słówek) w Centrum Testowym Taty!`);
-  document.getElementById("newLessonTitle").value = "";
-  document.getElementById("newLessonDesc").value = "";
-  document.getElementById("newLessonIcon").value = "";
-  document.getElementById("newLessonLines").value = "";
-  const pb = document.getElementById("generatedLessonPreviewBox");
-  if (pb) pb.classList.add("hidden");
+  refreshAllParentWidgets();
+
+  if (titleEl) titleEl.value = "";
+  if (iconEl) iconEl.value = "";
+  if (descEl) descEl.value = "";
+  if (linesEl) linesEl.value = "";
+  const previewBox = document.getElementById("generatedLessonPreviewBox");
+  if (previewBox) previewBox.classList.add("hidden");
+
+  if (state.profile && typeof showLessonMenu === "function") {
+    showLessonMenu();
+  }
+
+  if (publishImmediately) {
+    showParentStatus(`✅ Lekcja „${title}” (${items.length} słówek) została zapisana i jest już widoczna we wszystkich trybach dla Igora i Huberta!`);
+  } else {
+    showParentStatus(`🧪 Zapisano lekcję testową „${title}” (widoczna dla Taty). <button onclick="parentApproveTestLesson('${newId}')" class="ml-2 px-3 py-1 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow">🚀 Zatwierdź teraz dla chłopców</button>`);
+  }
 }
 
-// ------------------------------------------------------------------------
-// CENTRUM TESTOWE I PRZEGLĄD / EDYCJA LEKCJI
-// ------------------------------------------------------------------------
+function parentAutoSuggestSimpleWord() {
+  const existing = new Set();
+  state.lessons.forEach(l => (l.items || []).forEach(it => existing.add((it.en || "").toLowerCase())));
+  const unused = AUTO_SIMPLE_WORDS_POOL.filter(w => !existing.has(w.en.toLowerCase()));
+  const pool = unused.length > 0 ? unused : AUTO_SIMPLE_WORDS_POOL;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+
+  const sel = document.getElementById("parentSelectLesson");
+  const enEl = document.getElementById("parentWordEn");
+  const plEl = document.getElementById("parentWordPl");
+  const phEl = document.getElementById("parentWordPhonetic");
+  const icEl = document.getElementById("parentWordIcon");
+  const ageEl = document.getElementById("parentWordAge");
+
+  if (sel && pick.lessonId) sel.value = pick.lessonId;
+  if (enEl) enEl.value = pick.en;
+  if (plEl) plEl.value = pick.pl;
+  if (phEl) phEl.value = pick.phonetic || "";
+  if (icEl) icEl.value = pick.icon || "⭐";
+  if (ageEl) ageEl.value = Array.isArray(pick.age) ? pick.age.join(",") : "4,6";
+}
+
+function parentAddSingleWord() {
+  const sel = document.getElementById("parentSelectLesson");
+  const ageEl = document.getElementById("parentWordAge");
+  const enEl = document.getElementById("parentWordEn");
+  const plEl = document.getElementById("parentWordPl");
+  const phEl = document.getElementById("parentWordPhonetic");
+  const icEl = document.getElementById("parentWordIcon");
+
+  const lessonId = sel ? sel.value : "";
+  const en = (enEl && enEl.value.trim()) || "";
+  const pl = (plEl && plEl.value.trim()) || "";
+  const phonetic = (phEl && phEl.value.trim()) || "";
+  const icon = (icEl && icEl.value.trim()) || "⭐";
+  const age = parseAgeSpecToArray(ageEl ? ageEl.value : "4,6");
+
+  if (!en || !pl) {
+    showParentStatus("⚠️ Wpisz nazwę po angielsku oraz po polsku!", true);
+    return;
+  }
+  const lesson = state.lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+  if (!Array.isArray(lesson.items)) lesson.items = [];
+
+  lesson.items.push({ en, pl, phonetic, icon, age });
+  saveCloudData();
+  refreshAllParentWidgets();
+
+  if (enEl) enEl.value = "";
+  if (plEl) plEl.value = "";
+  if (phEl) phEl.value = "";
+  if (icEl) icEl.value = "";
+  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+  showParentStatus(`✅ Dodano słówko „${en} (${pl})” do lekcji „${lesson.title}”! Działa we wszystkich trybach (w tym 🎧 Ze słuchu).`);
+}
+
+function parentApproveTestLesson(lessonId) {
+  const lesson = state.lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+  delete lesson.testOnly;
+  persistApprovedLessonIds([...(state.approvedLessonIds || []), lessonId]);
+  saveCloudData();
+  refreshAllParentWidgets();
+  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+  showParentStatus(`✅ Lekcja „${lesson.title}” została zatwierdzona i jest już dostępna dla Igora i Huberta!`);
+}
+
 function parentToggleEqualizeLessonForIgor(lessonId) {
   if (!Array.isArray(state.equalizedLessonsForIgor)) state.equalizedLessonsForIgor = [];
-  const idx = state.equalizedLessonsForIgor.indexOf(lessonId);
-  if (idx >= 0) state.equalizedLessonsForIgor.splice(idx, 1);
-  else state.equalizedLessonsForIgor.push(lessonId);
+  if (state.equalizedLessonsForIgor.includes(lessonId)) {
+    state.equalizedLessonsForIgor = state.equalizedLessonsForIgor.filter(id => id !== lessonId);
+  } else {
+    state.equalizedLessonsForIgor.push(lessonId);
+  }
   saveCloudData();
   renderParentTestCenter();
   if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
-  const l = state.lessons.find(x => x.id === lessonId);
-  const active = state.equalizedLessonsForIgor.includes(lessonId);
-  showParentMsg(active ? `✓ Lekcja „${l ? l.title : lessonId}” dla Igorka ma teraz poziom Huberta!` : `✓ Przywrócono standardowy poziom (4 l.).`);
 }
 
 function renderParentTestCenter() {
   const box = document.getElementById("parentTestCenterBox");
+  const badge = document.getElementById("parentMenuPendingBadge");
+  const testLessons = state.lessons.filter(l => l.testOnly);
+  if (badge) badge.textContent = `${testLessons.length} oczekujących`;
   if (!box) return;
 
-  const testLessons = state.lessons.filter(l => l.testOnly);
-  const testWords = [];
-  state.lessons.forEach(l => {
-    if (!l.testOnly && Array.isArray(l.items)) {
-      l.items.forEach((it, idx) => {
-        if (it.testOnly) testWords.push({ lessonId: l.id, lessonTitle: l.title, wordIdx: idx, en: it.en, pl: it.pl, icon: it.icon || "📝" });
-      });
-    }
-  });
-
-  const totalPending = testLessons.length + testWords.length;
-  const eqList = Array.isArray(state.equalizedLessonsForIgor) ? state.equalizedLessonsForIgor : [];
-
-  const pendingListHtml = totalPending === 0
-    ? `<div class="text-xs font-bold text-teal-800 bg-white/80 p-3 rounded-2xl border border-teal-200">✓ Wszystkie lekcje i słówka są zatwierdzone dla Igora i Huberta!</div>`
-    : `<div class="space-y-1.5 mb-3 max-h-44 overflow-y-auto pr-1">
-        ${testLessons.map(l => `
-          <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-teal-300 text-xs font-bold">
-            <span>📚 Nowa lekcja: <strong>${l.title}</strong> (${l.items.length} słówek)</span>
-            <button onclick="parentDeleteTestLesson('${l.id}')" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[10px]">🗑️ Usuń</button>
-          </div>
-        `).join("")}
-        ${testWords.map(w => `
-          <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-teal-300 text-xs font-bold">
-            <span>${w.icon} Nowe słówko: <strong>${w.en}</strong> (${w.pl}) w „${w.lessonTitle}”</span>
-            <button onclick="parentDeleteTestWord('${w.lessonId}', ${w.wordIdx})" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[10px]">🗑️ Usuń</button>
-          </div>
-        `).join("")}
-      </div>
-      <button onclick="parentPublishAllTestItems()" class="kid-card w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-extrabold rounded-xl text-xs shadow">
-        ✅ Zatwierdź trwale lekcje i słówka (${totalPending}) dla Igora i Huberta
-      </button>`;
+  const eqSet = new Set(Array.isArray(state.equalizedLessonsForIgor) ? state.equalizedLessonsForIgor : []);
+  const regularLessons = state.lessons.filter(l => l.type !== "memory_game");
 
   box.innerHTML = `
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-      <h3 class="font-extrabold text-teal-950 text-base">🧪 Centrum Testowe Taty</h3>
-      <span class="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-950 font-extrabold text-xs">Oczekujące: ${totalPending}</span>
+    <h3 class="font-extrabold text-teal-950 text-lg mb-2">🧪 Centrum Testowe i Poziomy</h3>
+    <div class="mb-4">
+      <div class="text-xs font-extrabold text-teal-900 uppercase mb-1.5">Lekcje testowe (widoczne tylko na koncie Taty):</div>
+      ${testLessons.length === 0
+        ? `<div class="p-3 rounded-2xl bg-white border border-teal-200 text-xs font-bold text-slate-500">Brak oczekujących lekcji testowych – wszystkie lekcje są aktywne dla chłopców.</div>`
+        : `<div class="space-y-2">${testLessons.map(l => `
+            <div class="p-3 rounded-2xl bg-white border-2 border-amber-300 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div class="font-extrabold text-sm text-slate-900">${l.icon} ${l.title} (${(l.items || []).length} słówek)</div>
+                <div class="text-[11px] text-slate-500">${l.subtitle || ""}</div>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="parentApproveTestLesson('${l.id}')" class="kid-card px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs">✅ Zatwierdź dla synów</button>
+                <button onclick="parentDeleteLesson('${l.id}')" class="kid-card px-3 py-1.5 rounded-xl bg-rose-100 text-rose-800 font-bold text-xs">🗑️ Usuń</button>
+              </div>
+            </div>
+          `).join("")}</div>`}
     </div>
-    ${pendingListHtml}
-    <div class="mt-3 p-3 rounded-2xl bg-white border-2 border-indigo-200">
-      <div class="text-xs font-extrabold text-indigo-950 mb-1.5">👦➔🧑 Zrównanie poziomu wybranej lekcji Igorka z Hubertem (6 opcji i pełne słówka):</div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
-        ${state.lessons.map(l => {
-          const isEq = eqList.includes(l.id);
+    <div>
+      <div class="text-xs font-extrabold text-teal-900 uppercase mb-1.5">Zrównanie poziomu Igora (4 l.) do Huberta (6 l.) w wybranych lekcjach:</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        ${regularLessons.map(l => {
+          const isEq = eqSet.has(l.id);
           return `
-            <button onclick="parentToggleEqualizeLessonForIgor('${l.id}')" class="flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-left text-xs font-bold ${isEq ? 'bg-indigo-600 text-white border-indigo-800' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-indigo-50'}">
-              <span class="truncate pr-1">${l.title}</span>
-              <span class="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md ${isEq ? 'bg-white text-indigo-900 font-extrabold' : 'bg-slate-200 text-slate-600'}">${isEq ? 'Poziom Huberta ✓' : 'Standard (4 l.)'}</span>
-            </button>
+            <div class="p-2.5 rounded-2xl bg-white border border-teal-200 flex items-center justify-between gap-2">
+              <span class="text-xs font-extrabold text-slate-800 truncate">${l.icon} ${l.title}</span>
+              <button onclick="parentToggleEqualizeLessonForIgor('${l.id}')" class="px-2.5 py-1 rounded-xl font-extrabold text-[11px] shrink-0 ${isEq ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"}">
+                ${isEq ? "🧑 Poziom Huberta ✓" : "👦 Poziom Igora"}
+              </button>
+            </div>
           `;
         }).join("")}
       </div>
-    </div>
-    <div class="mt-3 pt-3 border-t border-teal-200 flex flex-wrap gap-2">
-      <button onclick="unlockAllForTataOnly()" class="kid-card py-2 px-3 bg-emerald-700 text-white font-bold rounded-xl text-xs">🔓 Odblokuj wszystko TYLKO u Taty</button>
-      <button onclick="parentGiveTestChest('tata','gold')" class="kid-card py-2 px-3 bg-amber-400 text-amber-950 font-bold rounded-xl text-xs">👑 Złota Skrzynia (Tata)</button>
-      <button onclick="parentResetWhatsNewGlow()" class="kid-card py-2 px-3 bg-rose-100 text-rose-900 border border-rose-300 font-bold rounded-xl text-xs">🔄 Zresetuj "Co nowego?"</button>
     </div>
   `;
 }
@@ -534,330 +725,257 @@ function renderParentTestCenter() {
 function renderParentLessonsManager() {
   const box = document.getElementById("parentLessonsManagerBox");
   if (!box) return;
-  const editableLessons = state.lessons.filter(l => Array.isArray(l.items) && l.items.length > 0);
-  if (!window._managedLessonId || !editableLessons.some(l => l.id === window._managedLessonId)) {
-    window._managedLessonId = editableLessons[0]?.id || "";
+  const manageable = state.lessons.filter(l => l.type !== "memory_game");
+  if (!_selectedManagerLessonId || !manageable.some(l => l.id === _selectedManagerLessonId)) {
+    _selectedManagerLessonId = manageable[0] ? manageable[0].id : null;
   }
-  const activeLesson = editableLessons.find(l => l.id === window._managedLessonId);
-  const isCustom = activeLesson && activeLesson.id.startsWith("custom_");
+  const current = manageable.find(l => l.id === _selectedManagerLessonId);
+  const isCustom = current && String(current.id).startsWith("custom_");
 
   box.innerHTML = `
-    <div class="space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <select onchange="window._managedLessonId=this.value; renderParentLessonsManager();" class="flex-1 p-2.5 rounded-xl border-2 border-purple-300 bg-white font-extrabold text-sm">
-          ${editableLessons.map(l => `<option value="${l.id}" ${l.id === window._managedLessonId ? "selected" : ""}>${l.title} (${l.items.length} słówek)</option>`).join("")}
-        </select>
-        ${isCustom ? `<button onclick="parentDeleteCustomLesson('${activeLesson.id}')" class="px-3.5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs">🗑️ Usuń całą lekcję</button>` : ""}
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
-        ${(activeLesson ? activeLesson.items : []).map((it, idx) => {
-          const ageArr = Array.isArray(it.age) ? it.age : [4, 6];
-          const ageLabel = ageArr.includes(4) && ageArr.includes(6) ? "4 i 6 lat" : ageArr.includes(4) ? "Tylko 4 l." : "Tylko 6 l.";
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <h3 class="font-extrabold text-purple-950 text-lg">🗂️ Przegląd i edycja lekcji</h3>
+      ${isCustom ? `<button onclick="parentDeleteLesson('${current.id}')" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs">🗑️ Usuń całą tę lekcję</button>` : ""}
+    </div>
+    <select onchange="_selectedManagerLessonId=this.value; renderParentLessonsManager();" class="w-full p-2.5 rounded-xl border-2 border-purple-300 bg-white font-extrabold text-sm mb-3">
+      ${manageable.map(l => `<option value="${l.id}" ${l.id === _selectedManagerLessonId ? "selected" : ""}>${l.title} (${(l.items || []).length} elem.)${l.testOnly ? " [TESTOWA]" : ""}</option>`).join("")}
+    </select>
+    ${current ? `
+      <div class="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+        ${(current.items || []).map((it, idx) => {
+          const ageLabel = Array.isArray(it.age) ? it.age.join(",") : "4,6";
           return `
-            <div class="p-2.5 rounded-2xl bg-white border border-purple-200 flex items-center justify-between gap-2 text-xs">
+            <div class="p-2 rounded-xl bg-white border border-purple-200 flex items-center justify-between gap-2 text-xs">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="text-2xl shrink-0">${it.icon || it.animal || "📘"}</span>
-                <div class="min-w-0">
-                  <div class="font-extrabold text-slate-900 truncate">${it.en}</div>
-                  <div class="text-slate-600 truncate">${it.pl}</div>
-                </div>
+                <span class="text-xl shrink-0">${it.icon || it.animal || "⭐"}</span>
+                <span class="font-extrabold text-slate-900 truncate">${it.en}</span>
+                <span class="text-slate-500 truncate">– ${it.pl}</span>
               </div>
-              <div class="flex items-center gap-1 shrink-0">
-                <button onclick="parentToggleWordAge('${activeLesson.id}', ${idx})" class="px-2 py-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-bold text-[10px]" title="Kliknij, aby zmienić grupę wiekową">${ageLabel}</button>
-                <button onclick="parentDeleteLessonWord('${activeLesson.id}', ${idx})" class="px-2 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-[10px]">✖</button>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="parentCycleWordAge('${current.id}', ${idx})" class="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-900 font-bold border border-indigo-200">Wiek: ${ageLabel}</button>
+                <button onclick="parentDeleteWordFromLesson('${current.id}', ${idx})" class="px-2 py-1 rounded-lg bg-rose-100 text-rose-800 font-bold">✖</button>
               </div>
             </div>
           `;
         }).join("")}
       </div>
+    ` : ""}
+  `;
+}
+
+function parentCycleWordAge(lessonId, idx) {
+  const lesson = state.lessons.find(l => l.id === lessonId);
+  if (!lesson || !lesson.items[idx]) return;
+  const cur = Array.isArray(lesson.items[idx].age) ? lesson.items[idx].age.join(",") : "4,6";
+  lesson.items[idx].age = cur === "4,6" ? [4] : (cur === "4" ? [6] : [4, 6]);
+  saveCloudData();
+  renderParentLessonsManager();
+}
+
+function parentDeleteWordFromLesson(lessonId, idx) {
+  const lesson = state.lessons.find(l => l.id === lessonId);
+  if (!lesson || !lesson.items[idx]) return;
+  if (lesson.items.length <= 1) {
+    showParentStatus("⚠️ W lekcji musi pozostać przynajmniej 1 słówko!", true);
+    return;
+  }
+  lesson.items.splice(idx, 1);
+  saveCloudData();
+  renderParentLessonsManager();
+}
+
+function parentDeleteLesson(lessonId) {
+  if (!confirm("Czy na pewno usunąć tę lekcję?")) return;
+  state.lessons = state.lessons.filter(l => l.id !== lessonId);
+  saveCloudData();
+  refreshAllParentWidgets();
+  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+  showParentStatus("🗑️ Usunięto lekcję.");
+}
+
+function renderParentHardWordsBox() {
+  const box = document.getElementById("parentHardWordsBox");
+  if (!box) return;
+  const renderCol = (key, label) => {
+    const list = (state.stats[key] && Array.isArray(state.stats[key].hardWords)) ? state.stats[key].hardWords : [];
+    return `
+      <div class="p-3 rounded-2xl bg-white border border-rose-200">
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-extrabold text-sm text-slate-900">${label} (${list.length})</span>
+          ${list.length > 0 ? `<button onclick="parentClearHardWords('${key}')" class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 font-bold text-xs">Wyczyść</button>` : ""}
+        </div>
+        ${list.length === 0
+          ? `<div class="text-xs text-slate-400">Brak trudnych słówek! 🎉</div>`
+          : `<div class="flex flex-wrap gap-1.5">${list.map(w => `<span class="px-2 py-1 rounded-lg bg-rose-50 border border-rose-200 text-xs font-bold">${w.icon || "⭐"} ${w.en} (${w.pl})</span>`).join("")}</div>`}
+      </div>
+    `;
+  };
+  box.innerHTML = `
+    <h3 class="font-extrabold text-rose-950 text-lg mb-3">🎯 Trudne słówka synów</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      ${renderCol("igor", "👦 Igor")}
+      ${renderCol("hubert", "🧑 Hubert")}
     </div>
   `;
 }
 
-function parentToggleWordAge(lessonId, wordIdx) {
-  const l = state.lessons.find(x => x.id === lessonId);
-  if (!l || !l.items[wordIdx]) return;
-  const cur = l.items[wordIdx].age || [4, 6];
-  if (cur.includes(4) && cur.includes(6)) l.items[wordIdx].age = [6];
-  else if (cur.includes(6)) l.items[wordIdx].age = [4];
-  else l.items[wordIdx].age = [4, 6];
-  saveCloudData();
-  renderParentLessonsManager();
-}
-
-function parentDeleteLessonWord(lessonId, wordIdx) {
-  const l = state.lessons.find(x => x.id === lessonId);
-  if (!l || !l.items[wordIdx] || l.items.length <= 1) return showParentMsg("Lekcja musi zawierać przynajmniej 1 słówko!", true);
-  if (!confirm(`Usunąć słówko "${l.items[wordIdx].en}"?`)) return;
-  l.items.splice(wordIdx, 1);
-  saveCloudData();
-  renderParentLessonsManager();
-  showParentMsg("✓ Usunięto słówko.");
-}
-
-function parentDeleteCustomLesson(lessonId) {
-  if (!confirm("Czy na pewno usunąć całą własną lekcję?")) return;
-  state.lessons = state.lessons.filter(l => l.id !== lessonId);
-  window._managedLessonId = "";
-  saveCloudData();
-  renderParentLessonsManager();
-  showParentMsg("✓ Usunięto lekcję.");
-}
-
-function renderParentHardWordsView() {
-  const box = document.getElementById("parentHardWordsBox");
-  if (!box) return;
-  const renderCol = (key, label, borderCls) => {
-    const list = (state.stats[key] && Array.isArray(state.stats[key].hardWords)) ? state.stats[key].hardWords : [];
-    return `
-      <div class="p-3 rounded-2xl bg-white border-2 ${borderCls} flex flex-col justify-between">
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <span class="font-extrabold text-sm text-slate-900">${label} (${list.length})</span>
-            ${list.length ? `<button onclick="parentClearHardWords('${key}')" class="px-2 py-1 rounded-lg bg-rose-100 text-rose-800 font-bold text-[10px]">Wyczyść</button>` : ""}
-          </div>
-          ${list.length === 0 ? `<p class="text-xs text-slate-500">Brak trudnych słówek – wszystko opanowane! 🎉</p>` : `<div class="space-y-1 max-h-56 overflow-y-auto">${list.map(w => `<div class="text-xs font-bold bg-slate-50 px-2.5 py-1.5 rounded-xl flex justify-between"><span>${w.icon || "⭐"} ${w.en}</span><span class="text-slate-500">${w.pl}</span></div>`).join("")}</div>`}
-        </div>
-      </div>
-    `;
-  };
-  box.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${renderCol("igor", "👦 IGOR", "border-amber-300")}${renderCol("hubert", "🧑 HUBERT", "border-sky-300")}</div>`;
-}
-
 function parentClearHardWords(profKey) {
-  if (!confirm("Wyczyścić listę trudnych słówek?")) return;
-  if (state.stats[profKey]) state.stats[profKey].hardWords = [];
+  if (!state.stats[profKey]) return;
+  state.stats[profKey].hardWords = [];
   saveCloudData();
-  renderParentHardWordsView();
-  showParentMsg("✓ Wyczyszczono listę trudnych słówek.");
+  renderParentHardWordsBox();
+  showParentStatus(`✅ Wyczyszczono listę trudnych słówek (${PROFILE_META[profKey].name}).`);
 }
 
-function parentResetWhatsNewGlow() {
-  if (!confirm("Zresetować powiadomienie 'Co nowego?' dla wszystkich profili?")) return;
-  ["igor", "hubert", "tata"].forEach(k => { if (state.stats[k]) state.stats[k].seenVersion = ""; });
+function renderRoundLengthButtons() {
+  const box = document.getElementById("roundLengthButtons");
+  if (!box) return;
+  const lengths = [5, 8, 10, 12, 15];
+  box.innerHTML = lengths.map(n => `
+    <button onclick="parentSetRoundLength(${n})" class="kid-card px-4 py-2 rounded-xl font-extrabold text-xs border-2 ${state.questionsPerRound === n ? "bg-amber-500 text-white border-amber-700" : "bg-white text-slate-800 border-slate-300"}">
+      ${n} pytań
+    </button>
+  `).join("");
+}
+
+function parentSetRoundLength(n) {
+  state.questionsPerRound = n;
   saveCloudData();
-  if (typeof updateWhatsNewButtonGlow === "function") updateWhatsNewButtonGlow();
-  showParentMsg("✓ Zresetowano okno 'Co nowego?'!");
-}
-
-function parentPublishAllTestItems() {
-  if (!confirm("Trwale zatwierdzić wszystkie lekcje i słówka dla Igora i Huberta?")) return;
-  let count = 0;
-  const approvedIds = new Set([...(state.approvedLessonIds || []), ...getStoredApprovedLessonIds()]);
-  state.lessons.forEach(l => {
-    if (l.testOnly) { delete l.testOnly; approvedIds.add(l.id); count++; }
-    if (Array.isArray(l.items)) {
-      l.items.forEach(it => {
-        if (it.testOnly) { delete it.testOnly; approvedIds.add(`${l.id}::${(it.en || "").toLowerCase()}`); count++; }
-      });
-    }
-  });
-  persistApprovedLessonIds(Array.from(approvedIds));
-  saveCloudData();
-  renderParentTestCenter();
-  if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
-  showParentMsg(`✓ Trwale zatwierdzono ${count} nowości dla Igora i Huberta!`);
-}
-
-function parentDeleteTestLesson(lessonId) {
-  if (!confirm("Usunąć tę testową lekcję?")) return;
-  state.lessons = state.lessons.filter(l => l.id !== lessonId);
-  saveCloudData(); renderParentTestCenter();
-  showParentMsg("✓ Usunięto testową lekcję.");
-}
-
-function parentDeleteTestWord(lessonId, wordIdx) {
-  if (!confirm("Usunąć to testowe słówko?")) return;
-  const l = state.lessons.find(x => x.id === lessonId);
-  if (l && l.items[wordIdx]) l.items.splice(wordIdx, 1);
-  saveCloudData(); renderParentTestCenter();
-  showParentMsg("✓ Usunięto testowe słówko.");
-}
-
-function unlockAllForTataOnly() {
-  if (!confirm("Odblokować wszystkie 131 ubrań, 50 zwierzaków i Spiżarnię na koncie TATA?")) return;
-  state.stats.tata = ensurePlayerStructure(state.stats.tata);
-  state.stats.tata.unlockedItems = getAll131OutfitsFlat().map(o => o.src);
-  state.stats.tata.memoryAnimals = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(a => a.id);
-  if (typeof PET_FOOD_POOL !== "undefined") PET_FOOD_POOL.forEach(f => { state.stats.tata.petFood[f.id] = 3; });
-  saveCloudData();
-  showParentMsg("✓ Odblokowano wszystko na profilu TATA!");
-}
-
-function parentExportBackupJson() {
-  const backupObj = {
-    version: CURRENT_GAME_VERSION, exportedAt: new Date().toISOString(), stats: state.stats,
-    calibration: state.calibration, questionsPerRound: state.questionsPerRound,
-    approvedLessonIds: state.approvedLessonIds, equalizedLessonsForIgor: state.equalizedLessonsForIgor, lessons: state.lessons
-  };
-  const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = `akademia_kopia_v${CURRENT_GAME_VERSION}_${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showParentMsg("✓ Pobrano plik kopii zapasowej (.json)!");
-}
-
-function parentImportBackupJson(input) {
-  if (!input.files || input.files.length === 0) return;
-  if (!confirm("Wczytać kopię zapasową z pliku (.json)?")) { input.value = ""; return; }
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const parsed = JSON.parse(e.target.result);
-      if (!parsed || !parsed.stats) throw new Error("Nieprawidłowy plik");
-      state.stats.igor = mergePlayerProgressSafe(state.stats.igor, parsed.stats.igor);
-      state.stats.hubert = mergePlayerProgressSafe(state.stats.hubert, parsed.stats.hubert);
-      state.stats.tata = mergePlayerProgressSafe(state.stats.tata, parsed.stats.tata);
-      state.stats.stickers = Array.from(new Set([...(state.stats.stickers || []), ...(parsed.stats.stickers || [])]));
-      if (Array.isArray(parsed.approvedLessonIds)) persistApprovedLessonIds([...state.approvedLessonIds, ...parsed.approvedLessonIds]);
-      if (Array.isArray(parsed.equalizedLessonsForIgor)) state.equalizedLessonsForIgor = Array.from(new Set([...state.equalizedLessonsForIgor, ...parsed.equalizedLessonsForIgor]));
-      if (parsed.calibration) state.calibration = mergeCalibrationWithDefaults(parsed.calibration);
-      if (parsed.questionsPerRound) state.questionsPerRound = parseInt(parsed.questionsPerRound) || 8;
-      if (Array.isArray(parsed.lessons) && parsed.lessons.length) state.lessons = parsed.lessons;
-      applyApprovedLessonsPersistence(state.lessons);
-      normalizePancakesIconsInLessons(state.lessons);
-      saveCloudData();
-      if (typeof updateHeaderUI === "function") updateHeaderUI();
-      showParentMsg("✓ Pomyślnie wczytano kopię zapasową!");
-    } catch (err) {
-      showParentMsg("❌ Błąd wczytywania pliku JSON!", true);
-    }
-    input.value = "";
-  };
-  reader.readAsText(input.files[0]);
-}
-
-function parentSetQuestionsPerRound(v) {
-  state.questionsPerRound = v; saveCloudData();
-  const lenBox = document.getElementById("roundLengthButtons");
-  if (lenBox) {
-    lenBox.innerHTML = [5, 8, 10, 15, 20].map(val => `
-      <button onclick="parentSetQuestionsPerRound(${val})" class="px-3.5 py-2 rounded-xl text-xs font-extrabold border-2 ${state.questionsPerRound === val ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white text-slate-700 border-slate-300'}">${val} pytań</button>
-    `).join("");
-  }
-  showParentMsg(`✓ Ustawiono długość rundy: ${v} pytań`);
-}
-
-function parentAutoSuggestSimpleWord() {
-  const selectedLessonId = document.getElementById("parentSelectLesson")?.value || "";
-  const existingWords = new Set();
-  state.lessons.forEach(l => (l.items || []).forEach(it => existingWords.add((it.en || "").toLowerCase())));
-  const pool = typeof AUTO_SIMPLE_WORDS_POOL !== "undefined" ? AUTO_SIMPLE_WORDS_POOL : [];
-  let candidates = pool.filter(w => !existingWords.has(w.en.toLowerCase()) && w.lessonId === selectedLessonId);
-  if (candidates.length === 0) candidates = pool.filter(w => !existingWords.has(w.en.toLowerCase()));
-  if (candidates.length === 0) return showParentMsg("Wszystkie proponowane słówka z puli zostały już dodane!", true);
-
-  const picked = candidates[Math.floor(Math.random() * candidates.length)];
-  const selEl = document.getElementById("parentSelectLesson");
-  if (selEl && Array.from(selEl.options).some(o => o.value === picked.lessonId)) selEl.value = picked.lessonId;
-  document.getElementById("parentWordEn").value = picked.en;
-  document.getElementById("parentWordPl").value = picked.pl;
-  document.getElementById("parentWordPhonetic").value = picked.phonetic || "";
-  document.getElementById("parentWordIcon").value = picked.icon || "⭐";
-  document.getElementById("parentWordAge").value = "4,6";
-  playEffect("beep");
-  showParentMsg(`✨ Dobrałem słówko: ${picked.icon} ${picked.en} (${picked.pl}). Kliknij „Zapisz słówko”!`)
-}
-
-function parentAddSingleWord() {
-  const lid = document.getElementById("parentSelectLesson").value;
-  const en = document.getElementById("parentWordEn").value.trim();
-  const pl = document.getElementById("parentWordPl").value.trim();
-  const ph = document.getElementById("parentWordPhonetic").value.trim();
-  const ic = document.getElementById("parentWordIcon").value.trim();
-  const age = document.getElementById("parentWordAge").value;
-  if (!en || !pl) return showParentMsg("Wypełnij Angielski i Polski!", true);
-  const lesson = state.lessons.find(l => l.id === lid);
-  if (!lesson) return;
-  lesson.items.push({ en, pl, phonetic: ph, icon: ic || "📝", age: age.includes(",") ? [4, 6] : [parseInt(age)], testOnly: true });
-  saveCloudData();
-  showParentMsg(`✓ Dodano słówko "${en}" do lekcji "${lesson.title}" (Centrum Testowe)!`);
-  document.getElementById("parentWordEn").value = ""; document.getElementById("parentWordPl").value = "";
-  document.getElementById("parentWordPhonetic").value = ""; document.getElementById("parentWordIcon").value = "";
-}
-
-function parentScanWorksheetAI(input) {
-  if (!input.files || input.files.length === 0) return;
-  const key = document.getElementById("parentGeminiKey").value.trim();
-  if (!key) return showParentMsg("Wpisz klucz API Gemini, aby użyć skanera!", true);
-  try { localStorage.setItem("akademia_gemini_key", key); } catch (e) {}
-  const age = document.getElementById("parentAiTargetAge").value;
-  showParentMsg("Wysyłam zdjęcie do Gemini AI...", false);
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const base64 = e.target.result.split(',')[1];
-    try {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `Przeanalizuj zdjęcie karty pracy z angielskiego. Wyodrębnij maks. 15 słówek dla dzieci (${age}). Zwróć TYLKO tekst: SłowoEn - TłumaczeniePl - Emoji - 4,6` }, { inline_data: { mime_type: input.files[0].type, data: base64 } }] }]
-        })
-      });
-      const data = await resp.json();
-      const raw = data.candidates[0].content.parts[0].text.trim();
-      openParentSection("new_lesson");
-      document.getElementById("newLessonLines").value = raw;
-      if (!document.getElementById("newLessonTitle").value) document.getElementById("newLessonTitle").value = "Lekcja z karty (" + new Date().toLocaleDateString() + ")";
-      showParentMsg("✓ Słówka rozpoznane! Przeniesiono do kreatora nowej lekcji.");
-    } catch (err) {
-      showParentMsg("Błąd połączenia z AI. Sprawdź klucz.", true);
-    }
-    input.value = "";
-  };
-  reader.readAsDataURL(input.files[0]);
+  renderRoundLengthButtons();
+  showParentStatus(`✅ Ustawiono długość rundy: ${n} pytań.`);
 }
 
 function parentGiveTestChest(profKey, tier) {
-  const kidName = profKey === "hubert" ? "Huberta" : profKey === "tata" ? "Taty" : "Igora";
-  const tierName = tier === "gold" ? "Złotą" : tier === "silver" ? "Srebrną" : "Brązową";
-  if (profKey === "igor" || profKey === "hubert") {
-    const p = ensurePlayerStructure(state.stats[profKey]);
-    if (!Array.isArray(p.pendingChests)) p.pendingChests = [];
-    p.pendingChests.push({ tier, reason: "Prezent od Taty!", addedAt: new Date().toISOString() });
-    state.stats[profKey] = p; saveCloudData();
-    showParentMsg(`✓ Wysłano ${tierName} skrzynię do kolejki gracza ${kidName}!`);
-    if (state.profile === profKey) { closeParentDashboard(); checkPendingDadChestsForPlayer(profKey); }
+  if (!state.stats[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  p.pendingChests.push({ tier, reason: "Specjalna skrzynia od Taty! 🎁", date: new Date().toISOString() });
+  state.stats[profKey] = p;
+  saveCloudData();
+  const names = { bronze: "Brązową", silver: "Srebrną", gold: "Złotą" };
+  showParentStatus(`🎁 Wysłano ${names[tier] || ""} Skrzynię do ${PROFILE_META[profKey].name}! Otworzy ją po wejściu na swój profil.`);
+}
+
+function parentScanWorksheetAI(inputEl) {
+  const file = inputEl && inputEl.files && inputEl.files[0];
+  if (!file) return;
+  let apiKey = "";
+  try { apiKey = (document.getElementById("parentGeminiKey")?.value || localStorage.getItem("akademia_gemini_key") || "").trim(); } catch (e) {}
+  if (!apiKey) {
+    showParentStatus("⚠️ Wklej najpierw swój klucz Gemini API!", true);
     return;
   }
-  closeParentDashboard();
-  renderChestOpeningInsidePopup(profKey, tier, `🛠️ Testowa Skrzynia (${tierName} - ${kidName})`);
+  const targetAge = document.getElementById("parentAiTargetAge")?.value || "4 i 6 lat";
+  showParentStatus("⏳ Analizuję zdjęcie karty pracy przez Gemini AI...");
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const base64Data = String(reader.result || "").split(",")[1];
+    const prompt = `Wyciągnij słówka angielskie ze zdjęcia karty pracy dla dziecka (${targetAge}). Zwróć wyłącznie linie w formacie: Angielski - Polski - Emoji - 4,6 (bez nagłówków i markdown).`;
+    fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: file.type || "image/jpeg", data: base64Data } }
+          ]
+        }]
+      })
+    })
+      .then(r => r.json())
+      .then(data => {
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (!text.trim()) {
+          showParentStatus("❌ Nie udało się odczytać słówek ze zdjęcia.", true);
+          return;
+        }
+        openParentSection("new_lesson");
+        const titleEl = document.getElementById("newLessonTitle");
+        const linesEl = document.getElementById("newLessonLines");
+        if (titleEl && !titleEl.value.trim()) titleEl.value = `${state.lessons.length + 1}. Karta pracy ze zdjęcia`;
+        if (linesEl) linesEl.value = text.trim();
+        showParentStatus("✅ Słówka odczytane ze zdjęcia! Sprawdź listę i zapisz lekcję.");
+      })
+      .catch(() => showParentStatus("❌ Błąd połączenia z Gemini API.", true));
+  };
+  reader.readAsDataURL(file);
 }
 
-function unlockAllOutfitsForTesting() {
-  if (!confirm("Odblokować wszystkie 131 przebrań i 50 zwierzaków u WSZYSTKICH graczy?")) return;
-  ["igor", "hubert", "tata"].forEach(p => {
-    state.stats[p] = ensurePlayerStructure(state.stats[p]);
-    state.stats[p].unlockedItems = getAll131OutfitsFlat().map(o => o.src);
-    state.stats[p].memoryAnimals = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(a => a.id);
-  });
-  saveCloudData();
-  showParentMsg("✓ Odblokowano 131 przebrań i 50 zwierzaków u wszystkich!");
+function parentExportBackupJson() {
+  const payload = {
+    version: CURRENT_GAME_VERSION,
+    exportedAt: new Date().toISOString(),
+    stats: state.stats,
+    lessons: state.lessons,
+    questionsPerRound: state.questionsPerRound,
+    calibration: state.calibration
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `akademia_angielskiego_backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showParentStatus("⬇️ Pobrano plik kopii zapasowej (.json).");
 }
 
-function lockAllOutfitsAfterTesting() {
-  if (!confirm("Zablokować ubrania i zwierzaki u wszystkich graczy?")) return;
-  ["igor", "hubert", "tata"].forEach(p => {
-    state.stats[p] = ensurePlayerStructure(state.stats[p]);
-    state.stats[p].unlockedItems = []; state.stats[p].memoryAnimals = [];
-    state.stats[p].avatar = { head: "", torso: "", legs: "", pet: "" };
-  });
-  saveCloudData();
-  showParentMsg("✓ Zablokowano ubrania i zwierzaki.");
+function parentImportBackupJson(inputEl) {
+  const file = inputEl && inputEl.files && inputEl.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(String(reader.result || "{}"));
+      if (parsed.stats) {
+        state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
+        state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
+        state.stats.tata = ensurePlayerStructure(parsed.stats.tata);
+        if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
+      }
+      if (Array.isArray(parsed.lessons)) state.lessons = parsed.lessons;
+      if (parsed.questionsPerRound) state.questionsPerRound = parsed.questionsPerRound;
+      if (parsed.calibration) state.calibration = mergeCalibrationWithDefaults(parsed.calibration);
+      saveCloudData();
+      refreshAllParentWidgets();
+      showParentStatus("⬆️ Wczytano kopię zapasową i zapisano w chmurze!");
+    } catch (e) {
+      showParentStatus("❌ Nieprawidłowy plik kopii zapasowej JSON.", true);
+    }
+  };
+  reader.readAsText(file);
 }
 
 function resetEverythingAll() {
-  if (confirm("⚠️ OSTRZEŻENIE: Usunąć WSZYSTKIE postępy obu chłopców oraz Taty?") && confirm("Tej operacji nie można cofnąć! Kontynuować?")) {
-    state.stats = { igor: createDefaultPlayerStats(), hubert: createDefaultPlayerStats(), tata: createDefaultPlayerStats(), stickers: [] };
-    saveCloudData(); location.reload();
-  }
+  if (!confirm("⚠️ UWAGA! Czy na pewno zresetować wszystkie postępy, gwiazdki, ubrania i własne lekcje?")) return;
+  localStorage.removeItem("akademia_save_v14");
+  localStorage.removeItem("akademia_save_v12");
+  localStorage.removeItem("akademia_save_v10");
+  localStorage.removeItem("akademia_approved_lessons_v1");
+  state.lessons = JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE));
+  state.approvedLessonIds = [];
+  state.equalizedLessonsForIgor = [];
+  state.stats = {
+    igor: createDefaultPlayerStats(),
+    hubert: createDefaultPlayerStats(),
+    tata: createDefaultPlayerStats(),
+    stickers: []
+  };
+  saveCloudData();
+  closeParentDashboard();
+  showStartScreen();
 }
-
-function openGuideModal() { const m = document.getElementById("guideModal"); if (m) { m.classList.remove("hidden"); m.classList.add("flex"); } }
-function closeGuideModal() { const m = document.getElementById("guideModal"); if (m) { m.classList.add("hidden"); m.classList.remove("flex"); } }
 
 window.addEventListener("DOMContentLoaded", () => {
   syncVersionLabelsInDom();
-  loadCloudData();
+  const pinInput = document.getElementById("pinInputField");
+  if (pinInput) {
+    pinInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") verifyParentPinAndProceed();
+    });
+  }
+  if (typeof loadCloudData === "function") {
+    loadCloudData();
+  }
 });

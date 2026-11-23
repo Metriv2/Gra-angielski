@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/06-menu-modes.js
-   EKRAN STARTOWY, MENU LEKCJI, PYTANIA ZE SŁUCHU (PL->EN) I START TRYBÓW
+   EKRAN STARTOWY, MENU LEKCJI, KOŁO FORTUNY (10-200 ⭐), PYTANIA ZE SŁUCHU I TRYBY
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -234,6 +234,197 @@ function claimDailyQuestReward() {
   speakSequence([{ lang: "pl", text: `Brawo! Zadanie Dnia wykonane! Otrzymujesz trzydzieści dodatkowych gwiazdek!` }]);
 }
 
+// ------------------------------------------------------------------------
+// KOŁO FORTUNY (DARMOWE GWIAZDKI RAZ DZIENNIE: 10, 20, 50, 70, 100, 150, 200)
+// ------------------------------------------------------------------------
+const FORTUNE_WHEEL_PRIZES = [
+  { stars: 10,  color: "#38bdf8", text: "#0f172a" },
+  { stars: 50,  color: "#f59e0b", text: "#0f172a" },
+  { stars: 20,  color: "#34d399", text: "#0f172a" },
+  { stars: 100, color: "#a855f7", text: "#ffffff" },
+  { stars: 70,  color: "#fb7185", text: "#ffffff" },
+  { stars: 150, color: "#f97316", text: "#ffffff" },
+  { stars: 200, color: "#eab308", text: "#0f172a" }
+];
+
+window._wheelSpinning = false;
+window._wheelCurrentDeg = 0;
+
+function buildFortuneWheelSvg() {
+  const n = FORTUNE_WHEEL_PRIZES.length;
+  const sliceDeg = 360 / n;
+  const cx = 160, cy = 160, r = 152;
+  let paths = "";
+
+  FORTUNE_WHEEL_PRIZES.forEach((seg, i) => {
+    const startDeg = i * sliceDeg - 90;
+    const endDeg = (i + 1) * sliceDeg - 90;
+    const rad1 = (startDeg * Math.PI) / 180;
+    const rad2 = (endDeg * Math.PI) / 180;
+    const x1 = cx + r * Math.cos(rad1);
+    const y1 = cy + r * Math.sin(rad1);
+    const x2 = cx + r * Math.cos(rad2);
+    const y2 = cy + r * Math.sin(rad2);
+
+    const midDeg = (i + 0.5) * sliceDeg;
+    const midRad = ((midDeg - 90) * Math.PI) / 180;
+    const tx = cx + (r * 0.64) * Math.cos(midRad);
+    const ty = cy + (r * 0.64) * Math.sin(midRad);
+
+    paths += `
+      <path d="M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z"
+            fill="${seg.color}" stroke="#ffffff" stroke-width="3" />
+      <g transform="translate(${tx.toFixed(1)}, ${ty.toFixed(1)}) rotate(${midDeg.toFixed(1)})">
+        <text x="0" y="-4" text-anchor="middle" dominant-baseline="middle"
+              font-family="Fredoka, sans-serif" font-size="22" font-weight="900" fill="${seg.text}">${seg.stars}</text>
+        <text x="0" y="16" text-anchor="middle" dominant-baseline="middle"
+              font-size="16">⭐</text>
+      </g>
+    `;
+  });
+
+  return `
+    <svg viewBox="0 0 320 320" class="w-full h-full drop-shadow-xl">
+      <circle cx="${cx}" cy="${cy}" r="157" fill="#1e293b" />
+      ${paths}
+      <circle cx="${cx}" cy="${cy}" r="28" fill="#ffffff" stroke="#f59e0b" stroke-width="5" />
+      <text x="${cx}" y="${cy + 2}" text-anchor="middle" dominant-baseline="middle" font-size="22">🦉</text>
+    </svg>
+  `;
+}
+
+function openFortuneWheelModal() {
+  if (!state.profile || state.profile === "duel") return;
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  const canSpin = typeof canSpinFortuneWheelToday === "function" ? canSpinFortuneWheelToday(profKey) : true;
+  const playerName = PROFILE_META[profKey] ? PROFILE_META[profKey].name : "GRACZ";
+
+  let modal = document.getElementById("fortuneWheelModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "fortuneWheelModal";
+    document.body.appendChild(modal);
+  }
+  window._wheelSpinning = false;
+
+  modal.className = "fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3";
+  modal.innerHTML = `
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 md:p-6 border-4 border-amber-400 shadow-2xl text-center relative">
+      <button onclick="closeFortuneWheelModal()" class="absolute top-3 right-3 text-xl bg-slate-100 hover:bg-slate-200 w-9 h-9 rounded-full font-bold text-slate-600">✖</button>
+      <div class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold text-xs mb-1">
+        🎡 Codzienna Nagroda • ${playerName} ${profKey === "tata" ? "(🧪 Tryb Testowy)" : "(1x dziennie)"}
+      </div>
+      <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1">Koło Fortuny Gwiazdek!</h2>
+      <p class="text-xs font-bold text-slate-600 mb-3">Do wygrania: <strong>10, 20, 50, 70, 100, 150 lub 200 ⭐</strong>!</p>
+
+      <div class="relative w-64 h-64 sm:w-72 sm:h-72 mx-auto my-2 flex items-center justify-center">
+        <div class="absolute -top-3 z-20 text-4xl drop-shadow-md select-none" style="color:#dc2626;">▼</div>
+        <div id="fortuneWheelSpinner" class="w-full h-full" style="transform: rotate(${window._wheelCurrentDeg}deg); transition: transform 4.2s cubic-bezier(0.15, 0.85, 0.25, 1);">
+          ${buildFortuneWheelSvg()}
+        </div>
+      </div>
+
+      <div id="fortuneWheelResultBox" class="min-h-[44px] my-2 flex items-center justify-center font-extrabold text-sm md:text-base text-amber-950">
+        ${canSpin
+          ? "Kliknij przycisk poniżej i zakręć kołem!"
+          : "✅ Dzisiejsze darmowe kręcenie zostało już wykorzystane! Wróć jutro po kolejne gwiazdki!"}
+      </div>
+
+      <button id="btnSpinWheel" onclick="spinFortuneWheel()" ${canSpin ? "" : "disabled"}
+        class="kid-card w-full py-3.5 rounded-2xl font-extrabold text-lg shadow-lg ${
+          canSpin
+            ? "bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:brightness-105 text-white"
+            : "bg-slate-200 text-slate-500 cursor-not-allowed"
+        }">
+        ${canSpin ? "🎡 ZAKRĘĆ KOŁEM! ⭐" : "⏳ Wróć jutro po nowe kręcenie"}
+      </button>
+    </div>
+  `;
+
+  if (canSpin) {
+    speakSequence([{ lang: "pl", text: `Witaj ${playerName} w Kole Fortuny! Zakręć kołem i wylosuj od dziesięciu aż do dwustu darmowych złotych gwiazdek!` }]);
+  }
+}
+
+function closeFortuneWheelModal() {
+  if (window._wheelSpinning) return;
+  const modal = document.getElementById("fortuneWheelModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+  if (state.profile && typeof showLessonMenu === "function") {
+    showLessonMenu();
+  }
+}
+
+function spinFortuneWheel() {
+  if (window._wheelSpinning) return;
+  const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
+  const canSpin = typeof canSpinFortuneWheelToday === "function" ? canSpinFortuneWheelToday(profKey) : true;
+  if (!canSpin) return;
+
+  window._wheelSpinning = true;
+  playEffect("beep");
+
+  const btn = document.getElementById("btnSpinWheel");
+  const resBox = document.getElementById("fortuneWheelResultBox");
+  const spinner = document.getElementById("fortuneWheelSpinner");
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "🎡 Koło się kręci...";
+  }
+  if (resBox) {
+    resBox.innerHTML = `<span class="text-indigo-700 animate-pulse">🍀 Trzymamy kciuki za dużą wygraną!</span>`;
+  }
+
+  const n = FORTUNE_WHEEL_PRIZES.length;
+  const sliceDeg = 360 / n;
+  const winIdx = Math.floor(Math.random() * n);
+  const prizeStars = FORTUNE_WHEEL_PRIZES[winIdx].stars;
+
+  const centerAngle = (winIdx + 0.5) * sliceDeg;
+  const jitter = (Math.random() - 0.5) * (sliceDeg * 0.45);
+  const targetMod = (360 - centerAngle + jitter + 360) % 360;
+  const currentMod = ((window._wheelCurrentDeg % 360) + 360) % 360;
+  const delta = (targetMod - currentMod + 360) % 360;
+  window._wheelCurrentDeg += 6 * 360 + delta;
+
+  if (spinner) {
+    spinner.style.transform = `rotate(${window._wheelCurrentDeg}deg)`;
+  }
+
+  if (typeof markFortuneWheelSpunToday === "function") {
+    markFortuneWheelSpunToday(profKey);
+  }
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  p.stars = (p.stars || 0) + prizeStars;
+  state.stats[profKey] = p;
+  advanceDailyQuestProgress(profKey, "stars", prizeStars);
+  saveCloudData();
+
+  setTimeout(() => {
+    window._wheelSpinning = false;
+    playEffect("fanfare");
+    if (typeof updateHeaderUI === "function") updateHeaderUI();
+    if (resBox) {
+      resBox.innerHTML = `<div class="p-2.5 rounded-2xl bg-emerald-100 border-2 border-emerald-400 text-emerald-950 w-full pop-correct">🎉 BRAWO! Wylosowano <strong>+${prizeStars} ⭐</strong>!</div>`;
+    }
+    if (btn) {
+      if (profKey === "tata") {
+        btn.disabled = false;
+        btn.textContent = "🔄 Zakręć ponownie (Test Taty)";
+      } else {
+        btn.disabled = true;
+        btn.className = "w-full py-3.5 rounded-2xl font-extrabold text-base bg-emerald-600 text-white shadow";
+        btn.textContent = `✅ Dodano +${prizeStars} ⭐! Kolejne kręcenie jutro`;
+      }
+    }
+    speakSequence([{ lang: "pl", text: `Hurra! Wylosowałeś ${prizeStars} złotych gwiazdek! Gwiazdki zostały dodane do Twojego konta!` }]);
+  }, 4300);
+}
+
 function updateHeaderUI() {
   syncVersionLabelsInDom();
   const badge = document.getElementById("activeProfileBadge");
@@ -403,6 +594,15 @@ function showLessonMenu() {
     hardWordsBtnHtml = `<button onclick="startHardWordsTraining()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-extrabold text-xs md:text-sm shadow-lg flex items-center gap-2 border-2 border-rose-300"><span>🎯🔥</span> Trudne Słówka (${hardList.length}) • 2x ⭐!</button>`;
   }
 
+  const canSpinWheel = state.profile !== "duel" && (typeof canSpinFortuneWheelToday === "function" ? canSpinFortuneWheelToday(pKey) : true);
+  const fortuneWheelBtnHtml = state.profile !== "duel"
+    ? `<button id="menuFortuneWheelBtn" onclick="openFortuneWheelModal()" class="kid-card px-4 py-2.5 rounded-2xl ${canSpinWheel ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-500 text-slate-950 border-amber-600 tutorial-highlight' : 'bg-amber-50 text-amber-900 border-amber-300'} border-3 font-extrabold text-xs md:text-sm shadow-md flex items-center gap-2">
+         <span class="text-lg">🎡</span>
+         <span>Koło Fortuny</span>
+         <span class="px-2 py-0.5 rounded-lg ${canSpinWheel ? 'bg-white text-amber-950' : 'bg-emerald-100 text-emerald-800'} text-[10px]">${canSpinWheel ? '🎁 Darmowe ⭐!' : '✓ Zakręcono'}</span>
+       </button>`
+    : "";
+
   const whatsNewGlow = shouldGlowWhatsNew() ? "tutorial-highlight" : "";
   const whatsNewBtnMenu = state.profile !== "duel"
     ? `<button id="menuWhatsNewBtn" onclick="openWhatsNewModal(true)" class="kid-card px-4 py-2.5 rounded-2xl bg-rose-100 border-3 border-rose-400 text-rose-900 font-extrabold text-sm flex items-center gap-2 shadow-sm ${whatsNewGlow}"><span>🆕🦉</span> Co nowego w Wersji ${CURRENT_GAME_VERSION}?</button>`
@@ -472,6 +672,7 @@ function showLessonMenu() {
     <div class="bg-white/95 rounded-3xl shadow-xl border-4 border-sky-200 p-4 md:p-6">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
         <div class="flex flex-wrap gap-2 items-center">
+          ${fortuneWheelBtnHtml}
           <button onclick="startKidVoiceTour()" class="kid-card px-4 py-2.5 rounded-2xl bg-amber-100 border-3 border-amber-400 text-amber-950 font-extrabold text-sm flex items-center gap-2 shadow-sm"><span class="text-xl">🦉🔊</span> Posłuchaj Sówki</button>
           ${whatsNewBtnMenu}
           ${tataSimSwitchHtml}

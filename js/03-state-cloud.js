@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/03-state-cloud.js
-   STAN GRY, KOŁO FORTUNY (1x DZIENNIE), URODZINY, KOLEJKA SKRZYŃ I SYNCHRONIZACJA GAS
+   STAN GRY, KOŁO FORTUNY (TESTOWE U TATY -> ZATWIERDZANE DLA SYNÓW) I CHMURA GAS
    ============================================================================ */
 
 const PROFILE_META = {
@@ -112,20 +112,45 @@ function recordDailySpecialChestAwarded(mode) {
   saveCloudData();
 }
 
-function canSpinFortuneWheelToday(profKey) {
+function hasSpunFortuneWheelToday(profKey) {
   if (!PROFILE_META[profKey]) return false;
-  if (profKey === "tata") return true;
   const p = ensurePlayerStructure(state.stats[profKey]);
   state.stats[profKey] = p;
   const today = new Date().toISOString().slice(0, 10);
-  return p.lastWheelSpinDate !== today;
+  return p.lastWheelSpinDate === today;
+}
+
+function canSpinFortuneWheelToday(profKey) {
+  if (!PROFILE_META[profKey]) return false;
+  if (profKey === "tata") return true;
+  return !hasSpunFortuneWheelToday(profKey);
 }
 
 function markFortuneWheelSpunToday(profKey) {
-  if (!PROFILE_META[profKey] || profKey === "tata") return;
+  if (!PROFILE_META[profKey]) return;
   const p = ensurePlayerStructure(state.stats[profKey]);
   p.lastWheelSpinDate = new Date().toISOString().slice(0, 10);
   state.stats[profKey] = p;
+}
+
+function getStoredFortuneWheelPublished() {
+  try {
+    return localStorage.getItem("akademia_fw_published_v1") === "true";
+  } catch (e) {
+    return false;
+  }
+}
+
+function isFortuneWheelPublishedForKids() {
+  return Boolean(state.fortuneWheelPublishedForKids || (state.stats && state.stats.fortuneWheelPublishedForKids) || getStoredFortuneWheelPublished());
+}
+
+function setFortuneWheelPublishedForKids(published) {
+  const val = Boolean(published);
+  state.fortuneWheelPublishedForKids = val;
+  state.stats.fortuneWheelPublishedForKids = val;
+  try { localStorage.setItem("akademia_fw_published_v1", val ? "true" : "false"); } catch (e) {}
+  saveCloudData();
 }
 
 const DEFAULT_AVATAR_CALIBRATION = {
@@ -323,6 +348,7 @@ var state = {
   dragonBattle: { dragonHp: 10, maxDragonHp: 10, teamHp: 4, maxTeamHp: 4, statusText: "", animClass: "" },
   selectedStickerCat: "all", selectedBadgeCat: "all", selectedWardrobeTier: "all", rewardQueue: [],
   featuresPublishedForKids: true,
+  fortuneWheelPublishedForKids: getStoredFortuneWheelPublished(),
   approvedLessonIds: [],
   equalizedLessonsForIgor: [],
   lessons: JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE)),
@@ -386,6 +412,15 @@ function normalizePancakesIconsInLessons(lessonsArr) {
   });
 }
 
+function isLegacyDuplicateLesson(cl) {
+  if (!cl) return true;
+  const legacyIds = ["shop", "shop_lesson", "bakery", "vehicles_world", "family_home"];
+  if (legacyIds.includes(cl.id)) return true;
+  const titleClean = String(cl.title || "").toLowerCase();
+  if (titleClean.includes("sklep i zakupy")) return true;
+  return false;
+}
+
 function isEffectiveIgorMode(lessonIdOverride = null) {
   const activeLid = lessonIdOverride || state.currentLessonId;
   const eqList = Array.isArray(state.equalizedLessonsForIgor)
@@ -446,6 +481,9 @@ function loadCloudData() {
         if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
         if (Array.isArray(parsed.stats.approvedLessonIds)) persistApprovedLessonIds(parsed.stats.approvedLessonIds);
         if (Array.isArray(parsed.stats.equalizedLessonsForIgor)) state.equalizedLessonsForIgor = parsed.stats.equalizedLessonsForIgor;
+        if (typeof parsed.stats.fortuneWheelPublishedForKids === "boolean") {
+          state.fortuneWheelPublishedForKids = parsed.stats.fortuneWheelPublishedForKids;
+        }
         if (parsed.stats.calibration) state.calibration = mergeCalibrationWithDefaults(parsed.stats.calibration);
       }
       if (Array.isArray(parsed.lessons)) localLessonsCache = parsed.lessons;
@@ -472,6 +510,11 @@ function loadCloudData() {
         const cloudEq = Array.isArray(pStats.equalizedLessonsForIgor) ? pStats.equalizedLessonsForIgor : [];
         state.equalizedLessonsForIgor = Array.from(new Set([...(state.equalizedLessonsForIgor || []), ...cloudEq]));
 
+        if (typeof pStats.fortuneWheelPublishedForKids === "boolean") {
+          state.fortuneWheelPublishedForKids = pStats.fortuneWheelPublishedForKids;
+          try { localStorage.setItem("akademia_fw_published_v1", pStats.fortuneWheelPublishedForKids ? "true" : "false"); } catch (err) {}
+        }
+
         if (pStats.calibration) {
           state.calibration = mergeCalibrationWithDefaults(pStats.calibration);
           state.stats.calibration = state.calibration;
@@ -483,6 +526,7 @@ function loadCloudData() {
         if (!Array.isArray(incomingLessons)) return;
         const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
         incomingLessons.forEach(cl => {
+          if (isLegacyDuplicateLesson(cl)) return;
           if (baseIds.includes(cl.id)) {
             const target = state.lessons.find(l => l.id === cl.id);
             if (target && Array.isArray(cl.items)) {
@@ -529,6 +573,7 @@ function loadCloudData() {
 
 function saveCloudData() {
   state.stats.featuresPublishedForKids = true;
+  state.stats.fortuneWheelPublishedForKids = isFortuneWheelPublishedForKids();
   state.stats.approvedLessonIds = Array.from(new Set([...(state.approvedLessonIds || []), ...getStoredApprovedLessonIds()]));
   state.stats.equalizedLessonsForIgor = Array.isArray(state.equalizedLessonsForIgor) ? state.equalizedLessonsForIgor : [];
   state.stats.calibration = state.calibration;

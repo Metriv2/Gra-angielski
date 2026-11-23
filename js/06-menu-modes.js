@@ -643,7 +643,7 @@ function startLesson(lessonId, subMode = null) {
   if (subMode === "shop_cart_game") pool = visibleItems.filter(i => i.isProduct);
   else if (subMode === "shop_phrases_game") pool = visibleItems.filter(i => i.isPhrase);
   else if (subMode === "riddles_game" && typeof RIDDLES_POOL !== "undefined") pool = RIDDLES_POOL;
-  else if (subMode === "letters_game") pool = visibleItems.filter(i => /^[a-zA-Z]+$/.test(i.en.trim()));
+  else if (subMode === "letters_game") pool = visibleItems.filter(i => /^[a-zA-Z\s]+$/.test(i.en.trim()));
 
   if (!pool || !pool.length) pool = visibleItems.length ? visibleItems : lesson.items;
 

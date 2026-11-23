@@ -572,16 +572,24 @@ function renderAudioOnlyQuiz(lesson) {
     }
   });
   const visLessonItems = getVisibleLessonItems(lesson.items || [], true, lesson.id).filter(it => it && it.en && it.pl);
-  let src = visLessonItems.length >= numChoices ? visLessonItems : allPool;
-  const uniqueOthers = [];
   const seenEn = new Set([q.en.toLowerCase()]);
-  shuffleArray(src).forEach(it => {
+  const uniqueOthers = [];
+  shuffleArray(visLessonItems).forEach(it => {
     const key = it.en.toLowerCase();
     if (!seenEn.has(key)) {
       seenEn.add(key);
       uniqueOthers.push(it);
     }
   });
+  if (uniqueOthers.length < numChoices - 1) {
+    shuffleArray(allPool).forEach(it => {
+      const key = it.en.toLowerCase();
+      if (!seenEn.has(key)) {
+        seenEn.add(key);
+        uniqueOthers.push(it);
+      }
+    });
+  }
   const choices = shuffleArray([q, ...uniqueOthers.slice(0, numChoices - 1)]);
   window._currentChoices = choices;
 
@@ -1033,11 +1041,32 @@ function renderUniversalVisualQuiz(lesson) {
   let allPool = [];
   const isTataCtx = isBrothersTestSandbox();
   state.lessons.filter(l => !l.testOnly || isTataCtx).forEach(l => {
-    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") getVisibleLessonItems(l.items, true, l.id).forEach(it => allPool.push(it));
+    if (l.type !== "prepositions" && l.type !== "mic_only" && l.type !== "memory_game") {
+      getVisibleLessonItems(l.items, true, l.id).forEach(it => {
+        if (it && it.en) allPool.push(it);
+      });
+    }
   });
-  const visLessonItems = getVisibleLessonItems(lesson.items, true, lesson.id);
-  let src = visLessonItems.length >= numChoices ? visLessonItems : allPool;
-  const choices = shuffleArray([q, ...shuffleArray(src.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);
+  const visLessonItems = getVisibleLessonItems(lesson.items || [], true, lesson.id).filter(it => it && it.en);
+  const seenEn = new Set([q.en.toLowerCase()]);
+  const uniqueOthers = [];
+  shuffleArray(visLessonItems).forEach(it => {
+    const key = it.en.toLowerCase();
+    if (!seenEn.has(key)) {
+      seenEn.add(key);
+      uniqueOthers.push(it);
+    }
+  });
+  if (uniqueOthers.length < numChoices - 1) {
+    shuffleArray(allPool).forEach(it => {
+      const key = it.en.toLowerCase();
+      if (!seenEn.has(key)) {
+        seenEn.add(key);
+        uniqueOthers.push(it);
+      }
+    });
+  }
+  const choices = shuffleArray([q, ...uniqueOthers.slice(0, numChoices - 1)]);
   window._currentChoices = choices;
   const mc = document.getElementById("mainContainer"); if (!mc) return;
   mc.innerHTML = `

@@ -3,7 +3,7 @@
    CENTRALNA KONFIGURACJA WERSJI ORAZ WŁASNE GRAFIKI SVG DLA PANKEJKÓW
    ============================================================================ */
 
-const CURRENT_GAME_VERSION = "14.3";
+const CURRENT_GAME_VERSION = "14.4";
 
 const APP_CONFIG = {
   version: CURRENT_GAME_VERSION,
@@ -12,24 +12,24 @@ const APP_CONFIG = {
   gasApiUrl: "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec",
   whatsNewItems: [
     {
-      icon: "🎧🔊",
-      title: "Nowe pytania ze słuchu (bez podpowiedzi obrazkowych)!",
-      desc: "W każdej lekcji (poza Memory), w Sprawdzianie, Pojedynku i u Smoka pojawiają się pytania, w których lektor pyta po polsku „Jak będzie po angielsku...”, a odpowiedzi odsłuchujesz z samych głośników!"
+      icon: "🎡⭐",
+      title: "Codzienne Koło Fortuny (od 10 do 200 darmowych gwiazdek)!",
+      desc: "Raz dziennie każdy z chłopców może zakręcić kolorowym Kołem Fortuny w menu lekcji i wylosować od 10 aż do 200 złotych gwiazdek!"
     },
     {
-      icon: "4️⃣👦",
-      title: "Igor ma teraz 4 odpowiedzi we wszystkich zadaniach!",
-      desc: "Zwiększyliśmy liczbę opcji dla Igora z 3 do 4 we wszystkich quizach, zagadkach, sklepie i układance literkowej."
+      icon: "🤖📚",
+      title: "Generator Lekcji AI z dowolnego tematu i ze zdjęcia z opisem!",
+      desc: "Wpisz dowolny temat (np. „stwórz lekcję o chorobach”) lub dodaj zdjęcie z opisem w Panelu Rodzica, a AI samo ułoży słówka, wymowę, ikony i poziomy wieku!"
+    },
+    {
+      icon: "🎧🔊",
+      title: "Pytania ze słuchu (PL ➔ EN) i 4 odpowiedzi dla Igora!",
+      desc: "W każdej lekcji (poza Memory), Sprawdzianie, Pojedynku i u Smoka pojawiają się pytania ze słuchu z samymi głośnikami, a Igor ma 4 opcje wyboru."
     },
     {
       icon: "⚔️🐉",
       title: "Pojedynek Braci i Walka ze Smokiem na pełnym ekranie!",
-      desc: "Awatary braci walczą na arenie z efektami dźwiękowymi i paskiem życia, a konto testowe Taty jest w pełni oddzielone od kont synów."
-    },
-    {
-      icon: "🛠️✨",
-      title: "Kafelkowy Panel Rodzica i Generator Lekcji!",
-      desc: "Wszystkie opcje w Panelu Rodzica są pogrupowane w czytelne kafelki z automatycznym tworzeniem nowych lekcji."
+      desc: "W turze Igora są 4 opcje, a w turze Huberta 6 opcji. Konto testowe Taty jest w pełni oddzielone od kont synów."
     }
   ]
 };

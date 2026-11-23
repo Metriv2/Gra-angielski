@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/02-database.js
-   BAZA LEKCJI (1–11 + MEMORY + STUDIO WYMOWY), ZAGADEK SÓWKI I SŁÓWEK RODZICA
+   BAZA LEKCJI (1–9 + MEMORY + STUDIO WYMOWY), ZAGADEK SÓWKI I SŁÓWEK RODZICA
    ============================================================================ */
 
 function getDayCalendarSvg(dayNum, shortPl, headerBg, borderCol) {
@@ -59,28 +59,40 @@ const FULL_LESSONS_DATABASE = [
   {
     id: "numbers",
     title: "3. Liczby i Liczenie",
-    subtitle: "Od 1 do 10 dla Igora oraz aż do 100 dla Huberta",
+    subtitle: "Od 1 do 20 dla Igora oraz aż do 100 dla Huberta",
     icon: "🔢🚀",
     color: "from-amber-400 to-orange-600",
     borderColor: "border-amber-400",
     type: "vocab",
     items: [
-      { en: "One",         pl: "Jeden",      phonetic: "łan",        icon: "1️⃣", age: [4, 6] },
-      { en: "Two",         pl: "Dwa",        phonetic: "tu",         icon: "2️⃣", age: [4, 6] },
-      { en: "Three",       pl: "Trzy",       phonetic: "fri",        icon: "3️⃣", age: [4, 6] },
-      { en: "Four",        pl: "Cztery",     phonetic: "for",        icon: "4️⃣", age: [4, 6] },
-      { en: "Five",        pl: "Pięć",       phonetic: "fajw",       icon: "5️⃣", age: [4, 6] },
-      { en: "Six",         pl: "Sześć",      phonetic: "siks",       icon: "6️⃣", age: [4, 6] },
-      { en: "Seven",       pl: "Siedem",     phonetic: "sewen",      icon: "7️⃣", age: [4, 6] },
-      { en: "Eight",       pl: "Osiem",      phonetic: "ejt",        icon: "8️⃣", age: [4, 6] },
-      { en: "Nine",        pl: "Dziewięć",   phonetic: "najn",       icon: "9️⃣", age: [4, 6] },
-      { en: "Ten",         pl: "Dziesięć",   phonetic: "ten",        icon: "🔟", age: [4, 6] },
-      { en: "Eleven",      pl: "Jedenaście", phonetic: "ilewen",     icon: "1️⃣1️⃣", age: [6] },
-      { en: "Twelve",      pl: "Dwanaście",  phonetic: "tłelw",      icon: "1️⃣2️⃣", age: [6] },
-      { en: "Fifteen",     pl: "Piętnaście", phonetic: "fiftin",     icon: "1️⃣5️⃣", age: [6] },
-      { en: "Twenty",      pl: "Dwadzieścia",phonetic: "tłenti",     icon: "2️⃣0️⃣", age: [6] },
-      { en: "Fifty",       pl: "Pięćdziesiąt",phonetic: "fifti",     icon: "5️⃣0️⃣", age: [6] },
-      { en: "One hundred", pl: "Sto",        phonetic: "łan handred",icon: "💯", age: [6] }
+      { en: "One",         pl: "Jeden",          phonetic: "łan",         icon: "1️⃣",   age: [4, 6] },
+      { en: "Two",         pl: "Dwa",            phonetic: "tu",          icon: "2️⃣",   age: [4, 6] },
+      { en: "Three",       pl: "Trzy",           phonetic: "fri",         icon: "3️⃣",   age: [4, 6] },
+      { en: "Four",        pl: "Cztery",         phonetic: "for",         icon: "4️⃣",   age: [4, 6] },
+      { en: "Five",        pl: "Pięć",           phonetic: "fajw",        icon: "5️⃣",   age: [4, 6] },
+      { en: "Six",         pl: "Sześć",          phonetic: "siks",        icon: "6️⃣",   age: [4, 6] },
+      { en: "Seven",       pl: "Siedem",         phonetic: "sewen",       icon: "7️⃣",   age: [4, 6] },
+      { en: "Eight",       pl: "Osiem",          phonetic: "ejt",         icon: "8️⃣",   age: [4, 6] },
+      { en: "Nine",        pl: "Dziewięć",       phonetic: "najn",        icon: "9️⃣",   age: [4, 6] },
+      { en: "Ten",         pl: "Dziesięć",       phonetic: "ten",         icon: "🔟",   age: [4, 6] },
+      { en: "Eleven",      pl: "Jedenaście",     phonetic: "ilewen",      icon: "1️⃣1️⃣", age: [4, 6] },
+      { en: "Twelve",      pl: "Dwanaście",      phonetic: "tłelw",       icon: "1️⃣2️⃣", age: [4, 6] },
+      { en: "Thirteen",    pl: "Trzynaście",     phonetic: "fertin",      icon: "1️⃣3️⃣", age: [4, 6] },
+      { en: "Fourteen",    pl: "Czternaście",    phonetic: "fortin",      icon: "1️⃣4️⃣", age: [4, 6] },
+      { en: "Fifteen",     pl: "Piętnaście",     phonetic: "fiftin",      icon: "1️⃣5️⃣", age: [4, 6] },
+      { en: "Sixteen",     pl: "Szesnaście",     phonetic: "sikstin",     icon: "1️⃣6️⃣", age: [4, 6] },
+      { en: "Seventeen",   pl: "Siedemnaście",   phonetic: "sewentin",    icon: "1️⃣7️⃣", age: [4, 6] },
+      { en: "Eighteen",    pl: "Osiemnaście",    phonetic: "ejtin",       icon: "1️⃣8️⃣", age: [4, 6] },
+      { en: "Nineteen",    pl: "Dziewiętnaście",phonetic: "najntin",     icon: "1️⃣9️⃣", age: [4, 6] },
+      { en: "Twenty",      pl: "Dwadzieścia",    phonetic: "tłenti",      icon: "2️⃣0️⃣", age: [4, 6] },
+      { en: "Thirty",      pl: "Trzydzieści",    phonetic: "ferti",       icon: "3️⃣0️⃣", age: [6] },
+      { en: "Forty",       pl: "Czterdzieści",   phonetic: "forti",       icon: "4️⃣0️⃣", age: [6] },
+      { en: "Fifty",       pl: "Pięćdziesiąt",   phonetic: "fifti",       icon: "5️⃣0️⃣", age: [6] },
+      { en: "Sixty",       pl: "Sześćdziesiąt",  phonetic: "siksti",      icon: "6️⃣0️⃣", age: [6] },
+      { en: "Seventy",     pl: "Siedemdziesiąt", phonetic: "sewenti",     icon: "7️⃣0️⃣", age: [6] },
+      { en: "Eighty",      pl: "Osiemdziesiąt",  phonetic: "ejti",        icon: "8️⃣0️⃣", age: [6] },
+      { en: "Ninety",      pl: "Dziewięćdziesiąt",phonetic: "najnti",     icon: "9️⃣0️⃣", age: [6] },
+      { en: "One hundred", pl: "Sto",            phonetic: "łan handred", icon: "💯",   age: [6] }
     ]
   },
   {
@@ -195,59 +207,14 @@ const FULL_LESSONS_DATABASE = [
     ]
   },
   {
-    id: "vehicles_world",
-    title: "9. Pojazdy i Maszyny",
-    subtitle: "Samochody, pociągi, rakiety i pojazdy ratunkowe",
-    icon: "🚒🚀",
-    color: "from-cyan-500 to-blue-700",
-    borderColor: "border-cyan-400",
-    type: "vocab",
-    items: [
-      { en: "Car",        pl: "Samochód",       phonetic: "kar",        icon: "🚗", age: [4, 6] },
-      { en: "Bus",        pl: "Autobus",        phonetic: "bas",        icon: "🚌", age: [4, 6] },
-      { en: "Train",      pl: "Pociąg",         phonetic: "trejn",      icon: "🚂", age: [4, 6] },
-      { en: "Airplane",   pl: "Samolot",        phonetic: "erplejn",    icon: "✈️", age: [4, 6] },
-      { en: "Fire truck", pl: "Wóz strażacki",  phonetic: "fajer trak", icon: "🚒", age: [4, 6] },
-      { en: "Police car", pl: "Radiowóz",       phonetic: "polis kar",  icon: "🚓", age: [4, 6] },
-      { en: "Tractor",    pl: "Traktor",        phonetic: "traktor",    icon: "🚜", age: [4, 6] },
-      { en: "Bicycle",    pl: "Rower",          phonetic: "bajsykl",    icon: "🚲", age: [4, 6] },
-      { en: "Rocket",     pl: "Rakieta",        phonetic: "roket",      icon: "🚀", age: [4, 6] },
-      { en: "Helicopter", pl: "Helikopter",     phonetic: "helikopter", icon: "🚁", age: [6] },
-      { en: "Ambulance",  pl: "Karetka",        phonetic: "ambjulans",  icon: "🚑", age: [6] },
-      { en: "Boat",       pl: "Łódka",          phonetic: "bołt",       icon: "⛵", age: [6] }
-    ]
-  },
-  {
-    id: "family_home",
-    title: "10. Rodzina i Dom",
-    subtitle: "Bliscy oraz przedmioty w naszym domu",
-    icon: "👨‍👩‍👦‍👦🏠",
-    color: "from-violet-500 to-purple-700",
-    borderColor: "border-violet-400",
-    type: "vocab",
-    items: [
-      { en: "Mother",  pl: "Mama",     phonetic: "mader",   icon: "👩", age: [4, 6] },
-      { en: "Father",  pl: "Tata",     phonetic: "fader",   icon: "👨", age: [4, 6] },
-      { en: "Brother", pl: "Brat",     phonetic: "brader",  icon: "👦", age: [4, 6] },
-      { en: "Sister",  pl: "Siostra",  phonetic: "sister",  icon: "👧", age: [4, 6] },
-      { en: "Baby",    pl: "Dzidziuś", phonetic: "bejbi",   icon: "👶", age: [4, 6] },
-      { en: "House",   pl: "Dom",      phonetic: "hałs",    icon: "🏠", age: [4, 6] },
-      { en: "Bed",     pl: "Łóżko",    phonetic: "bed",     icon: "🛏️", age: [4, 6] },
-      { en: "Chair",   pl: "Krzesło",  phonetic: "czer",    icon: "🪑", age: [4, 6] },
-      { en: "Grandma", pl: "Babcia",   phonetic: "granma",  icon: "👵", age: [6] },
-      { en: "Grandpa", pl: "Dziadek",  phonetic: "granpa",  icon: "👴", age: [6] },
-      { en: "Window",  pl: "Okno",     phonetic: "łindoł",  icon: "🪟", age: [6] },
-      { en: "Door",    pl: "Drzwi",    phonetic: "dor",     icon: "🚪", age: [6] }
-    ]
-  },
-  {
     id: "days_of_week",
-    title: "11. Dni tygodnia",
+    title: "9. Dni tygodnia",
     subtitle: "Poznaj wszystkie dni od poniedziałku do niedzieli!",
     icon: "📅🗓️",
     color: "from-teal-400 to-emerald-600",
     borderColor: "border-teal-400",
     type: "vocab",
+    testOnly: true,
     items: [
       { en: "Monday",    pl: "Poniedziałek", phonetic: "mandej",    icon: getDayCalendarSvg("1", "PON", "#ef4444", "#b91c1c"), age: [4, 6] },
       { en: "Tuesday",   pl: "Wtorek",       phonetic: "tjuzdej",   icon: getDayCalendarSvg("2", "WTO", "#f97316", "#c2410c"), age: [4, 6] },
@@ -286,10 +253,8 @@ const FULL_LESSONS_DATABASE = [
       { en: "Lion",       pl: "Lew",           phonetic: "lajon",    icon: "🦁", age: [4, 6] },
       { en: "Red",        pl: "Czerwony",      phonetic: "red",      icon: "🔴", age: [4, 6] },
       { en: "Blue",       pl: "Niebieski",     phonetic: "blu",      icon: "🔵", age: [4, 6] },
-      { en: "Monday",     pl: "Poniedziałek",  phonetic: "mandej",   icon: "📅", age: [4, 6] },
-      { en: "Friday",     pl: "Piątek",        phonetic: "frajdej",  icon: "🎉", age: [4, 6] },
-      { en: "Sunday",     pl: "Niedziela",     phonetic: "sandej",   icon: "☀️", age: [4, 6] },
-      { en: "Fire truck", pl: "Wóz strażacki", phonetic: "fajer trak",icon: "🚒", age: [6] },
+      { en: "Twenty",     pl: "Dwadzieścia",   phonetic: "tłenti",   icon: "2️⃣0️⃣", age: [4, 6] },
+      { en: "One hundred",pl: "Sto",           phonetic: "łan handred",icon: "💯", age: [6] },
       { en: "Elephant",   pl: "Słoń",          phonetic: "elefant",  icon: "🐘", age: [6] },
       { en: "Strawberry", pl: "Truskawka",     phonetic: "stroberi", icon: "🍓", age: [6] }
     ]
@@ -314,10 +279,9 @@ const AUTO_SIMPLE_WORDS_POOL = [
   { lessonId: "fruits_veggies", en: "Cherry",     pl: "Wiśnia",     phonetic: "czeri",     icon: "🍒", age: [4, 6] },
   { lessonId: "fruits_veggies", en: "Pineapple",  pl: "Ananas",     phonetic: "pajnapl",   icon: "🍍", age: [4, 6] },
   { lessonId: "fruits_veggies", en: "Corn",       pl: "Kukurydza",  phonetic: "korn",      icon: "🌽", age: [4, 6] },
-  { lessonId: "vehicles_world", en: "Submarine",  pl: "Łódź podwodna", phonetic: "sabmarin", icon: "🚢", age: [6] },
-  { lessonId: "vehicles_world", en: "Motorbike",  pl: "Motocykl",   phonetic: "motorbajk", icon: "🏍️", age: [4, 6] },
-  { lessonId: "family_home",    en: "Clock",      pl: "Zegar",      phonetic: "klok",      icon: "⏰", age: [4, 6] },
-  { lessonId: "family_home",    en: "Key",        pl: "Klucz",      phonetic: "ki",        icon: "🗝️", age: [4, 6] },
+  { lessonId: "colors",         en: "Gold",       pl: "Złoty",      phonetic: "gold",      icon: "🌟", age: [4, 6] },
+  { lessonId: "colors",         en: "Silver",     pl: "Srebrny",    phonetic: "silwer",    icon: "🥈", age: [4, 6] },
+  { lessonId: "body_hurts",     en: "Tooth",      pl: "Ząb",        phonetic: "tuf",       icon: "🦷", age: [4, 6] },
   { lessonId: "days_of_week",   en: "Yesterday",  pl: "Wczoraj",    phonetic: "jesterdej", icon: "⬅️📅", age: [6] },
   { lessonId: "bakery_shop",    en: "Ice cream",  pl: "Lody",       phonetic: "ajs krim",  icon: "🍦", age: [4, 6] }
 ];

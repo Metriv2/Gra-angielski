@@ -3,7 +3,7 @@
    CENTRALNA KONFIGURACJA WERSJI ORAZ WŁASNE GRAFIKI SVG DLA PANKEJKÓW
    ============================================================================ */
 
-const CURRENT_GAME_VERSION = "14.6";
+const CURRENT_GAME_VERSION = "14.7";
 
 const APP_CONFIG = {
   version: CURRENT_GAME_VERSION,

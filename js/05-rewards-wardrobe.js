@@ -1,424 +1,618 @@
 /* ============================================================================
-   PLIK: js/05-rewards-wardrobe.js
-   SKRZYNIE NAGRÓD, KOLEJKA NAGRÓD, GARDEROBA AWATARA, ZWIERZAKI I NAKLEJKI
+   PLIK: js/03-state-cloud.js
+   STAN GRY, KOŁO FORTUNY (TESTOWE U TATY -> ZATWIERDZANE) I CHMURA GAS
    ============================================================================ */
 
-const CHEST_TIERS_CONFIG = {
-  bronze: {
-    id: "bronze",
-    name: "Brązowa Skrzynia",
-    icon: "📦",
-    costStars: 50,
-    outfitPool: [
-      "grafiki/cap_red.png",
-      "grafiki/shirt_blue.png",
-      "grafiki/jeans_blue.png",
-      "grafiki/cap_blue.png",
-      "grafiki/shirt_green.png",
-      "grafiki/shirt_yellow.png",
-      "grafiki/shorts_blue.png"
-    ]
-  },
-  silver: {
-    id: "silver",
-    name: "Srebrna Skrzynia",
-    icon: "🥈",
-    costStars: 120,
-    outfitPool: [
-      "grafiki/srebrna/shirt_pigeon.png",
-      "grafiki/srebrna/shirt_T-Rex.png",
-      "grafiki/srebrna/pants_grey.png",
-      "grafiki/srebrna/cap_silver.png"
-    ]
-  },
-  gold: {
-    id: "gold",
-    name: "Złota Skrzynia",
-    icon: "👑",
-    costStars: 250,
-    outfitPool: [
-      "grafiki/zlota/helmet_astronaut.png",
-      "grafiki/zlota/armor_gold.png",
-      "grafiki/zlota/pants_gold.png",
-      "grafiki/zlota/shorts_gold.png"
-    ]
-  }
+const PROFILE_META = {
+  igor:   { name: "IGOR",   birthDate: "2022-06-29", icon: "👦" },
+  hubert: { name: "HUBERT", birthDate: "2020-08-17", icon: "🧑" },
+  tata:   { name: "TATA",   birthDate: "1989-08-06", icon: "👨‍💻" }
 };
 
-const COMPANION_PETS = [
-  { id: "p_dog",     en: "Dog",     pl: "Piesek",   icon: "🐶" },
-  { id: "p_cat",     en: "Cat",     pl: "Kotek",    icon: "🐱" },
-  { id: "p_rabbit",  en: "Rabbit",  pl: "Królik",   icon: "🐰" },
-  { id: "p_fox",     en: "Fox",     pl: "Lisek",    icon: "🦊" },
-  { id: "p_owl",     en: "Owl",     pl: "Sówka",    icon: "🦉" },
-  { id: "p_dino",    en: "Dino",    pl: "Dinozaur", icon: "🦕" },
-  { id: "p_unicorn", en: "Unicorn", pl: "Jednorożec",icon: "🦄" },
-  { id: "p_dragon",  en: "Dragon",  pl: "Smoczek",  icon: "🐲" }
-];
-
-const PET_FOOD_ITEMS = [
-  { id: "food_apple",  name: "Jabłko",    icon: "🍎" },
-  { id: "food_carrot", name: "Marchewka", icon: "🥕" },
-  { id: "food_banana", name: "Banan",     icon: "🍌" },
-  { id: "food_cookie", name: "Ciastko",   icon: "🍪" }
-];
-
-window._pendingPopupReward = null;
-window._isOpeningChestAnim = false;
-
-function getRewardProfileKey(fallbackKey = null) {
-  if (fallbackKey && PROFILE_META[fallbackKey]) return fallbackKey;
-  if (state.profile === "igor" || state.profile === "hubert" || state.profile === "tata") {
-    return state.profile;
-  }
-  if (state.returnProfileAfterBrothers && PROFILE_META[state.returnProfileAfterBrothers]) {
-    return state.returnProfileAfterBrothers;
-  }
-  return "igor";
+function getPlayerAge(profKey) {
+  const meta = PROFILE_META[profKey];
+  if (!meta || !meta.birthDate) return 0;
+  const today = new Date();
+  const [y, m, d] = meta.birthDate.split("-").map(Number);
+  let age = today.getFullYear() - y;
+  const mDiff = (today.getMonth() + 1) - m;
+  if (mDiff < 0 || (mDiff === 0 && today.getDate() < d)) age--;
+  return age;
 }
 
-function showRewardModalEl() {
-  const modal = document.getElementById("rewardPopupModal");
-  if (!modal) return null;
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  return modal;
+function isPlayerBirthdayToday(profKey) {
+  const meta = PROFILE_META[profKey];
+  if (!meta || !meta.birthDate) return false;
+  const today = new Date();
+  const [y, m, d] = meta.birthDate.split("-").map(Number);
+  return (today.getMonth() + 1) === m && today.getDate() === d;
 }
 
-function hideRewardModalEl() {
-  const modal = document.getElementById("rewardPopupModal");
-  if (!modal) return;
-  modal.classList.add("hidden");
-  modal.classList.remove("flex");
-  const content = document.getElementById("rewardPopupContent");
-  if (content) content.innerHTML = "";
-}
-
-function guessOutfitSlotFromPath(src) {
-  const s = String(src || "").toLowerCase();
-  if (s.includes("cap") || s.includes("helmet")) return "head";
-  if (s.includes("jeans") || s.includes("pants") || s.includes("shorts")) return "legs";
-  return "torso";
-}
-
-function rollRewardForPlayer(profKey, chestType = "bronze") {
-  const tierKey = CHEST_TIERS_CONFIG[chestType] ? chestType : "bronze";
-  const tierCfg = CHEST_TIERS_CONFIG[tierKey];
+function checkAndAwardBirthdayChest(profKey) {
+  if (!PROFILE_META[profKey]) return;
   const p = ensurePlayerStructure(state.stats[profKey]);
-
-  const availableOutfits = (tierCfg.outfitPool || [])
-    .map(resolveOutfitPath)
-    .filter(path => path && !p.unlockedItems.includes(path));
-
-  const availablePets = COMPANION_PETS
-    .filter(pet => !p.memoryAnimals.includes(pet.id));
-
-  if (availableOutfits.length > 0 && (Math.random() < 0.55 || availablePets.length === 0)) {
-    const pickedPath = availableOutfits[Math.floor(Math.random() * availableOutfits.length)];
-    const slot = guessOutfitSlotFromPath(pickedPath);
-    return {
-      type: "outfit",
-      slot,
-      path: pickedPath,
-      label: `Nowe ubranko (${slot === "head" ? "Głowa" : slot === "legs" ? "Nogi" : "Tułów"})`,
-      icon: slot === "head" ? "🧢" : slot === "legs" ? "👖" : "👕"
-    };
+  state.stats[profKey] = p;
+  const currentYear = new Date().getFullYear();
+  if (isPlayerBirthdayToday(profKey) && p.lastBirthdayRewardYear !== currentYear) {
+    p.lastBirthdayRewardYear = currentYear;
+    saveCloudData();
+    const age = getPlayerAge(profKey);
+    const name = PROFILE_META[profKey].name;
+    setTimeout(() => {
+      if (typeof renderChestOpeningInsidePopup === "function") {
+        renderChestOpeningInsidePopup(profKey, "gold", `🎂 Sto lat ${name}! Dziś kończysz ${age} lat! Oto Urodzinowa Złota Skrzynia!`);
+      }
+      speakSequence([
+        { lang: "pl", text: `Sto lat, sto lat! Wszystkiego najlepszego z okazji ${age} urodzin ${name}! W nagrodę otrzymujesz urodzinową złotą skrzynię!` }
+      ]);
+    }, 550);
   }
+}
 
-  if (availablePets.length > 0) {
-    const pickedPet = availablePets[Math.floor(Math.random() * availablePets.length)];
-    return {
-      type: "pet",
-      petId: pickedPet.id,
-      label: `Nowy zwierzak: ${pickedPet.pl} (${pickedPet.en})`,
-      icon: pickedPet.icon
-    };
-  }
+function checkPendingDadChestsForPlayer(profKey) {
+  if (!PROFILE_META[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  if (!Array.isArray(p.pendingChests) || p.pendingChests.length === 0) return;
 
-  const food = PET_FOOD_ITEMS[Math.floor(Math.random() * PET_FOOD_ITEMS.length)];
-  const bonusStars = tierKey === "gold" ? 40 : tierKey === "silver" ? 25 : 15;
+  const chestsToQueue = [...p.pendingChests];
+  p.pendingChests = [];
+  state.stats[profKey] = p;
+  saveCloudData();
+
+  chestsToQueue.forEach(item => {
+    const tier = typeof item === "string" ? item : (item.tier || "bronze");
+    const reason = (typeof item === "object" && item.reason) ? item.reason : "Nagroda od Taty!";
+    state.rewardQueue.push({
+      profKey,
+      achievement: { name: reason, tier: tier === "gold" ? 4 : tier === "silver" ? 2 : 1 },
+      chestType: tier,
+      fromDad: true
+    });
+  });
+
+  setTimeout(() => {
+    if (typeof processNextRewardInQueue === "function") processNextRewardInQueue();
+  }, 450);
+}
+
+function getDailySpecialChestStatus(mode) {
+  const limit = (typeof APP_CONFIG !== "undefined" && APP_CONFIG.dailySpecialChestLimit) ? APP_CONFIG.dailySpecialChestLimit : 3;
+  const today = new Date().toISOString().slice(0, 10);
+  const field = mode === "dragon" ? "dragonChestDaily" : "duelChestDaily";
+
+  let maxUsed = 0;
+  ["igor", "hubert"].forEach(k => {
+    const p = ensurePlayerStructure(state.stats[k]);
+    state.stats[k] = p;
+    const rec = p[field];
+    if (rec && rec.date === today) {
+      maxUsed = Math.max(maxUsed, rec.count || 0);
+    }
+  });
+
   return {
-    type: "food_and_stars",
-    foodId: food.id,
-    foodName: food.name,
-    foodIcon: food.icon,
-    bonusStars,
-    label: `${food.icon} +1 ${food.name} oraz +${bonusStars} ⭐!`,
-    icon: food.icon
+    limit,
+    used: maxUsed,
+    remaining: Math.max(0, limit - maxUsed),
+    canEarn: maxUsed < limit
   };
 }
 
-function applyRolledRewardToPlayer(profKey, reward) {
-  if (!reward) return;
-  const p = ensurePlayerStructure(state.stats[profKey]);
+function recordDailySpecialChestAwarded(mode) {
+  const today = new Date().toISOString().slice(0, 10);
+  const field = mode === "dragon" ? "dragonChestDaily" : "duelChestDaily";
+  const status = getDailySpecialChestStatus(mode);
+  const nextCount = status.used + 1;
 
-  if (reward.type === "outfit" && reward.path) {
-    if (!p.unlockedItems.includes(reward.path)) {
-      p.unlockedItems.push(reward.path);
-    }
-    if (!p.avatar) p.avatar = { head: "", torso: "", legs: "", pet: "" };
-    p.avatar[reward.slot] = reward.path;
-  } else if (reward.type === "pet" && reward.petId) {
-    if (!p.memoryAnimals.includes(reward.petId)) {
-      p.memoryAnimals.push(reward.petId);
-    }
-    if (!p.avatar) p.avatar = { head: "", torso: "", legs: "", pet: "" };
-    p.avatar.pet = reward.petId;
-  } else if (reward.type === "food_and_stars") {
-    if (!p.petFood) p.petFood = {};
-    p.petFood[reward.foodId] = (p.petFood[reward.foodId] || 0) + 1;
-    p.stars = (p.stars || 0) + (reward.bonusStars || 15);
-  }
-
-  state.stats[profKey] = p;
+  ["igor", "hubert"].forEach(k => {
+    const p = ensurePlayerStructure(state.stats[k]);
+    p[field] = { date: today, count: nextCount };
+    state.stats[k] = p;
+  });
   saveCloudData();
-  if (typeof updateHeaderUI === "function") updateHeaderUI();
 }
 
-function renderChestOpeningInsidePopup(profKey, chestType = "bronze", reasonText = "Nagroda!") {
-  const targetProf = getRewardProfileKey(profKey);
-  const tierKey = CHEST_TIERS_CONFIG[chestType] ? chestType : "bronze";
-  const tierCfg = CHEST_TIERS_CONFIG[tierKey];
-  const modal = showRewardModalEl();
-  const box = document.getElementById("rewardPopupContent");
-  if (!modal || !box) return;
-
-  window._pendingPopupReward = { profKey: targetProf, chestType: tierKey, reasonText };
-  window._isOpeningChestAnim = false;
-
-  box.innerHTML = `
-    <div class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold text-xs mb-2">
-      ${PROFILE_META[targetProf] ? PROFILE_META[targetProf].name : "GRACZ"}
-    </div>
-    <h3 class="text-2xl font-extrabold text-slate-900 mb-1">${tierCfg.name}</h3>
-    <p class="text-xs font-bold text-slate-600 mb-4">${reasonText}</p>
-    <button id="btnOpenChestPopup" type="button" onclick="triggerChestUnboxAnimation()"
-      class="kid-card cursor-pointer w-44 h-44 mx-auto rounded-3xl bg-gradient-to-b from-amber-100 to-amber-300 border-4 border-amber-500 shadow-xl flex flex-col items-center justify-center">
-      <span class="text-7xl float-anim drop-shadow">${tierCfg.icon}</span>
-      <span class="mt-2 px-3 py-1 rounded-full bg-amber-600 text-white font-extrabold text-xs shadow animate-pulse">Kliknij, aby otworzyć!</span>
-    </button>
-  `;
-}
-
-function triggerChestUnboxAnimation() {
-  if (window._isOpeningChestAnim || !window._pendingPopupReward) return;
-  window._isOpeningChestAnim = true;
-  if (typeof playEffect === "function") playEffect("beep");
-
-  const { profKey, chestType, reasonText } = window._pendingPopupReward;
-  const tierCfg = CHEST_TIERS_CONFIG[chestType] || CHEST_TIERS_CONFIG.bronze;
-  const rolled = rollRewardForPlayer(profKey, chestType);
-  applyRolledRewardToPlayer(profKey, rolled);
-  window._pendingPopupReward.rolled = rolled;
-
-  const box = document.getElementById("rewardPopupContent");
-  if (box) {
-    box.innerHTML = `
-      <div class="text-6xl mb-2 pop-correct">${rolled.icon}</div>
-      <h3 class="text-2xl font-extrabold text-emerald-700 mb-1">Zdobyto nagrodę!</h3>
-      <p class="text-xs font-bold text-slate-500 mb-3">${tierCfg.name} • ${reasonText}</p>
-      <div class="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 font-extrabold text-lg text-slate-900 mb-5">
-        ${rolled.label}
-      </div>
-      <button type="button" onclick="claimRewardAndClosePopup()"
-        class="kid-card w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base shadow-lg">
-        ✅ Super! Odbierz ▶
-      </button>
-    `;
-  }
-  if (typeof playEffect === "function") playEffect("fanfare");
-}
-
-function claimRewardAndClosePopup() {
-  window._pendingPopupReward = null;
-  window._isOpeningChestAnim = false;
-  hideRewardModalEl();
-
-  if (Array.isArray(state.rewardQueue) && state.rewardQueue.length > 0) {
-    setTimeout(() => processNextRewardInQueue(), 200);
-    return;
-  }
-
-  const avatarModal = document.getElementById("avatarModal");
-  if (avatarModal && !avatarModal.classList.contains("hidden") && typeof openAvatarModal === "function") {
-    openAvatarModal();
-  }
-}
-
-function processNextRewardInQueue() {
-  if (!Array.isArray(state.rewardQueue) || state.rewardQueue.length === 0) {
-    hideRewardModalEl();
-    return;
-  }
-  const next = state.rewardQueue.shift();
-  const profKey = getRewardProfileKey(next.profKey);
-  const chestType = next.chestType || "bronze";
-  const reason = (next.achievement && next.achievement.name) ? next.achievement.name : "Nagroda za postępy!";
-  renderChestOpeningInsidePopup(profKey, chestType, reason);
-}
-
-function buyAndOpenChest(chestType) {
-  const tierKey = CHEST_TIERS_CONFIG[chestType] ? chestType : "bronze";
-  const tierCfg = CHEST_TIERS_CONFIG[tierKey];
-  const profKey = getRewardProfileKey();
+function hasSpunFortuneWheelToday(profKey) {
+  if (!PROFILE_META[profKey]) return false;
   const p = ensurePlayerStructure(state.stats[profKey]);
-
-  if ((p.stars || 0) < tierCfg.costStars) {
-    if (typeof playEffect === "function") playEffect("wrong");
-    if (typeof speakSequence === "function") {
-      speakSequence([{ lang: "pl", text: `Potrzebujesz ${tierCfg.costStars} złotych gwiazdek, aby otworzyć tę skrzynię.` }]);
-    }
-    return;
-  }
-
-  p.stars -= tierCfg.costStars;
   state.stats[profKey] = p;
-  saveCloudData();
-  if (typeof updateHeaderUI === "function") updateHeaderUI();
-  renderChestOpeningInsidePopup(profKey, tierKey, `Zakupiono za ${tierCfg.costStars} ⭐`);
+  const today = new Date().toISOString().slice(0, 10);
+  return p.lastWheelSpinDate === today;
 }
 
-function checkAndUnlockAchievements(profKey) {
-  if (!PROFILE_META[profKey] || !state.stats[profKey]) return;
+function canSpinFortuneWheelToday(profKey) {
+  if (!PROFILE_META[profKey]) return false;
+  if (profKey === "tata") return true;
+  return !hasSpunFortuneWheelToday(profKey);
+}
+
+function markFortuneWheelSpunToday(profKey) {
+  if (!PROFILE_META[profKey]) return;
   const p = ensurePlayerStructure(state.stats[profKey]);
-  if (!Array.isArray(p.badges)) p.badges = [];
+  p.lastWheelSpinDate = new Date().toISOString().slice(0, 10);
+  state.stats[profKey] = p;
+}
 
-  const milestones = [
-    { id: "first_cup",   name: "Pierwszy Puchar",   check: () => (p.cups || 0) >= 1,    chest: "bronze" },
-    { id: "star_50",     name: "50 Złotych Gwiazdek", check: () => (p.stars || 0) >= 50,  chest: "silver" },
-    { id: "star_150",    name: "150 Złotych Gwiazdek", check: () => (p.stars || 0) >= 150, chest: "gold" }
-  ];
+function getStoredFortuneWheelPublished() {
+  try {
+    return localStorage.getItem("akademia_fw_published_v1") === "true";
+  } catch (e) {
+    return false;
+  }
+}
 
-  let unlockedAny = false;
-  milestones.forEach(m => {
-    if (!p.badges.includes(m.id) && m.check()) {
-      p.badges.push(m.id);
-      unlockedAny = true;
-      state.rewardQueue.push({
-        profKey,
-        achievement: { name: `🏅 Odznaka: ${m.name}` },
-        chestType: m.chest
+function isFortuneWheelPublishedForKids() {
+  return Boolean(state.fortuneWheelPublishedForKids || (state.stats && state.stats.fortuneWheelPublishedForKids) || getStoredFortuneWheelPublished());
+}
+
+function setFortuneWheelPublishedForKids(published) {
+  const val = Boolean(published);
+  state.fortuneWheelPublishedForKids = val;
+  state.stats.fortuneWheelPublishedForKids = val;
+  try { localStorage.setItem("akademia_fw_published_v1", val ? "true" : "false"); } catch (e) {}
+  saveCloudData();
+}
+
+const DEFAULT_AVATAR_CALIBRATION = {
+  cap:         { label: "🧢 Czapki (Brązowa i Srebrna)", top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
+  goldCap:     { label: "👑 Czapki (Złota)",             top: -3, width: 48, height: 31, scaleX: 1.06, scaleY: 1.06 },
+  helmet:      { label: "🪖 Pełne Maski (Złote)",        top: -2, width: 52, height: 36, scaleX: 1.08, scaleY: 1.08 },
+  openHelmet:  { label: "👷 Hełmy otwarte (Strażak)",    top: -5, width: 50, height: 35, scaleX: 1.04, scaleY: 1.04 },
+  shirt:       { label: "👕 Wszystkie Koszulki",         top: 31, width: 37, height: 27, scaleX: 0.88, scaleY: 0.92 },
+  armor:       { label: "🛡️ Kurtki i Zbroje (Złote)",    top: 28, width: 45, height: 33, scaleX: 0.96, scaleY: 0.98 },
+  jeans:       { label: "👖 Jeansy (Brązowa - 1:1)",     top: 0,  width: 100, height: 100, scaleX: 1.00, scaleY: 1.00 },
+  silverPants: { label: "👖 Długie spodnie (Srebrna)",   top: 49, width: 54, height: 42, scaleX: 1.00, scaleY: 1.00 },
+  shorts:      { label: "🩳 Krótkie spodenki",           top: 51, width: 42, height: 27, scaleX: 0.95, scaleY: 1.00 },
+  goldShorts:  { label: "🩳 Spodenki piłkarskie",        top: 49, width: 50, height: 31, scaleX: 1.00, scaleY: 1.00 },
+  goldPants:   { label: "🥾 Spodnie z butami",           top: 48, width: 56, height: 50, scaleX: 1.00, scaleY: 1.00 }
+};
+
+window._calibOpen = false;
+window._calibActiveType = "shirt";
+
+function mergeCalibrationWithDefaults(rawCal) {
+  const merged = {};
+  Object.keys(DEFAULT_AVATAR_CALIBRATION).forEach(k => {
+    merged[k] = { ...DEFAULT_AVATAR_CALIBRATION[k], ...((rawCal && rawCal[k]) || {}) };
+  });
+  return merged;
+}
+
+function loadInitialCalibrationFromStorage() {
+  try {
+    const saved = localStorage.getItem("akademia_avatar_calib_v4");
+    if (saved) return mergeCalibrationWithDefaults(JSON.parse(saved));
+  } catch (e) {}
+  return mergeCalibrationWithDefaults(null);
+}
+
+const PARENT_PIN = APP_CONFIG.parentPin;
+const GAS_API_URL = APP_CONFIG.gasApiUrl;
+
+let audioCtx = null;
+let activeSpeechToken = 0;
+let pendingAdvanceTimer = null;
+let cloudSyncReady = false;
+
+function createDefaultPlayerStats() {
+  return {
+    stars: 0, cups: 0, perfectRounds: 0, examsDone: 0, duelsWon: 0, streakDays: 0, lastPlayDate: "", micCount: 0,
+    lastBirthdayRewardYear: 0, lastWheelSpinDate: "", nakedStartMigrated: true, seenVersion: "",
+    badges: [], avatar: { head: "", torso: "", legs: "", pet: "" },
+    unlockedItems: [], memoryAnimals: [], hardWords: [],
+    pendingChests: [],
+    dragonChestDaily: { date: "", count: 0 },
+    duelChestDaily: { date: "", count: 0 },
+    petFood: {}, petXp: {},
+    dailyQuest: { date: "", type: "", title: "", target: 1, progress: 0, rewardStars: 30, claimed: false },
+    lessonCounts: {}, equipped: {}
+  };
+}
+
+function resolveOutfitPath(pathOrId) {
+  if (!pathOrId) return "";
+  const legacyMap = {
+    red_cap: "grafiki/cap_red.png",
+    hero_shirt: "grafiki/shirt_blue.png",
+    "grafiki/Shirt_blue.png": "grafiki/shirt_blue.png",
+    "grafiki/srebrna/Shirt_pigeon.png": "grafiki/srebrna/shirt_pigeon.png",
+    "grafiki/srebrna/Shirt_T-Rex.png": "grafiki/srebrna/shirt_T-Rex.png",
+    jeans: "grafiki/jeans_blue.png",
+    space_helmet: "grafiki/zlota/helmet_astronaut.png"
+  };
+  if (legacyMap[pathOrId]) return legacyMap[pathOrId];
+  if (pathOrId.includes("/")) return pathOrId;
+  return "grafiki/" + pathOrId.replace(/\.png$/i, "") + ".png";
+}
+
+function getFallbackOutfitPath(src) {
+  if (!src) return "";
+  if (src.startsWith("grafiki/zlota/")) return src.replace("grafiki/zlota/", "grafiki/srebrna/zlota/");
+  return src;
+}
+
+function ensurePlayerStructure(p) {
+  const def = createDefaultPlayerStats();
+  if (!p) return def;
+
+  if (!p.nakedStartMigrated) {
+    const oldStarter = ["grafiki/cap_red.png", "grafiki/shirt_blue.png", "grafiki/Shirt_blue.png", "grafiki/jeans_blue.png"];
+    p.unlockedItems = (p.unlockedItems || []).filter(it => !oldStarter.includes(it));
+    p.memoryAnimals = (p.memoryAnimals || []).filter(id => !["mem_dog", "mem_cat", "mem_rabbit", "mem_fox", "p_dog", "p_cat", "p_rabbit", "p_fox"].includes(id));
+    p.avatar = { head: "", torso: "", legs: "", pet: "" };
+    p.nakedStartMigrated = true;
+  }
+
+  const rawUnlocked = Array.isArray(p.unlockedItems) ? p.unlockedItems.map(resolveOutfitPath).filter(Boolean) : [];
+  const rawAnimals = Array.isArray(p.memoryAnimals)
+    ? p.memoryAnimals.map(id => String(id).replace(/^mem_/, "p_")).filter(Boolean)
+    : [];
+  const rawAvatar = p.avatar || def.avatar;
+
+  return {
+    ...def, ...p, lessonCounts: p.lessonCounts || {},
+    lastBirthdayRewardYear: p.lastBirthdayRewardYear || 0,
+    lastWheelSpinDate: p.lastWheelSpinDate || "",
+    nakedStartMigrated: true,
+    seenVersion: p.seenVersion || "",
+    badges: Array.isArray(p.badges) ? p.badges : [],
+    unlockedItems: Array.from(new Set(rawUnlocked)),
+    memoryAnimals: Array.from(new Set(rawAnimals)),
+    hardWords: Array.isArray(p.hardWords) ? p.hardWords : [],
+    pendingChests: Array.isArray(p.pendingChests) ? p.pendingChests : [],
+    dragonChestDaily: (p.dragonChestDaily && typeof p.dragonChestDaily === "object") ? { ...def.dragonChestDaily, ...p.dragonChestDaily } : def.dragonChestDaily,
+    duelChestDaily: (p.duelChestDaily && typeof p.duelChestDaily === "object") ? { ...def.duelChestDaily, ...p.duelChestDaily } : def.duelChestDaily,
+    petFood: (p.petFood && typeof p.petFood === "object") ? p.petFood : {},
+    petXp: (p.petXp && typeof p.petXp === "object") ? p.petXp : {},
+    dailyQuest: (p.dailyQuest && typeof p.dailyQuest === "object") ? { ...def.dailyQuest, ...p.dailyQuest } : def.dailyQuest,
+    avatar: {
+      head: rawAvatar.head ? resolveOutfitPath(rawAvatar.head) : "",
+      torso: rawAvatar.torso ? resolveOutfitPath(rawAvatar.torso) : "",
+      legs: rawAvatar.legs ? resolveOutfitPath(rawAvatar.legs) : "",
+      pet: rawAvatar.pet ? String(rawAvatar.pet).replace(/^mem_/, "p_") : ""
+    },
+    equipped: { ...def.equipped, ...(p.equipped || {}) }
+  };
+}
+
+function mergeDailyCounterSafe(locRec, cldRec) {
+  const l = locRec || { date: "", count: 0 };
+  const c = cldRec || { date: "", count: 0 };
+  if (l.date === c.date) return { date: l.date, count: Math.max(l.count || 0, c.count || 0) };
+  return (c.date || "") >= (l.date || "") ? c : l;
+}
+
+function mergePlayerProgressSafe(localRaw, cloudRaw) {
+  const loc = ensurePlayerStructure(localRaw);
+  const cld = ensurePlayerStructure(cloudRaw);
+  if (!cloudRaw) return loc;
+  if (!localRaw) return cld;
+
+  const mergedLessonCounts = { ...loc.lessonCounts };
+  Object.keys(cld.lessonCounts || {}).forEach(k => {
+    mergedLessonCounts[k] = Math.max(mergedLessonCounts[k] || 0, cld.lessonCounts[k] || 0);
+  });
+
+  const mergedPetXp = { ...loc.petXp };
+  Object.keys(cld.petXp || {}).forEach(k => {
+    mergedPetXp[k] = Math.max(mergedPetXp[k] || 0, cld.petXp[k] || 0);
+  });
+
+  const mergedPetFood = { ...cld.petFood };
+  Object.keys(loc.petFood || {}).forEach(k => {
+    if (mergedPetFood[k] === undefined) mergedPetFood[k] = loc.petFood[k];
+  });
+
+  return {
+    ...loc,
+    ...cld,
+    stars: Math.max(loc.stars || 0, cld.stars || 0),
+    cups: Math.max(loc.cups || 0, cld.cups || 0),
+    perfectRounds: Math.max(loc.perfectRounds || 0, cld.perfectRounds || 0),
+    examsDone: Math.max(loc.examsDone || 0, cld.examsDone || 0),
+    duelsWon: Math.max(loc.duelsWon || 0, cld.duelsWon || 0),
+    streakDays: Math.max(loc.streakDays || 0, cld.streakDays || 0),
+    micCount: Math.max(loc.micCount || 0, cld.micCount || 0),
+    lastPlayDate: (cld.lastPlayDate || "") >= (loc.lastPlayDate || "") ? cld.lastPlayDate : loc.lastPlayDate,
+    lastWheelSpinDate: (cld.lastWheelSpinDate || "") >= (loc.lastWheelSpinDate || "") ? cld.lastWheelSpinDate : loc.lastWheelSpinDate,
+    lastBirthdayRewardYear: Math.max(loc.lastBirthdayRewardYear || 0, cld.lastBirthdayRewardYear || 0),
+    seenVersion: cld.seenVersion || loc.seenVersion || "",
+    badges: Array.from(new Set([...(loc.badges || []), ...(cld.badges || [])])),
+    unlockedItems: Array.from(new Set([...(loc.unlockedItems || []), ...(cld.unlockedItems || [])])),
+    memoryAnimals: Array.from(new Set([...(loc.memoryAnimals || []), ...(cld.memoryAnimals || [])])),
+    hardWords: (cld.hardWords && cld.hardWords.length > 0) ? cld.hardWords : (loc.hardWords || []),
+    pendingChests: [...(cld.pendingChests || []), ...(loc.pendingChests || [])].filter((v, i, arr) => arr.findIndex(x => JSON.stringify(x) === JSON.stringify(v)) === i),
+    dragonChestDaily: mergeDailyCounterSafe(loc.dragonChestDaily, cld.dragonChestDaily),
+    duelChestDaily: mergeDailyCounterSafe(loc.duelChestDaily, cld.duelChestDaily),
+    petFood: mergedPetFood,
+    petXp: mergedPetXp,
+    lessonCounts: mergedLessonCounts,
+    avatar: {
+      head: cld.avatar.head || loc.avatar.head || "",
+      torso: cld.avatar.torso || loc.avatar.torso || "",
+      legs: cld.avatar.legs || loc.avatar.legs || "",
+      pet: cld.avatar.pet || loc.avatar.pet || ""
+    },
+    equipped: { ...(loc.equipped || {}), ...(cld.equipped || {}) }
+  };
+}
+
+var state = {
+  profile: null, tataPreviewAsIgor: false,
+  turtleMode: false, questionsPerRound: 8, currentLessonId: null, currentSubMode: "listen_pick",
+  isExamMode: false, isHardWordsMode: false, isCoopDragonMode: false,
+  roundIndex: 0, roundQuestions: [], roundResults: [], currentQuestionMistakes: 0,
+  roundScore: 0, roundMistakes: 0, answeredCurrent: false, flashcardIndex: 0, shopCart: [], riddleHintShown: false,
+  letterBuilt: "", letterPool: [],
+  duelScores: { igor: 0, hubert: 0 }, duelTurn: "igor", duelReadyWaiting: false,
+  dragonBattle: { dragonHp: 10, maxDragonHp: 10, teamHp: 4, maxTeamHp: 4, statusText: "", animClass: "" },
+  selectedStickerCat: "all", selectedBadgeCat: "all", selectedWardrobeTier: "all", rewardQueue: [],
+  featuresPublishedForKids: true,
+  fortuneWheelPublishedForKids: getStoredFortuneWheelPublished(),
+  approvedLessonIds: [],
+  equalizedLessonsForIgor: [],
+  lessons: JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE)),
+  calibration: loadInitialCalibrationFromStorage(),
+  stats: {
+    igor: createDefaultPlayerStats(),
+    hubert: createDefaultPlayerStats(),
+    tata: createDefaultPlayerStats(),
+    stickers: []
+  },
+  memoryGameCards: [], memoryFlippedIndexes: [], memoryMatchedPairs: 0
+};
+
+function getStoredApprovedLessonIds() {
+  try {
+    const raw = localStorage.getItem("akademia_approved_lessons_v1");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+
+function persistApprovedLessonIds(idsArr) {
+  const unique = Array.from(new Set((idsArr || []).filter(Boolean)));
+  state.approvedLessonIds = unique;
+  state.stats.approvedLessonIds = unique;
+  try { localStorage.setItem("akademia_approved_lessons_v1", JSON.stringify(unique)); } catch (e) {}
+}
+
+function applyApprovedLessonsPersistence(lessonsArr) {
+  const approvedSet = new Set([
+    ...(state.approvedLessonIds || []),
+    ...((state.stats && state.stats.approvedLessonIds) || []),
+    ...getStoredApprovedLessonIds()
+  ]);
+  persistApprovedLessonIds(Array.from(approvedSet));
+  (lessonsArr || []).forEach(l => {
+    if (approvedSet.has(l.id) && l.testOnly) {
+      delete l.testOnly;
+    }
+    if (Array.isArray(l.items)) {
+      l.items.forEach(it => {
+        if (approvedSet.has(`${l.id}::${(it.en || "").toLowerCase()}`) && it.testOnly) {
+          delete it.testOnly;
+        }
       });
     }
   });
+}
 
-  state.stats[profKey] = p;
-  if (unlockedAny) {
-    saveCloudData();
-    if (typeof updateHeaderUI === "function") updateHeaderUI();
+function normalizePancakesIconsInLessons(lessonsArr) {
+  const pLesson = (lessonsArr || []).find(l => l.id === "pancakes_cooking");
+  if (!pLesson || !Array.isArray(pLesson.items)) return;
+  pLesson.items.forEach(it => {
+    const k = (it.en || "").toLowerCase();
+    if (k === "flour") it.icon = getCustomPancakeSvg("flour", 64);
+    if (k === "yoghurt") it.icon = getCustomPancakeSvg("yoghurt", 64);
+    if (k === "oil") it.icon = getCustomPancakeSvg("oil", 64);
+  });
+}
+
+function isLegacyDuplicateLesson(cl) {
+  if (!cl) return true;
+  const legacyIds = ["shop", "shop_lesson", "bakery"];
+  if (legacyIds.includes(cl.id)) return true;
+  const titleClean = String(cl.title || "").toLowerCase();
+  if (titleClean.includes("sklep i zakupy")) return true;
+  return false;
+}
+
+function isEffectiveIgorMode(lessonIdOverride = null) {
+  const activeLid = lessonIdOverride || state.currentLessonId;
+  const eqList = Array.isArray(state.equalizedLessonsForIgor)
+    ? state.equalizedLessonsForIgor
+    : ((state.stats && Array.isArray(state.stats.equalizedLessonsForIgor)) ? state.stats.equalizedLessonsForIgor : []);
+
+  if (activeLid && eqList.includes(activeLid)) {
+    return false;
   }
-}
-
-function openAvatarModal() {
-  const modal = document.getElementById("avatarModal");
-  const itemsBox = document.getElementById("avatarItemsContainer");
-  const previewBox = document.getElementById("avatarPreviewBox");
-  const nameEl = document.getElementById("avatarModalPlayerName");
-  if (!modal || !itemsBox || !previewBox) return;
-
-  const profKey = getRewardProfileKey();
-  const p = ensurePlayerStructure(state.stats[profKey]);
-  if (nameEl) nameEl.textContent = PROFILE_META[profKey] ? PROFILE_META[profKey].name : "GRACZ";
-
-  previewBox.innerHTML = `
-    <div onclick="if(typeof speakAvatarGreeting==='function') speakAvatarGreeting();" class="cursor-pointer my-2">
-      ${typeof renderBoyAvatarSvg === "function" ? renderBoyAvatarSvg(profKey, 150) : "👦"}
-    </div>
-    <div class="text-sm font-extrabold text-indigo-950 mt-1">Twoje gwiazdki: ⭐ ${p.stars || 0}</div>
-  `;
-
-  const allOutfits = Object.values(CHEST_TIERS_CONFIG).flatMap(t => (t.outfitPool || []).map(resolveOutfitPath));
-  const uniqueOutfits = Array.from(new Set(allOutfits));
-
-  itemsBox.innerHTML = `
-    <div class="p-3 rounded-2xl bg-amber-50 border-2 border-amber-300">
-      <div class="text-xs font-extrabold text-amber-950 uppercase mb-2">🎁 Sklepik ze Skrzyniami (masz ⭐ ${p.stars || 0})</div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        ${Object.values(CHEST_TIERS_CONFIG).map(t => {
-          const canAfford = (p.stars || 0) >= t.costStars;
-          return `
-            <button type="button" onclick="buyAndOpenChest('${t.id}')"
-              class="kid-card p-3 rounded-2xl border-2 font-extrabold text-xs flex flex-col items-center gap-1 shadow-sm ${
-                canAfford ? "bg-white hover:bg-amber-100 border-amber-400 text-slate-900" : "bg-slate-100 border-slate-200 text-slate-400"
-              }">
-              <span class="text-3xl">${t.icon}</span>
-              <span>${t.name}</span>
-              <span class="px-2 py-0.5 rounded-lg bg-amber-200 text-amber-950">${t.costStars} ⭐</span>
-            </button>
-          `;
-        }).join("")}
-      </div>
-    </div>
-
-    <div class="p-3 rounded-2xl bg-indigo-50/70 border-2 border-indigo-200">
-      <div class="text-xs font-extrabold text-indigo-950 uppercase mb-2">👕 Odblokowane ubranka (${p.unlockedItems.length}/${uniqueOutfits.length})</div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        ${uniqueOutfits.length === 0
-          ? `<div class="col-span-full text-xs text-slate-500">Otwórz skrzynię, aby zdobyć ubranka!</div>`
-          : uniqueOutfits.map(src => {
-              const unlocked = p.unlockedItems.includes(src);
-              const slot = guessOutfitSlotFromPath(src);
-              const equipped = p.avatar && p.avatar[slot] === src;
-              const shortName = src.split("/").pop().replace(/\.png$/i, "");
-              return `
-                <button type="button" ${unlocked ? `onclick="toggleEquipOutfit('${profKey}','${slot}','${src}')"` : "disabled"}
-                  class="p-2.5 rounded-xl border-2 text-xs font-bold text-left flex items-center justify-between gap-1 ${
-                    equipped ? "bg-emerald-100 border-emerald-500 text-emerald-950" : (unlocked ? "bg-white border-indigo-300 text-slate-800 hover:bg-indigo-50" : "bg-slate-100 border-slate-200 text-slate-400 opacity-60")
-                  }">
-                  <span class="truncate">${unlocked ? "👕" : "🔒"} ${shortName}</span>
-                  ${equipped ? "<span class='text-[10px] font-extrabold text-emerald-700'>✓</span>" : ""}
-                </button>
-              `;
-            }).join("")}
-      </div>
-    </div>
-  `;
-
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-}
-
-function closeAvatarModal() {
-  const modal = document.getElementById("avatarModal");
-  if (modal) {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
+  if (state.profile === "duel" || state.isCoopDragonMode) {
+    return state.duelTurn === "igor";
   }
+  if (state.profile === "igor") return true;
+  if (state.profile === "tata" && state.tataPreviewAsIgor) return true;
+  return false;
 }
 
-function toggleEquipOutfit(profKey, slot, src) {
-  const p = ensurePlayerStructure(state.stats[profKey]);
-  if (!p.unlockedItems.includes(src)) return;
-  if (!p.avatar) p.avatar = { head: "", torso: "", legs: "", pet: "" };
-  p.avatar[slot] = p.avatar[slot] === src ? "" : src;
-  state.stats[profKey] = p;
-  saveCloudData();
+function toggleTataPreviewAge() {
+  if (state.profile !== "tata") return;
+  state.tataPreviewAsIgor = !state.tataPreviewAsIgor;
+  playEffect("beep");
   if (typeof updateHeaderUI === "function") updateHeaderUI();
-  openAvatarModal();
+  if (state.currentLessonId && typeof startLesson === "function" && state.currentLessonId !== "grand_exam" && state.currentLessonId !== "hard_words_training" && state.currentLessonId !== "dragon_coop") {
+    startLesson(state.currentLessonId, state.currentSubMode);
+  } else if (typeof showLessonMenu === "function") {
+    showLessonMenu();
+  }
 }
 
-function unlockAllOutfitsForTesting() {
-  const allOutfits = Object.values(CHEST_TIERS_CONFIG).flatMap(t => (t.outfitPool || []).map(resolveOutfitPath));
-  const uniqueOutfits = Array.from(new Set(allOutfits));
-  const allPets = COMPANION_PETS.map(pet => pet.id);
-  ["igor", "hubert", "tata"].forEach(k => {
-    const p = ensurePlayerStructure(state.stats[k]);
-    p.unlockedItems = Array.from(new Set([...p.unlockedItems, ...uniqueOutfits]));
-    p.memoryAnimals = Array.from(new Set([...p.memoryAnimals, ...allPets]));
-    state.stats[k] = p;
-  });
-  saveCloudData();
-  if (typeof showParentStatus === "function") showParentStatus("🔓 Odblokowano wszystkie ubranka i zwierzaki dla testów!");
+function getAvatarCalibration() {
+  if (typeof state !== "undefined" && state && state.calibration) return state.calibration;
+  return loadInitialCalibrationFromStorage();
 }
 
-function lockAllOutfitsAfterTesting() {
-  ["igor", "hubert", "tata"].forEach(k => {
-    const p = ensurePlayerStructure(state.stats[k]);
-    p.unlockedItems = [];
-    p.memoryAnimals = [];
-    p.avatar = { head: "", torso: "", legs: "", pet: "" };
-    state.stats[k] = p;
-  });
+function saveAvatarCalibration(cal) {
+  state.calibration = mergeCalibrationWithDefaults(cal);
+  state.stats.calibration = state.calibration;
+  try { localStorage.setItem("akademia_avatar_calib_v4", JSON.stringify(state.calibration)); } catch (e) {}
   saveCloudData();
-  if (typeof showParentStatus === "function") showParentStatus("🔒 Zablokowano testowe ubranka i zwierzaki.");
+}
+
+function areNewFeaturesActive() {
+  return true;
+}
+
+function loadCloudData() {
+  let localStatsCache = null;
+  let localLessonsCache = null;
+  try {
+    const localSaved = localStorage.getItem("akademia_save_v14") || localStorage.getItem("akademia_save_v12") || localStorage.getItem("akademia_save_v10");
+    if (localSaved) {
+      const parsed = JSON.parse(localSaved);
+      if (parsed.stats) {
+        localStatsCache = parsed.stats;
+        state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
+        state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
+        state.stats.tata = ensurePlayerStructure(parsed.stats.tata);
+        if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
+        if (Array.isArray(parsed.stats.approvedLessonIds)) persistApprovedLessonIds(parsed.stats.approvedLessonIds);
+        if (Array.isArray(parsed.stats.equalizedLessonsForIgor)) state.equalizedLessonsForIgor = parsed.stats.equalizedLessonsForIgor;
+        if (typeof parsed.stats.fortuneWheelPublishedForKids === "boolean") {
+          state.fortuneWheelPublishedForKids = parsed.stats.fortuneWheelPublishedForKids;
+        }
+        if (parsed.stats.calibration) state.calibration = mergeCalibrationWithDefaults(parsed.stats.calibration);
+      }
+      if (Array.isArray(parsed.lessons)) localLessonsCache = parsed.lessons;
+      if (parsed.calibration) state.calibration = mergeCalibrationWithDefaults(parsed.calibration);
+      if (parsed.questionsPerRound) state.questionsPerRound = parseInt(parsed.questionsPerRound) || 8;
+    }
+  } catch (e) {}
+
+  fetch(GAS_API_URL)
+    .then(res => res.json())
+    .then(data => {
+      if (data.stats) {
+        const pStats = JSON.parse(data.stats);
+        state.stats.igor = mergePlayerProgressSafe(localStatsCache && localStatsCache.igor, pStats.igor);
+        state.stats.hubert = mergePlayerProgressSafe(localStatsCache && localStatsCache.hubert, pStats.hubert);
+        state.stats.tata = mergePlayerProgressSafe(localStatsCache && localStatsCache.tata, pStats.tata);
+        const localStickers = (localStatsCache && Array.isArray(localStatsCache.stickers)) ? localStatsCache.stickers : [];
+        const cloudStickers = Array.isArray(pStats.stickers) ? pStats.stickers : [];
+        state.stats.stickers = Array.from(new Set([...localStickers, ...cloudStickers]));
+
+        const cloudApproved = Array.isArray(pStats.approvedLessonIds) ? pStats.approvedLessonIds : [];
+        persistApprovedLessonIds([...state.approvedLessonIds, ...cloudApproved, ...getStoredApprovedLessonIds()]);
+
+        const cloudEq = Array.isArray(pStats.equalizedLessonsForIgor) ? pStats.equalizedLessonsForIgor : [];
+        state.equalizedLessonsForIgor = Array.from(new Set([...(state.equalizedLessonsForIgor || []), ...cloudEq]));
+
+        if (typeof pStats.fortuneWheelPublishedForKids === "boolean") {
+          state.fortuneWheelPublishedForKids = pStats.fortuneWheelPublishedForKids;
+          try { localStorage.setItem("akademia_fw_published_v1", pStats.fortuneWheelPublishedForKids ? "true" : "false"); } catch (err) {}
+        }
+
+        if (pStats.calibration) {
+          state.calibration = mergeCalibrationWithDefaults(pStats.calibration);
+          state.stats.calibration = state.calibration;
+          try { localStorage.setItem("akademia_avatar_calib_v4", JSON.stringify(state.calibration)); } catch (err) {}
+        }
+      }
+
+      const mergeLessonLists = (incomingLessons) => {
+        if (!Array.isArray(incomingLessons)) return;
+        const baseIds = FULL_LESSONS_DATABASE.map(l => l.id);
+        incomingLessons.forEach(cl => {
+          if (isLegacyDuplicateLesson(cl)) return;
+          if (baseIds.includes(cl.id)) {
+            const target = state.lessons.find(l => l.id === cl.id);
+            if (target && Array.isArray(cl.items)) {
+              const knownEn = new Set(target.items.map(x => x.en.toLowerCase()));
+              cl.items.forEach(it => {
+                if (!knownEn.has(it.en.toLowerCase())) target.items.push(it);
+              });
+            }
+          } else {
+            const existingCustom = state.lessons.find(l => l.id === cl.id);
+            if (!existingCustom) {
+              state.lessons.push(cl);
+            } else if (!cl.testOnly && existingCustom.testOnly) {
+              delete existingCustom.testOnly;
+            }
+          }
+        });
+      };
+
+      state.lessons = JSON.parse(JSON.stringify(FULL_LESSONS_DATABASE));
+      if (localLessonsCache) mergeLessonLists(localLessonsCache);
+      if (data.lessons) mergeLessonLists(JSON.parse(data.lessons));
+
+      applyApprovedLessonsPersistence(state.lessons);
+      normalizePancakesIconsInLessons(state.lessons);
+
+      if (data.questionsPerRound) state.questionsPerRound = parseInt(data.questionsPerRound) || 8;
+      cloudSyncReady = true;
+      saveCloudData();
+      if (typeof updateHeaderUI === "function") updateHeaderUI();
+      if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+      else if (typeof showStartScreen === "function") showStartScreen();
+    })
+    .catch(err => {
+      console.error("Błąd pobierania danych:", err);
+      applyApprovedLessonsPersistence(state.lessons);
+      normalizePancakesIconsInLessons(state.lessons);
+      cloudSyncReady = true;
+      if (typeof updateHeaderUI === "function") updateHeaderUI();
+      if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
+      else if (typeof showStartScreen === "function") showStartScreen();
+    });
+}
+
+function saveCloudData() {
+  state.stats.featuresPublishedForKids = true;
+  state.stats.fortuneWheelPublishedForKids = isFortuneWheelPublishedForKids();
+  state.stats.approvedLessonIds = Array.from(new Set([...(state.approvedLessonIds || []), ...getStoredApprovedLessonIds()]));
+  state.stats.equalizedLessonsForIgor = Array.isArray(state.equalizedLessonsForIgor) ? state.equalizedLessonsForIgor : [];
+  state.stats.calibration = state.calibration;
+  try {
+    const serialized = JSON.stringify({
+      stats: state.stats,
+      lessons: state.lessons,
+      questionsPerRound: state.questionsPerRound,
+      calibration: state.calibration
+    });
+    localStorage.setItem("akademia_save_v14", serialized);
+    localStorage.setItem("akademia_save_v12", serialized);
+  } catch (e) {}
+  if (!cloudSyncReady) return;
+  const payload = {
+    action: "save",
+    data: {
+      stats: state.stats,
+      calibration: state.calibration,
+      lessons: state.lessons,
+      questionsPerRound: state.questionsPerRound
+    }
+  };
+  fetch(GAS_API_URL, {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  }).catch(err => console.error("Błąd zapisu:", err));
+}
+
+function updateDailyStreakForPlayer(profKey) {
+  const p = state.stats[profKey];
+  if (!p) return;
+  const today = new Date().toISOString().slice(0, 10);
+  if (p.lastPlayDate === today) return;
+  if (!p.lastPlayDate) p.streakDays = 1;
+  else {
+    const diffDays = Math.round((new Date(today) - new Date(p.lastPlayDate)) / (1000 * 60 * 60 * 24));
+    p.streakDays = diffDays === 1 ? (p.streakDays || 1) + 1 : (diffDays > 1 ? 1 : p.streakDays);
+  }
+  p.lastPlayDate = today;
 }

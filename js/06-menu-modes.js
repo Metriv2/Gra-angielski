@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/06-menu-modes.js
-   EKRAN STARTOWY, MENU LEKCJI, KOŁO FORTUNY (10-200 ⭐), PYTANIA ZE SŁUCHU I TRYBY
+   EKRAN STARTOWY, MENU LEKCJI, KOŁO FORTUNY (TESTOWE U TATY -> ZATWIERDZANE), QUIZ
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -235,7 +235,7 @@ function claimDailyQuestReward() {
 }
 
 // ------------------------------------------------------------------------
-// KOŁO FORTUNY (DARMOWE GWIAZDKI RAZ DZIENNIE: 10, 20, 50, 70, 100, 150, 200)
+// KOŁO FORTUNY (10, 20, 50, 70, 100, 150, 200 ⭐ – TESTOWE U TATY DO ZATWIERDZENIA)
 // ------------------------------------------------------------------------
 const FORTUNE_WHEEL_PRIZES = [
   { stars: 10,  color: "#38bdf8", text: "#0f172a" },
@@ -296,7 +296,9 @@ function buildFortuneWheelSvg() {
 function openFortuneWheelModal() {
   if (!state.profile || state.profile === "duel") return;
   const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
-  const canSpin = typeof canSpinFortuneWheelToday === "function" ? canSpinFortuneWheelToday(profKey) : true;
+  if (profKey !== "tata" && !isFortuneWheelPublishedForKids()) return;
+
+  const canSpin = canSpinFortuneWheelToday(profKey);
   const playerName = PROFILE_META[profKey] ? PROFILE_META[profKey].name : "GRACZ";
 
   let modal = document.getElementById("fortuneWheelModal");
@@ -312,7 +314,7 @@ function openFortuneWheelModal() {
     <div class="bg-white rounded-3xl max-w-md w-full p-5 md:p-6 border-4 border-amber-400 shadow-2xl text-center relative">
       <button onclick="closeFortuneWheelModal()" class="absolute top-3 right-3 text-xl bg-slate-100 hover:bg-slate-200 w-9 h-9 rounded-full font-bold text-slate-600">✖</button>
       <div class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold text-xs mb-1">
-        🎡 Codzienna Nagroda • ${playerName} ${profKey === "tata" ? "(🧪 Tryb Testowy)" : "(1x dziennie)"}
+        🎡 Codzienna Nagroda • ${playerName} ${profKey === "tata" ? "(🧪 Testowe – bez limitu)" : "(1x dziennie)"}
       </div>
       <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1">Koło Fortuny Gwiazdek!</h2>
       <p class="text-xs font-bold text-slate-600 mb-3">Do wygrania: <strong>10, 20, 50, 70, 100, 150 lub 200 ⭐</strong>!</p>
@@ -361,8 +363,8 @@ function closeFortuneWheelModal() {
 function spinFortuneWheel() {
   if (window._wheelSpinning) return;
   const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
-  const canSpin = typeof canSpinFortuneWheelToday === "function" ? canSpinFortuneWheelToday(profKey) : true;
-  if (!canSpin) return;
+  if (profKey !== "tata" && !isFortuneWheelPublishedForKids()) return;
+  if (!canSpinFortuneWheelToday(profKey)) return;
 
   window._wheelSpinning = true;
   playEffect("beep");
@@ -395,9 +397,7 @@ function spinFortuneWheel() {
     spinner.style.transform = `rotate(${window._wheelCurrentDeg}deg)`;
   }
 
-  if (typeof markFortuneWheelSpunToday === "function") {
-    markFortuneWheelSpunToday(profKey);
-  }
+  markFortuneWheelSpunToday(profKey);
   const p = ensurePlayerStructure(state.stats[profKey]);
   p.stars = (p.stars || 0) + prizeStars;
   state.stats[profKey] = p;
@@ -594,12 +594,18 @@ function showLessonMenu() {
     hardWordsBtnHtml = `<button onclick="startHardWordsTraining()" class="kid-card px-4 py-2.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-extrabold text-xs md:text-sm shadow-lg flex items-center gap-2 border-2 border-rose-300"><span>🎯🔥</span> Trudne Słówka (${hardList.length}) • 2x ⭐!</button>`;
   }
 
-  const canSpinWheel = state.profile !== "duel" && (typeof canSpinFortuneWheelToday === "function" ? canSpinFortuneWheelToday(pKey) : true);
-  const fortuneWheelBtnHtml = state.profile !== "duel"
-    ? `<button id="menuFortuneWheelBtn" onclick="openFortuneWheelModal()" class="kid-card px-4 py-2.5 rounded-2xl ${canSpinWheel ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-500 text-slate-950 border-amber-600 tutorial-highlight' : 'bg-amber-50 text-amber-900 border-amber-300'} border-3 font-extrabold text-xs md:text-sm shadow-md flex items-center gap-2">
+  const showWheelForProfile = state.profile === "tata" || (state.profile !== "duel" && isFortuneWheelPublishedForKids());
+  const spunToday = hasSpunFortuneWheelToday(pKey);
+  const wheelShouldGlow = !spunToday;
+  const wheelBadgeText = state.profile === "tata"
+    ? (spunToday ? "🧪 TEST (✓ Zakręcono)" : "🧪 TEST (Darmowe ⭐!)")
+    : (spunToday ? "✓ Zakręcono dziś" : "🎁 Darmowe ⭐!");
+
+  const fortuneWheelBtnHtml = showWheelForProfile
+    ? `<button id="menuFortuneWheelBtn" onclick="openFortuneWheelModal()" class="kid-card px-4 py-2.5 rounded-2xl ${wheelShouldGlow ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-500 text-slate-950 border-amber-600 tutorial-highlight' : 'bg-amber-50 text-amber-900 border-amber-300'} border-3 font-extrabold text-xs md:text-sm shadow-md flex items-center gap-2">
          <span class="text-lg">🎡</span>
          <span>Koło Fortuny</span>
-         <span class="px-2 py-0.5 rounded-lg ${canSpinWheel ? 'bg-white text-amber-950' : 'bg-emerald-100 text-emerald-800'} text-[10px]">${canSpinWheel ? '🎁 Darmowe ⭐!' : '✓ Zakręcono'}</span>
+         <span class="px-2 py-0.5 rounded-lg ${wheelShouldGlow ? 'bg-white text-amber-950' : 'bg-emerald-100 text-emerald-800'} text-[10px]">${wheelBadgeText}</span>
        </button>`
     : "";
 

@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/03-state-cloud.js
-   STAN GRY, URODZINY, KOLEJKA SKRZYŃ, DZIENNY LIMIT SKRZYŃ I SYNCHRONIZACJA GAS
+   STAN GRY, KOŁO FORTUNY (1x DZIENNIE), URODZINY, KOLEJKA SKRZYŃ I SYNCHRONIZACJA GAS
    ============================================================================ */
 
 const PROFILE_META = {
@@ -112,6 +112,22 @@ function recordDailySpecialChestAwarded(mode) {
   saveCloudData();
 }
 
+function canSpinFortuneWheelToday(profKey) {
+  if (!PROFILE_META[profKey]) return false;
+  if (profKey === "tata") return true;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  state.stats[profKey] = p;
+  const today = new Date().toISOString().slice(0, 10);
+  return p.lastWheelSpinDate !== today;
+}
+
+function markFortuneWheelSpunToday(profKey) {
+  if (!PROFILE_META[profKey] || profKey === "tata") return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  p.lastWheelSpinDate = new Date().toISOString().slice(0, 10);
+  state.stats[profKey] = p;
+}
+
 const DEFAULT_AVATAR_CALIBRATION = {
   cap:         { label: "🧢 Czapki (Brązowa i Srebrna)", top: 2,  width: 34, height: 22, scaleX: 1.00, scaleY: 1.00 },
   goldCap:     { label: "👑 Czapki (Złota)",             top: -3, width: 48, height: 31, scaleX: 1.06, scaleY: 1.06 },
@@ -156,7 +172,7 @@ let cloudSyncReady = false;
 function createDefaultPlayerStats() {
   return {
     stars: 0, cups: 0, perfectRounds: 0, examsDone: 0, duelsWon: 0, streakDays: 0, lastPlayDate: "", micCount: 0,
-    lastBirthdayRewardYear: 0, nakedStartMigrated: true, seenVersion: "",
+    lastBirthdayRewardYear: 0, lastWheelSpinDate: "", nakedStartMigrated: true, seenVersion: "",
     badges: [], avatar: { head: "", torso: "", legs: "", pet: "" },
     unlockedItems: [], memoryAnimals: [], hardWords: [],
     pendingChests: [],
@@ -211,6 +227,7 @@ function ensurePlayerStructure(p) {
   return {
     ...def, ...p, lessonCounts: p.lessonCounts || {},
     lastBirthdayRewardYear: p.lastBirthdayRewardYear || 0,
+    lastWheelSpinDate: p.lastWheelSpinDate || "",
     nakedStartMigrated: true,
     seenVersion: p.seenVersion || "",
     badges: Array.isArray(p.badges) ? p.badges : [],
@@ -272,6 +289,7 @@ function mergePlayerProgressSafe(localRaw, cloudRaw) {
     streakDays: Math.max(loc.streakDays || 0, cld.streakDays || 0),
     micCount: Math.max(loc.micCount || 0, cld.micCount || 0),
     lastPlayDate: (cld.lastPlayDate || "") >= (loc.lastPlayDate || "") ? cld.lastPlayDate : loc.lastPlayDate,
+    lastWheelSpinDate: (cld.lastWheelSpinDate || "") >= (loc.lastWheelSpinDate || "") ? cld.lastWheelSpinDate : loc.lastWheelSpinDate,
     lastBirthdayRewardYear: Math.max(loc.lastBirthdayRewardYear || 0, cld.lastBirthdayRewardYear || 0),
     seenVersion: cld.seenVersion || loc.seenVersion || "",
     badges: Array.from(new Set([...(loc.badges || []), ...(cld.badges || [])])),

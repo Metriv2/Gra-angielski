@@ -500,8 +500,7 @@ function buyChestWithStars(tier, cost) {
     speakSequence([{ lang: "pl", text: `Super! Wymieniono ${cost} gwiazdek na ${tierSpeak}! Kliknij skrzynię, aby ją otworzyć!` }]);
   }, 120);
 }
-
-function openPendingChestByIndex
+p.pendingChestsUpdatedAt = Date.now();
 
 function processNextRewardInQueue() {
   if (state.rewardQueue.length === 0) return;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Akademia Angielskiego: Igor i Hubert</title>
+  <title>Akademia Angielskiego: Igor i Hubert - Wersja 14.8</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -91,7 +91,7 @@
           <span>👤</span> Zmień profil
         </button>
         <div id="activeProfileBadge" onclick="speakAvatarGreeting()" class="cursor-pointer kid-card px-3.5 py-1.5 rounded-2xl font-bold text-xs md:text-sm bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-center gap-2 shadow-sm" title="Kliknij awatara!"></div>
-        <span data-app-version class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 14.5</span>
+        <span data-app-version class="px-2.5 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-bold text-xs border border-indigo-300">Wersja 14.8</span>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
@@ -131,7 +131,7 @@
   <div id="whatsNewModal" class="fixed inset-0 bg-black/65 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-5 md:p-6 border-4 border-rose-400 shadow-2xl text-left max-h-[92vh] flex flex-col">
       <div class="flex justify-between items-center pb-3 border-b border-rose-100 mb-3">
-        <h2 class="text-2xl md:text-3xl font-extrabold text-rose-600 flex items-center gap-2"><span>🦉🆕</span> Co nowego w <span data-app-version>Wersji 14.5</span>?</h2>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-rose-600 flex items-center gap-2"><span>🦉🆕</span> Co nowego w <span data-app-version>Wersji 14.8</span>?</h2>
         <button onclick="closeWhatsNewModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-600">✖</button>
       </div>
       <div id="whatsNewContentBox" class="space-y-3 overflow-y-auto pr-1 flex-1"></div>
@@ -192,7 +192,7 @@
   <div id="guideModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 md:p-4">
     <div class="bg-white rounded-3xl max-w-4xl w-full p-5 md:p-6 border-4 border-sky-400 shadow-2xl text-left max-h-[92vh] flex flex-col">
       <div class="flex justify-between items-center pb-3 border-b border-sky-100 mb-3">
-        <h2 class="text-2xl md:text-3xl font-extrabold text-sky-900 flex items-center gap-2"><span>📘🦉</span> Instrukcja Gry (<span data-app-version>Wersja 14.5</span>)</h2>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-sky-900 flex items-center gap-2"><span>📘🦉</span> Instrukcja Gry (<span data-app-version>Wersja 14.8</span>)</h2>
         <button onclick="closeGuideModal()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-700">✖</button>
       </div>
       <div class="space-y-4 overflow-y-auto pr-1 flex-1 text-sm text-slate-700">
@@ -209,8 +209,8 @@
         <div class="p-4 rounded-2xl bg-amber-50 border-2 border-amber-200">
           <h3 class="font-extrabold text-amber-950 text-base mb-2">2. Tryby Nauki i Mini-Gry</h3>
           <ul class="space-y-1.5 text-xs md:text-sm list-disc pl-5">
-            <li><strong>🃏 Fiszki i 👂 Quiz:</strong> Poznawanie wymowy z lektorem (przycisk <strong>🐢 Żółwik</strong> spowalnia wymowę angielską) oraz dopasowywanie słów do obrazków.</li>
-            <li><strong>🎧 Pytania Ze Słuchu (bez podpowiedzi obrazkowych):</strong> Lektor pyta po polsku <em>„Jak będzie po angielsku...”</em>, a odpowiedzi odsłuchuje się z samych głośników. Pojawiają się we wszystkich trybach gry (poza Memory) dla obu chłopców!</li>
+            <li><strong>🃏 Fiszki i 👂 Quiz:</strong> Poznawanie wymowy po angielsku i po polsku z lektorem (przycisk <strong>🐢 Żółwik</strong> spowalnia wymowę angielską) oraz dopasowywanie słów do obrazków.</li>
+            <li><strong>🎧 Pytania Ze Słuchu (bez podpowiedzi obrazkowych):</strong> Lektor pyta po polsku lub po angielsku, a odpowiedzi odsłuchuje się z samych głośników.</li>
             <li><strong>🧩 Układanka Literkowa:</strong> Układanie słowa z rozsypanych liter po usłyszeniu wymowy.</li>
             <li><strong>🎤 Studio Wymowy:</strong> Mówienie angielskich słówek do mikrofonu. Rodzic może zatwierdzić odpowiedź przyciskiem <strong>🔒 Zalicz (Tata)</strong>.</li>
             <li><strong>📦 Przyimki (In / On / Under):</strong> Animowana nauka położenia przedmiotów (w środku, na górze, pod spodem).</li>
@@ -222,9 +222,9 @@
         <div class="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200">
           <h3 class="font-extrabold text-emerald-950 text-base mb-2">3. Koło Fortuny 🎡, Gwiazdki ⭐, Skrzynie 🎁 i Garderoba 👕</h3>
           <ul class="space-y-1.5 text-xs md:text-sm list-disc pl-5">
-            <li><strong>🎡 Codzienne Koło Fortuny:</strong> Raz dziennie w menu lekcji każdy z chłopców może zakręcić kołem i wylosować za darmo <strong>10, 20, 50, 70, 100, 150 lub 200 ⭐</strong>!</li>
+            <li><strong>🎡 Codzienne Koło Fortuny:</strong> Raz dziennie w menu lekcji można zakręcić kołem i wylosować za darmo <strong>10, 20, 50, 70, 100, 150 lub 200 ⭐</strong>!</li>
             <li><strong>⭐ Gwiazdki i Sklepik:</strong> W zakładce <strong>👑 Awatar</strong> można wymienić gwiazdki na skrzynie: <strong>📦 Brązową (50 ⭐)</strong>, <strong>🥈 Srebrną (120 ⭐)</strong> lub <strong>👑 Złotą (250 ⭐)</strong>.</li>
-            <li><strong>🎁 Zawartość Skrzyń:</strong> Ze skrzyń wypadają <strong>131 przebrań</strong> dla awatara, <strong>50 zwierzaków towarzyszy</strong>, <strong>100 naklejek</strong> do klasera oraz owoce i warzywa do <strong>🍎 Spiżarni Zwierzaka</strong> (karmienie podnosi poziom przyjaźni!).</li>
+            <li><strong>🎁 Zawartość Skrzyń:</strong> Ze skrzyń wypadają przebrania dla awatara, <strong>50 zwierzaków towarzyszy</strong>, <strong>100 naklejek</strong> do klasera oraz owoce i warzywa do <strong>🍎 Spiżarni Zwierzaka</strong>.</li>
             <li><strong>🐉 Limit dzienny w Walce ze Smokiem i VS:</strong> Codziennie w tych dwóch trybach można zdobyć po <strong>3 skrzynie</strong> (po wykorzystaniu limitu nadal wpadają gwiazdki i puchary).</li>
           </ul>
         </div>
@@ -238,9 +238,8 @@
             <li>Kliknij przycisk <strong>Create API key</strong> (<em>Utwórz klucz API</em>) — jeśli zapyta o projekt, wybierz <strong>Create API key in new project</strong> (<em>Utwórz klucz w nowym projekcie</em>).</li>
             <li>Kliknij <strong>Copy</strong> — skopiujesz swój darmowy klucz zaczynający się od liter <strong><code>AIza...</code></strong>.</li>
             <li>Wróć do gry, kliknij u góry <strong>🔒 Rodzic</strong> (wpisz PIN rodziców) ➔ wybierz kafelek <strong>🤖 Generator Lekcji AI (Dowolny temat)</strong> (lub <strong>📷🤖 Lekcja ze Zdjęcia + Opis AI</strong>).</li>
-            <li>Wklej skopiowany klucz w pole <strong>🔑 Klucz Gemini AI</strong> (zapisze się automatycznie w tej przeglądarce), wpisz temat (np. <em>„Stwórz lekcję o chorobach”</em>) i kliknij <strong>🤖✨ Wygeneruj lekcję automatycznie</strong>, a następnie zielony przycisk <strong>🚀 Zapisz i udostępnij od razu synom</strong>.</li>
+            <li>Wklej skopiowany klucz w pole <strong>🔑 Klucz Gemini AI</strong>, wpisz temat i kliknij <strong>🤖✨ Wygeneruj lekcję automatycznie</strong>, a następnie zapisz do testów na koncie TATA lub udostępnij synom.</li>
           </ol>
-          <p class="text-[11px] text-indigo-900 font-bold">ℹ️ Wygenerowana lekcja zapisuje się automatycznie w chmurze Google i od razu działa we wszystkich trybach gry (Fiszki, Quiz, 🎧 Ze słuchu, Literki, Wymowa, Memory, Sprawdzian, VS i Walka ze Smokiem).</p>
         </div>
       </div>
       <div class="pt-3 mt-3 border-t border-sky-100 flex justify-between items-center gap-2">
@@ -250,13 +249,13 @@
     </div>
   </div>
 
-  <!-- MODAL: WPROWADZANIE PINU -->
+  <!-- MODAL: WPROWADZANIE PINU (BEZ SYSTEMOWEJ KLAWIATURY TELEFONU) -->
   <div id="parentPinModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 border-4 border-slate-400 shadow-2xl text-center">
       <div class="text-5xl mb-2">🔒</div>
       <h2 id="pinModalTitle" class="text-2xl font-extrabold text-slate-800 mb-1">Panel Rodzica</h2>
-      <p id="pinModalDesc" class="text-xs md:text-sm text-slate-500 mb-4">Wpisz 4-cyfrowy kod PIN:</p>
-      <input id="pinInputField" type="password" maxlength="4" placeholder="••••" class="w-44 text-center text-3xl font-extrabold tracking-widest py-2.5 px-4 rounded-2xl border-4 border-slate-300 focus:border-sky-500 outline-none mb-2 bg-slate-50" />
+      <p id="pinModalDesc" class="text-xs md:text-sm text-slate-500 mb-4">Wpisz 4-cyfrowy kod PIN (klawiaturą poniżej):</p>
+      <input id="pinInputField" type="password" maxlength="4" readonly inputmode="none" onfocus="this.blur()" placeholder="••••" class="w-44 text-center text-3xl font-extrabold tracking-widest py-2.5 px-4 rounded-2xl border-4 border-slate-300 outline-none mb-2 bg-slate-50 cursor-default select-none" />
       <div id="pinErrorMsg" class="text-rose-600 font-bold text-sm min-h-[22px] mb-2"></div>
       <div id="pinKeyboardGrid" class="grid grid-cols-3 gap-2.5 max-w-xs mx-auto mb-4"></div>
       <button onclick="closeParentPinModal()" class="text-sm font-bold text-slate-500 hover:text-slate-800 underline">Anuluj i wróć</button>
@@ -269,7 +268,7 @@
       <div class="flex flex-wrap justify-between items-center gap-2 pb-3 border-b border-indigo-100 mb-3">
         <div class="flex items-center gap-2">
           <button id="parentBackToMenuBtn" onclick="backToParentMenu()" class="hidden kid-card px-3.5 py-2 rounded-2xl bg-indigo-100 hover:bg-indigo-200 text-indigo-950 font-extrabold text-xs md:text-sm border border-indigo-300">⬅️ Wszystkie opcje</button>
-          <h2 id="parentModalHeaderTitle" class="text-xl md:text-2xl font-extrabold text-indigo-950">🛠️ Panel Rodzica (<span data-app-version>Wersja 14.5</span>)</h2>
+          <h2 id="parentModalHeaderTitle" class="text-xl md:text-2xl font-extrabold text-indigo-950">🛠️ Panel Rodzica (<span data-app-version>Wersja 14.8</span>)</h2>
         </div>
         <button onclick="closeParentDashboard()" class="text-2xl bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full font-bold text-slate-700">✖</button>
       </div>
@@ -313,7 +312,7 @@
                 <span id="parentMenuPendingBadge" class="px-2 py-0.5 rounded-full bg-teal-600 text-white font-extrabold text-[10px]">0 oczekujących</span>
               </div>
               <h3 class="font-extrabold text-teal-950 text-base">Centrum Testowe i Poziomy</h3>
-              <p class="text-xs text-slate-600 mt-1">Zatwierdź nowe lekcje dla chłopców lub zrównaj wybraną lekcję Igora z poziomem Huberta.</p>
+              <p class="text-xs text-slate-600 mt-1">Zatwierdź nowe lekcje lub Koło Fortuny dla chłopców oraz zrównaj wybraną lekcję Igora z poziomem Huberta.</p>
             </div>
             <div class="mt-3 text-right"><span class="px-3 py-1 rounded-xl bg-teal-600 text-white font-bold text-xs">Otwórz ▶</span></div>
           </div>
@@ -340,7 +339,7 @@
             <div>
               <div class="text-3xl mb-1.5">🎁⚙️</div>
               <h3 class="font-extrabold text-amber-950 text-base">Skrzynie, Runda i Tester</h3>
-              <p class="text-xs text-slate-600 mt-1">Wyślij skrzynię w nagrodę dla Igora lub Huberta, zmień długość rundy i przetestuj garderobę.</p>
+              <p class="text-xs text-slate-600 mt-1">Wyślij skrzynię w nagrodę dla Igora, Huberta lub Taty, zmień długość rundy i przetestuj garderobę.</p>
             </div>
             <div class="mt-3 text-right"><span class="px-3 py-1 rounded-xl bg-amber-500 text-amber-950 font-bold text-xs">Otwórz ▶</span></div>
           </div>
@@ -403,7 +402,10 @@
             <summary class="cursor-pointer text-xs font-extrabold text-sky-900">📝 Podgląd / ręczna edycja listy słówek (Format: Angielski - Polski - Wymowa - Ikona - Wiek)</summary>
             <textarea id="newLessonLines" rows="5" placeholder="Fever - Gorączka - fiwer - 🤒 - 4,6" class="w-full p-2.5 mt-2 rounded-xl border border-sky-300 text-xs font-mono bg-white"></textarea>
           </details>
-          <button onclick="parentCreateNewLesson(true)" class="kid-card w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-sm shadow">✅ Zapisz i udostępnij lekcję synom</button>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button onclick="parentCreateNewLesson(false)" class="kid-card py-3 bg-amber-500 hover:bg-amber-600 text-amber-950 font-extrabold rounded-xl text-sm shadow">🧪 Zapisz do testów na koncie TATA</button>
+            <button onclick="parentCreateNewLesson(true)" class="kid-card py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-sm shadow">✅ Zapisz i udostępnij synom</button>
+          </div>
         </div>
 
         <!-- SEKCJA 2: DODAWANIE POJEDYNCZEGO SŁÓWKA -->
@@ -422,7 +424,7 @@
             <input id="parentWordPhonetic" type="text" placeholder="Wymowa (opcj.)" class="p-2.5 rounded-xl border border-emerald-300 text-sm bg-white" />
             <input id="parentWordIcon" type="text" placeholder="Emoji (np. 🍐)" class="p-2.5 rounded-xl border border-emerald-300 text-sm bg-white" />
           </div>
-          <button onclick="parentAddSingleWord()" class="kid-card px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-sm shadow">Zapisz słówko</button>
+          <button onclick="parentAddSingleWord()" class="kid-card px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-sm shadow">Zapisz słówko (do testów u Taty)</button>
         </div>
 
         <!-- SEKCJA 3: CENTRUM TESTOWE I POZIOMY -->
@@ -461,7 +463,7 @@
             <div id="roundLengthButtons" class="flex flex-wrap gap-2"></div>
           </div>
           <div>
-            <div class="text-xs font-extrabold text-slate-700 mb-1.5">Wyślij Skrzynię do kolejki nagród (otworzy po wejściu na dany profil):</div>
+            <div class="text-xs font-extrabold text-slate-700 mb-1.5">Wyślij Skrzynię do kolejki nagród (otworzy po wejściu na dany profil lub od razu po zamknięciu panelu):</div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
               <button onclick="parentGiveTestChest('igor','bronze')" class="kid-card py-2.5 px-3 bg-amber-700 text-white font-bold rounded-xl text-xs">📦 Brązowa ➔ Igor</button>
               <button onclick="parentGiveTestChest('igor','silver')" class="kid-card py-2.5 px-3 bg-slate-500 text-white font-bold rounded-xl text-xs">🥈 Srebrna ➔ Igor</button>
@@ -480,7 +482,7 @@
           </div>
           <div class="p-3 rounded-2xl bg-white border-2 border-amber-300">
             <div class="text-xs font-extrabold text-amber-950 mb-2">👕 Tester Garderoby (wszyscy gracze):</div>
-            <button onclick="unlockAllOutfitsForTesting()" class="kid-card py-2 px-4 bg-emerald-600 text-white font-extrabold rounded-xl text-xs mr-2">🔓 Odblokuj wszystkie 131 przebrań</button>
+            <button onclick="unlockAllOutfitsForTesting()" class="kid-card py-2 px-4 bg-emerald-600 text-white font-extrabold rounded-xl text-xs mr-2">🔓 Odblokuj wszystkie ubrania</button>
             <button onclick="lockAllOutfitsAfterTesting()" class="kid-card py-2 px-4 bg-slate-600 text-white font-bold rounded-xl text-xs">🔒 Zablokuj</button>
           </div>
         </div>

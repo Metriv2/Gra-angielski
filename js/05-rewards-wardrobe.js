@@ -4,6 +4,27 @@
    ============================================================================ */
 
 const OUTFITS_DB = {
+   function handleOutfitImgError(imgEl, primarySrc, fallbackSrc) {
+  if (!imgEl) return;
+  const attempt = parseInt(imgEl.dataset.retry || "0", 10);
+
+  if (attempt === 0 && fallbackSrc && fallbackSrc !== primarySrc && imgEl.src.indexOf("srebrna/zlota") === -1) {
+    imgEl.dataset.retry = "1";
+    imgEl.src = fallbackSrc;
+    return;
+  }
+
+  if (attempt < 3) {
+    imgEl.dataset.retry = String(attempt + 1);
+    setTimeout(() => {
+      const sep = primarySrc.includes("?") ? "&" : "?";
+      imgEl.src = `${primarySrc}${sep}v=${CURRENT_GAME_VERSION}&r=${attempt + 1}`;
+    }, 700 * (attempt + 1));
+    return;
+  }
+
+  imgEl.style.display = "none";
+}
   bronze: {
     head: [
       "cap_red.png", "cap_blue.png", "cap_green.png", "cap_yellow.png",
@@ -759,7 +780,7 @@ function renderAvatarItems() {
       const isUnlocked = p.unlockedItems.includes(item.src), isEquipped = p.avatar && p.avatar[cat.key] === item.src;
       const tierBadgeColor = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-800" : "bg-amber-700 text-white";
       html += isUnlocked
-        ? `<div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm"><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><img src="${item.src}" class="w-14 h-14 object-contain mb-1 drop-shadow" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${item.fallbackSrc}';}" /><div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}</div>`
+        ? `<div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm"><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><img src="${item.src}?v=${CURRENT_GAME_VERSION}" loading="lazy" decoding="async" class="w-14 h-14 object-contain mb-1 drop-shadow" onerror="handleOutfitImgError(this, '${item.src}', '${item.fallbackSrc}')" />><div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}</div>`
         : `<div class="rounded-2xl border-2 border-slate-200 bg-slate-100 p-2 flex flex-col items-center justify-between text-center opacity-55"><span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><div class="text-2xl my-2">🔒</div><div class="text-[10px] font-bold text-slate-500 leading-tight break-all">${item.name}</div></div>`;
     });
     html += `</div></div>`;

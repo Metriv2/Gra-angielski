@@ -3,7 +3,7 @@
    CENTRALNA KONFIGURACJA WERSJI ORAZ WŁASNE GRAFIKI SVG DLA PANKEJKÓW
    ============================================================================ */
 
-const CURRENT_GAME_VERSION = "14.7";
+const CURRENT_GAME_VERSION = "14.8";
 
 const APP_CONFIG = {
   version: CURRENT_GAME_VERSION,
@@ -12,19 +12,24 @@ const APP_CONFIG = {
   gasApiUrl: "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec",
   whatsNewItems: [
     {
-      icon: "🔢💯",
-      title: "Rozszerzona lekcja Liczb: 1–20 dla Igora oraz aż do 100 dla Huberta!",
-      desc: "Igor ćwiczy teraz wszystkie liczby od 1 do 20, a Hubert dodatkowo uczy się pełnych dziesiątek aż do 100 (Thirty, Forty, Fifty... One hundred)!"
+      icon: "🎁👑",
+      title: "Naprawione otwieranie skrzynek, Garderoba, Spiżarnia i Klaser!",
+      desc: "Wszystkie skrzynie (Brązowa, Srebrna, Złota – ze sklepiku, od Taty, z urodzin i ze Smoka) otwierają się teraz bezbłędnie!"
+    },
+    {
+      icon: "🃏🦉",
+      title: "Ulepszone Fiszki z polskim lektorem i szybkim powrotem do lekcji!",
+      desc: "Sówka czyta teraz w fiszkach angielskie słówko oraz polskie tłumaczenie, a na górze widać wszystkie sekcje danej lekcji."
     },
     {
       icon: "🎧🔊",
-      title: "Pytania ze słuchu (PL ➔ EN) i 4 odpowiedzi dla Igora!",
-      desc: "W każdej lekcji (poza Memory) pojawiają się pytania ze słuchu z samymi głośnikami, Igor ma 4 opcje wyboru, a Hubert 6 opcji."
+      title: "Lekcja Dni tygodnia w pełni ze słuchu (PL ⇄ EN)!",
+      desc: "Lektor zadaje pytania po polsku lub po angielsku, a odpowiedzi wybiera się z samych głośniczków."
     },
     {
-      icon: "⚔️🐉",
-      title: "Pojedynek Braci i Walka ze Smokiem na pełnym ekranie!",
-      desc: "W turze Igora są 4 opcje, a w turze Huberta 6 opcji. Konto testowe Taty jest w pełni oddzielone od kont synów."
+      icon: "🔢💯",
+      title: "Liczby 1–20 dla Igora oraz aż do 100 dla Huberta!",
+      desc: "Igor ćwiczy wszystkie liczby od 1 do 20, a Hubert dodatkowo uczy się dziesiątek aż do 100."
     }
   ]
 };

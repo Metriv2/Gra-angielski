@@ -1,10 +1,13 @@
 /* ============================================================================
    PLIK: js/09-parent-init.js
-   PIN RODZICA (BEZ KLAWIATURY TELEFONU), GENERATOR AI, CENTRUM TESTOWE I SKRZYNIE
+   PIN RODZICA (BEZ KLAWIATURY TELEFONU), GENERATOR AI, CENTRUM TESTOWE I GARDEROBA
    ============================================================================ */
 
 let _pendingPinAction = "dashboard";
 let _selectedManagerLessonId = null;
+let _selectedWardrobePlayerKey = "tata";
+let _selectedWardrobeAdminTier = "all";
+let _selectedWardrobeAdminCat = "all";
 
 const AUTO_LESSON_TOPICS_DB = [
   {
@@ -414,6 +417,7 @@ function openParentSection(sectionKey) {
 function refreshAllParentWidgets() {
   populateParentLessonSelect();
   renderParentTestCenter();
+  renderParentWardrobeManager();
   renderParentLessonsManager();
   renderParentHardWordsBox();
   renderRoundLengthButtons();
@@ -888,6 +892,258 @@ function renderParentTestCenter() {
           `;
         }).join("")}
       </div>
+    </div>
+  `;
+}
+
+// ------------------------------------------------------------------------
+// GARDEROBA I PRZEBRANIA (OSOBNO DLA TATY, IGORA I HUBERTA)
+// ------------------------------------------------------------------------
+function parentUnlockAllOutfitsForProfile(profKey) {
+  if (!state.stats[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  const all131 = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat().map(o => o.src) : [];
+  p.unlockedItems = Array.from(new Set([...(p.unlockedItems || []), ...all131]));
+  p.wardrobeUpdatedAt = Date.now();
+  state.stats[profKey] = p;
+  saveCloudData();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  renderParentWardrobeManager();
+  showParentStatus(`🔓 Odblokowano wszystkie ${all131.length} przebrań wyłącznie dla: <strong>${PROFILE_META[profKey].name}</strong>!`);
+}
+
+function parentLockAllOutfitsForProfile(profKey) {
+  if (!state.stats[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  p.unlockedItems = [];
+  if (p.avatar) {
+    p.avatar.head = "";
+    p.avatar.torso = "";
+    p.avatar.legs = "";
+  }
+  p.wardrobeUpdatedAt = Date.now();
+  state.stats[profKey] = p;
+  saveCloudData();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  renderParentWardrobeManager();
+  showParentStatus(`🔒 Zablokowano wszystkie przebrania dla: <strong>${PROFILE_META[profKey].name}</strong>.`);
+}
+
+function parentUnlockAllPetsForProfile(profKey) {
+  if (!state.stats[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  const allPets = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(pet => pet.id);
+  p.memoryAnimals = Array.from(new Set([...(p.memoryAnimals || []), ...allPets]));
+  p.wardrobeUpdatedAt = Date.now();
+  state.stats[profKey] = p;
+  saveCloudData();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  renderParentWardrobeManager();
+  showParentStatus(`🐾 Odblokowano wszystkie ${allPets.length} zwierzaków wyłącznie dla: <strong>${PROFILE_META[profKey].name}</strong>!`);
+}
+
+function parentLockAllPetsForProfile(profKey) {
+  if (!state.stats[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  p.memoryAnimals = [];
+  if (p.avatar) p.avatar.pet = "";
+  p.wardrobeUpdatedAt = Date.now();
+  state.stats[profKey] = p;
+  saveCloudData();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  renderParentWardrobeManager();
+  showParentStatus(`🔒 Zablokowano wszystkie zwierzaki dla: <strong>${PROFILE_META[profKey].name}</strong>.`);
+}
+
+function parentToggleSingleOutfitForProfile(profKey, src) {
+  if (!state.stats[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  const cleanSrc = resolveOutfitPath(src);
+  const exists = p.unlockedItems.includes(cleanSrc);
+
+  if (exists) {
+    p.unlockedItems = p.unlockedItems.filter(it => it !== cleanSrc);
+    if (p.avatar) {
+      if (p.avatar.head === cleanSrc) p.avatar.head = "";
+      if (p.avatar.torso === cleanSrc) p.avatar.torso = "";
+      if (p.avatar.legs === cleanSrc) p.avatar.legs = "";
+    }
+  } else {
+    p.unlockedItems.push(cleanSrc);
+  }
+  p.wardrobeUpdatedAt = Date.now();
+  state.stats[profKey] = p;
+  saveCloudData();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  renderParentWardrobeManager();
+}
+
+function parentToggleSinglePetForProfile(profKey, petId) {
+  if (!state.stats[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  const exists = (p.memoryAnimals || []).includes(petId);
+  if (exists) {
+    p.memoryAnimals = p.memoryAnimals.filter(id => id !== petId);
+    if (p.avatar && p.avatar.pet === petId) p.avatar.pet = "";
+  } else {
+    p.memoryAnimals.push(petId);
+  }
+  p.wardrobeUpdatedAt = Date.now();
+  state.stats[profKey] = p;
+  saveCloudData();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  renderParentWardrobeManager();
+}
+
+function renderParentWardrobeManager() {
+  const box = document.getElementById("parentWardrobeManagerBox");
+  if (!box) return;
+
+  const profKey = PROFILE_META[_selectedWardrobePlayerKey] ? _selectedWardrobePlayerKey : "tata";
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  state.stats[profKey] = p;
+
+  const all131 = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat() : [];
+  const allPets = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
+  const ownedOutfitsCount = all131.filter(o => p.unlockedItems.includes(o.src)).length;
+  const ownedPetsCount = allPets.filter(pet => (p.memoryAnimals || []).includes(pet.id)).length;
+
+  const profiles = [
+    { key: "tata",   label: "👨‍💻 TATA (Konto testowe)", activeCls: "bg-emerald-600 text-white border-emerald-800" },
+    { key: "igor",   label: "👦 IGOR (4 l.)",           activeCls: "bg-amber-500 text-white border-amber-700" },
+    { key: "hubert", label: "🧑 HUBERT (6 l.)",         activeCls: "bg-sky-600 text-white border-sky-800" }
+  ];
+
+  const catTabs = [
+    { id: "all",   label: "👕 Wszystkie ubrania" },
+    { id: "head",  label: "🧢 Głowa" },
+    { id: "torso", label: "👕 Tułów" },
+    { id: "legs",  label: "👖 Nogi" },
+    { id: "pets",  label: `🐾 Zwierzaki (${ownedPetsCount}/${allPets.length})` }
+  ];
+
+  const tierTabs = [
+    { id: "all",    label: "Wszystkie skrzynie" },
+    { id: "bronze", label: "📦 Brązowa" },
+    { id: "silver", label: "🥈 Srebrna" },
+    { id: "gold",   label: "👑 Złota" }
+  ];
+
+  let gridHtml = "";
+  if (_selectedWardrobeAdminCat === "pets") {
+    gridHtml = `
+      <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-2 max-h-80 overflow-y-auto pr-1">
+        ${allPets.map(pet => {
+          const unlocked = (p.memoryAnimals || []).includes(pet.id);
+          return `
+            <button type="button" onclick="parentToggleSinglePetForProfile('${profKey}', '${pet.id}')"
+              class="kid-card p-2 rounded-2xl border-2 text-center flex flex-col items-center justify-between ${
+                unlocked ? "bg-emerald-50 border-emerald-500 text-emerald-950 shadow-sm" : "bg-slate-100 border-slate-300 text-slate-500 opacity-75"
+              }">
+              <span class="text-3xl">${pet.icon}</span>
+              <span class="text-[10px] font-extrabold leading-tight mt-1">${pet.pl}</span>
+              <span class="mt-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold ${unlocked ? "bg-emerald-600 text-white" : "bg-slate-300 text-slate-700"}">
+                ${unlocked ? "✓ Odblokowane" : "🔒 Zablokowane"}
+              </span>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    `;
+  } else {
+    const filtered = all131.filter(it => {
+      const matchTier = _selectedWardrobeAdminTier === "all" || it.tier === _selectedWardrobeAdminTier;
+      const matchCat = _selectedWardrobeAdminCat === "all" || it.slot === _selectedWardrobeAdminCat;
+      return matchTier && matchCat;
+    });
+
+    gridHtml = `
+      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-80 overflow-y-auto pr-1">
+        ${filtered.map(item => {
+          const unlocked = p.unlockedItems.includes(item.src);
+          const tierBadge = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-900" : "bg-amber-700 text-white";
+          return `
+            <button type="button" onclick="parentToggleSingleOutfitForProfile('${profKey}', '${item.src}')"
+              class="kid-card p-2 rounded-2xl border-2 text-center flex flex-col items-center justify-between ${
+                unlocked ? "bg-emerald-50 border-emerald-500 text-slate-900 shadow-sm" : "bg-slate-100 border-slate-300 text-slate-500 opacity-75"
+              }">
+              <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadge} mb-1">${item.tierLabel}</span>
+              <img src="${item.src}" class="w-12 h-12 object-contain my-0.5" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${item.fallbackSrc}'){this.src='${item.fallbackSrc}';}else{this.style.display='none';}" />
+              <span class="text-[10px] font-bold leading-tight break-all">${item.name}</span>
+              <span class="mt-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold ${unlocked ? "bg-emerald-600 text-white" : "bg-slate-300 text-slate-700"}">
+                ${unlocked ? "✓ Ma to" : "🔒 Brak"}
+              </span>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  box.innerHTML = `
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <h3 class="font-extrabold text-indigo-950 text-lg">👕 Garderoba i Przebrania (Osobno na każdy profil)</h3>
+      <span class="px-3 py-1 rounded-full bg-white border border-indigo-300 text-xs font-extrabold text-indigo-900">
+        ${PROFILE_META[profKey].name}: 👕 ${ownedOutfitsCount}/${all131.length} • 🐾 ${ownedPetsCount}/${allPets.length}
+      </span>
+    </div>
+
+    <div class="mb-3">
+      <div class="text-xs font-extrabold text-indigo-900 uppercase mb-1.5">1. Wybierz profil, dla którego zmieniasz garderobę:</div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        ${profiles.map(pr => {
+          const isSel = pr.key === profKey;
+          return `
+            <button type="button" onclick="_selectedWardrobePlayerKey='${pr.key}'; renderParentWardrobeManager();"
+              class="kid-card py-2.5 px-3 rounded-2xl border-3 font-extrabold text-xs md:text-sm shadow-sm ${
+                isSel ? pr.activeCls : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+              }">
+              ${pr.label} ${isSel ? "✓" : ""}
+            </button>
+          `;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="p-3 rounded-2xl bg-white border-2 border-indigo-200 mb-3 space-y-2">
+      <div class="text-xs font-extrabold text-slate-800">2. Szybkie akcje wyłącznie dla profilu <strong>${PROFILE_META[profKey].name}</strong>:</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button type="button" onclick="parentUnlockAllOutfitsForProfile('${profKey}')" class="kid-card py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow">
+          🔓 Odblokuj wszystkie ubrania (${PROFILE_META[profKey].name})
+        </button>
+        <button type="button" onclick="parentLockAllOutfitsForProfile('${profKey}')" class="kid-card py-2 px-3 rounded-xl bg-slate-600 hover:bg-slate-700 text-white font-bold text-xs">
+          🔒 Zablokuj wszystkie ubrania (${PROFILE_META[profKey].name})
+        </button>
+        <button type="button" onclick="parentUnlockAllPetsForProfile('${profKey}')" class="kid-card py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 font-extrabold text-xs shadow">
+          🐾 Odblokuj wszystkie zwierzaki (${PROFILE_META[profKey].name})
+        </button>
+        <button type="button" onclick="parentLockAllPetsForProfile('${profKey}')" class="kid-card py-2 px-3 rounded-xl bg-slate-500 hover:bg-slate-600 text-white font-bold text-xs">
+          🔒 Zablokuj wszystkie zwierzaki (${PROFILE_META[profKey].name})
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <div class="text-xs font-extrabold text-indigo-900 uppercase">3. Kliknij konkretne przebranie lub zwierzaka, aby odblokować / zablokować tylko dla ${PROFILE_META[profKey].name}:</div>
+      <div class="flex flex-wrap gap-1.5">
+        ${catTabs.map(ct => `
+          <button type="button" onclick="_selectedWardrobeAdminCat='${ct.id}'; renderParentWardrobeManager();"
+            class="px-2.5 py-1 rounded-xl font-extrabold text-xs border-2 ${_selectedWardrobeAdminCat === ct.id ? "bg-indigo-600 text-white border-indigo-800" : "bg-white text-slate-700 border-slate-200"}">
+            ${ct.label}
+          </button>
+        `).join("")}
+      </div>
+      ${_selectedWardrobeAdminCat !== "pets" ? `
+        <div class="flex flex-wrap gap-1.5">
+          ${tierTabs.map(tt => `
+            <button type="button" onclick="_selectedWardrobeAdminTier='${tt.id}'; renderParentWardrobeManager();"
+              class="px-2.5 py-1 rounded-xl font-bold text-[11px] border ${_selectedWardrobeAdminTier === tt.id ? "bg-amber-500 text-white border-amber-700" : "bg-white text-slate-600 border-slate-200"}">
+              ${tt.label}
+            </button>
+          `).join("")}
+        </div>
+      ` : ""}
+      ${gridHtml}
     </div>
   `;
 }

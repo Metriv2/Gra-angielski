@@ -1,83 +1,108 @@
 /* ============================================================================
    PLIK: js/05-rewards-wardrobe.js
-   OSIĄGNIĘCIA, SKRZYNIE, GARDEROBA (131 UBRAŃ), SPIŻARNIA I ASYSTENT ZAKUPOWY
+   OSIĄGNIĘCIA, SKRZYNIE, GARDEROBA (131 DOKŁADNYCH PLIKÓW), SPIŻARNIA I ASYSTENT
    ============================================================================ */
 
 const OUTFITS_DB = {
   bronze: {
     head: [
-      "cap_red.png", "cap_blue.png", "cap_green.png", "cap_yellow.png",
-      "cap_orange.png", "cap_purple.png", "cap_black.png", "cap_white.png"
+      "cap_black.png", "cap_blue.png", "cap_green.png", "cap_orange.png",
+      "cap_purple.png", "cap_red.png", "cap_white.png", "cap_yellow.png"
     ],
     torso: [
-      "shirt_blue.png", "shirt_red.png", "shirt_green.png", "shirt_yellow.png",
-      "shirt_orange.png", "shirt_purple.png", "shirt_white.png", "shirt_black.png",
-      "shirt_stripes.png", "shirt_star.png", "shirt_smile.png", "shirt_car.png"
+      "Shirt_black.png", "shirt_blue.png", "Shirt_green.png", "Shirt_pink.png",
+      "Shirt_red.png", "Shirt_white.png", "Shirt_yellow.png"
     ],
     legs: [
-      "jeans_blue.png", "jeans_black.png", "jeans_grey.png",
-      "shorts_blue.png", "shorts_red.png", "shorts_green.png", "shorts_yellow.png",
-      "shorts_black.png", "shorts_orange.png", "shorts_camo.png"
+      "jeans_black.png", "jeans_blue.png", "jeans_braun.png", "jeans_green.png",
+      "jeans_orange.png", "jeans_red.png", "jeans_seledin.png", "jeans_yellow.png",
+      "short_black.png", "short_blue.png", "short_green.png", "short_pink.png",
+      "short_red.png", "short_white.png", "short_yellow.png"
     ]
   },
   silver: {
     head: [
-      "cap_silver.png", "cap_police.png", "cap_captain.png", "cap_chef.png",
-      "cap_pirate.png", "cap_cowboy.png", "cap_explorer.png", "cap_pilot.png",
-      "cap_sailor.png", "cap_army.png", "cap_sport.png", "cap_winter.png",
-      "helmet_firefighter.png", "helmet_electrician.png", "helmet_bike.png", "helmet_construction.png"
+      "cap_bastetball.png", "cap_batman.png", "cap_captain.png", "cap_cat.png",
+      "cap_handball.png", "cap_pigeon.png", "cap_pikachu.png", "cap_pokeball.png",
+      "cap_poop.png", "cap_pterodactyl.png", "cap_soccer.png", "cap_superman.png",
+      "cap_T-Rex.png", "cap_volleyball.png"
     ],
     torso: [
-      "shirt_pigeon.png", "shirt_T-Rex.png", "shirt_police.png", "shirt_firefighter.png",
-      "shirt_paramedic.png", "shirt_pirate.png", "shirt_pilot.png", "shirt_chef.png",
-      "shirt_rocket.png", "shirt_shark.png", "shirt_tiger.png", "shirt_dragon.png",
-      "shirt_dino.png", "shirt_lion.png", "shirt_wolf.png", "shirt_eagle.png",
-      "shirt_robot.png", "shirt_space.png", "shirt_camo.png", "shirt_sport.png",
-      "shirt_sailor.png", "shirt_explorer.png", "jacket_denim.png", "jacket_sport.png"
+      "shirt_basktetball.png", "shirt_batman.png", "shirt_captain.png", "shirt_cat.png",
+      "shirt_handball.png", "shirt_pigeon.png", "shirt_pikachu.png", "shirt_pobeball.png",
+      "shirt_poop.png", "shirt_pterodactyl.png", "shirt_soccer.png", "shirt_superman.png",
+      "shirt_T-Rex.png", "shirt_volleyball.png"
     ],
     legs: [
-      "pants_grey.png", "pants_police.png", "pants_firefighter.png", "pants_paramedic.png",
-      "pants_pirate.png", "pants_cargo.png", "pants_camo.png", "pants_sport.png",
-      "pants_pilot.png", "pants_chef.png", "shorts_sport.png", "shorts_dino.png",
-      "shorts_shark.png", "shorts_tiger.png", "shorts_rocket.png", "shorts_pirate.png"
+      "pants_basketball.png", "pants_batman.png", "pants_captain.png", "pants_cat.png",
+      "pants_handball.png", "pants_pigeon.png", "pants_pikachu.png", "pants_pokeball.png",
+      "pants_poop.png", "pants_pterodactyl.png", "pants_soccer.png", "pants_superman.png",
+      "pants_volleyball.png", "pants-T-Rex.png",
+      "shorts_basketball.png", "shorts_batman.png", "shorts_captain.png", "shorts_cat.png",
+      "shorts_handball.png", "shorts_pigeon.png", "shorts_pikachu.png", "shorts_pokeball.png",
+      "shorts_poop.png", "shorts_pterodactyl.png", "shorts_soccer.png", "shorts_superman.png",
+      "shorts_T-Rex.png", "shorts_volleyball.png"
     ]
   },
   gold: {
     head: [
-      "helmet_astronaut.png", "helmet_knight.png", "helmet_robot.png", "helmet_ninja.png",
-      "helmet_viking.png", "helmet_dino.png", "helmet_dragon.png", "helmet_hot-dog.png",
-      "mask_superhero.png", "mask_iron.png", "mask_spider.png", "mask_bat.png",
-      "cap_crown.png", "cap_wizard.png", "cap_king.png"
+      "cap_barcelona.png", "cap_hot-dog.png", "cap_paramedic.png", "cap_poland.png",
+      "cap_police.png", "cap_soldier.png", "helmet_astronaut.png", "helmet_commando.png",
+      "helmet_cyberdragon.png", "helmet_diver.png", "helmet_electrician.png",
+      "helmet_firefighter.png", "helmet_knight.png", "mask_batman.png", "mask_skeleton.png"
     ],
     torso: [
-      "armor_gold.png", "armor_knight.png", "armor_dragon.png", "armor_robot.png",
-      "armor_viking.png", "suit_astronaut.png", "suit_superhero.png", "suit_ninja.png",
-      "suit_iron.png", "suit_spider.png", "suit_bat.png", "jacket_king.png",
-      "jacket_wizard.png", "jacket_gold.png", "shirt_commando.png", "shirt_soldier.png",
-      "shirt_barcelona.png", "shirt_poland.png"
+      "armor_batman.png", "armor_cyberdragon.png", "armor_knight.png",
+      "jacket_diver.png", "jacket_electrician.png", "jacket_firefighter.png", "jacket_paramedic.png",
+      "shirt_barcelona.png", "shirt_commando.png", "shirt_poland.png", "shirt_police.png",
+      "shirt_soldier.png", "suit_astronaut.png", "suit_hot-dog.png", "suit_skeleton.png"
     ],
     legs: [
-      "pants_gold.png", "pants_knight.png", "pants_astronaut.png", "pants_robot.png",
-      "pants_ninja.png", "pants_viking.png", "pants_superhero.png", "pants_iron.png",
-      "pants_barcelona.png", "pants_poland.png", "shorts_gold.png", "shorts_king.png"
+      "pants_austronaut.png", "pants_barcelona.png", "pants_batman2.png", "pants_commando.png",
+      "pants_cyberdragon.png", "pants_diver.png", "pants_electrician.png", "pants_firefighter.png",
+      "pants_hot-dog.png", "pants_knight.png", "pants_paramedic.png", "pants_poland.png",
+      "pants_police.png", "pants_skeleton.png", "pants_soldier.png"
     ]
   }
 };
 
+function toggleFilenameFirstLetterCase(path) {
+  const idx = path.lastIndexOf("/");
+  const dir = idx >= 0 ? path.slice(0, idx + 1) : "";
+  const file = idx >= 0 ? path.slice(idx + 1) : path;
+  if (!file) return path;
+  const first = file[0];
+  const swapped = first === first.toUpperCase() ? first.toLowerCase() : first.toUpperCase();
+  return dir + swapped + file.slice(1);
+}
+
 function handleOutfitImgError(imgEl, primarySrc, fallbackSrc) {
   if (!imgEl) return;
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.9";
   const attempt = parseInt(imgEl.dataset.retry || "0", 10);
 
-  if (attempt === 0 && fallbackSrc && fallbackSrc !== primarySrc && imgEl.src.indexOf("srebrna/zlota") === -1) {
+  if (attempt === 0) {
     imgEl.dataset.retry = "1";
-    imgEl.src = fallbackSrc;
+    const swappedSrc = toggleFilenameFirstLetterCase(primarySrc);
+    if (swappedSrc !== primarySrc) {
+      imgEl.src = `${swappedSrc}?v=${ver}`;
+      return;
+    }
+    if (fallbackSrc && fallbackSrc !== primarySrc) {
+      imgEl.src = `${fallbackSrc}?v=${ver}`;
+      return;
+    }
+  }
+
+  if (attempt === 1 && fallbackSrc && fallbackSrc !== primarySrc && imgEl.src.indexOf("srebrna/zlota") === -1) {
+    imgEl.dataset.retry = "2";
+    imgEl.src = `${fallbackSrc}?v=${ver}`;
     return;
   }
 
   if (attempt < 3) {
     imgEl.dataset.retry = String(attempt + 1);
     setTimeout(() => {
-      const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.9";
       const sep = primarySrc.includes("?") ? "&" : "?";
       imgEl.src = `${primarySrc}${sep}v=${ver}&r=${attempt + 1}`;
     }, 700 * (attempt + 1));

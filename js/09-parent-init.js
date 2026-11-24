@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/09-parent-init.js
-   PIN RODZICA (BEZ KLAWIATURY TELEFONU), GENERATOR AI, SKRZYNIE I GARDEROBA (%)
+   PIN RODZICA, GENERATOR AI, POTWIERDZENIA AKCJI, SKRZYNIE I GARDEROBA (%)
    ============================================================================ */
 
 let _pendingPinAction = "dashboard";
@@ -8,6 +8,10 @@ let _selectedManagerLessonId = null;
 let _selectedWardrobePlayerKey = "tata";
 let _selectedWardrobeAdminTier = "all";
 let _selectedWardrobeAdminCat = "all";
+
+function confirmParentAction(actionDescription) {
+  return window.confirm(`⚠️ Panel Rodzica – potwierdzenie:\n\n${actionDescription}\n\nCzy na pewno chcesz to zrobić?`);
+}
 
 const AUTO_LESSON_TOPICS_DB = [
   {
@@ -691,6 +695,11 @@ function parentCreateNewLesson(publishImmediately = false) {
     return;
   }
 
+  const modeMsg = publishImmediately
+    ? `Zapiszesz lekcję „${title}” (${items.length} słówek) i od razu udostępnisz ją Igorowi i Hubertowi.`
+    : `Zapiszesz lekcję „${title}” (${items.length} słówek) jako lekcję testową (tylko na koncie TATA).`;
+  if (!confirmParentAction(modeMsg)) return;
+
   const palettes = [
     { color: "from-sky-400 to-indigo-600", borderColor: "border-sky-400" },
     { color: "from-emerald-400 to-teal-600", borderColor: "border-emerald-400" },
@@ -782,6 +791,9 @@ function parentAddSingleWord() {
   }
   const lesson = state.lessons.find(l => l.id === lessonId);
   if (!lesson) return;
+
+  if (!confirmParentAction(`Dodasz słówko „${en} (${pl})” do lekcji „${lesson.title}” (do testów u Taty).`)) return;
+
   if (!Array.isArray(lesson.items)) lesson.items = [];
 
   lesson.items.push({ en, pl, phonetic, icon, age, testOnly: true });
@@ -799,6 +811,7 @@ function parentAddSingleWord() {
 function parentApproveTestLesson(lessonId) {
   const lesson = state.lessons.find(l => l.id === lessonId);
   if (!lesson) return;
+  if (!confirmParentAction(`Zatwierdzisz lekcję „${lesson.title}” – stanie się widoczna dla Igora i Huberta.`)) return;
   delete lesson.testOnly;
   if (Array.isArray(lesson.items)) {
     lesson.items.forEach(it => { if (it.testOnly) delete it.testOnly; });
@@ -812,6 +825,10 @@ function parentApproveTestLesson(lessonId) {
 
 function parentToggleFortuneWheelForKids() {
   const nextVal = !isFortuneWheelPublishedForKids();
+  const msg = nextVal
+    ? "Udostępnisz Codzienne Koło Fortuny dla Igora i Huberta."
+    : "Wycofasz Codzienne Koło Fortuny do trybu testowego (tylko dla Taty).";
+  if (!confirmParentAction(msg)) return;
   setFortuneWheelPublishedForKids(nextVal);
   renderParentTestCenter();
   if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
@@ -822,10 +839,18 @@ function parentToggleFortuneWheelForKids() {
 
 function parentToggleEqualizeLessonForIgor(lessonId) {
   if (!Array.isArray(state.equalizedLessonsForIgor)) state.equalizedLessonsForIgor = [];
-  if (state.equalizedLessonsForIgor.includes(lessonId)) {
-    state.equalizedLessonsForIgor = state.equalizedLessonsForIgor.filter(id => id !== lessonId);
-  } else {
+  const lesson = state.lessons.find(l => l.id === lessonId);
+  const title = lesson ? lesson.title : lessonId;
+  const willEqualize = !state.equalizedLessonsForIgor.includes(lessonId);
+  const msg = willEqualize
+    ? `Ustawisz w lekcji „${title}” poziom Huberta (6 lat) również dla Igora.`
+    : `Przywrócisz w lekcji „${title}” zwykły poziom Igora (4 lata).`;
+  if (!confirmParentAction(msg)) return;
+
+  if (willEqualize) {
     state.equalizedLessonsForIgor.push(lessonId);
+  } else {
+    state.equalizedLessonsForIgor = state.equalizedLessonsForIgor.filter(id => id !== lessonId);
   }
   saveCloudData();
   renderParentTestCenter();
@@ -973,6 +998,9 @@ function updateParentMenuWardrobeSummaryBadge() {
 
 function parentUnlockAllOutfitsForProfile(profKey) {
   if (!state.stats[profKey]) return;
+  const name = PROFILE_META[profKey].name;
+  if (!confirmParentAction(`Odblokujesz WSZYSTKIE przebrania (100% garderoby) dla profilu: ${name}.`)) return;
+
   const p = ensurePlayerStructure(state.stats[profKey]);
   const all131 = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat().map(o => o.src) : [];
   p.unlockedItems = Array.from(new Set([...(p.unlockedItems || []), ...all131]));
@@ -982,11 +1010,14 @@ function parentUnlockAllOutfitsForProfile(profKey) {
   if (typeof updateHeaderUI === "function") updateHeaderUI();
   updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
-  showParentStatus(`🔓 Odblokowano wszystkie ${all131.length} przebrań wyłącznie dla: <strong>${PROFILE_META[profKey].name}</strong>!`);
+  showParentStatus(`🔓 Odblokowano wszystkie ${all131.length} przebrań wyłącznie dla: <strong>${name}</strong>!`);
 }
 
 function parentLockAllOutfitsForProfile(profKey) {
   if (!state.stats[profKey]) return;
+  const name = PROFILE_META[profKey].name;
+  if (!confirmParentAction(`ZABLOKUJESZ (wyczyścisz) wszystkie przebrania dla profilu: ${name}!`)) return;
+
   const p = ensurePlayerStructure(state.stats[profKey]);
   p.unlockedItems = [];
   if (p.avatar) {
@@ -1000,11 +1031,14 @@ function parentLockAllOutfitsForProfile(profKey) {
   if (typeof updateHeaderUI === "function") updateHeaderUI();
   updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
-  showParentStatus(`🔒 Zablokowano wszystkie przebrania dla: <strong>${PROFILE_META[profKey].name}</strong>.`);
+  showParentStatus(`🔒 Zablokowano wszystkie przebrania dla: <strong>${name}</strong>.`);
 }
 
 function parentUnlockAllPetsForProfile(profKey) {
   if (!state.stats[profKey]) return;
+  const name = PROFILE_META[profKey].name;
+  if (!confirmParentAction(`Odblokujesz WSZYSTKIE 50 zwierzaków towarzyszy dla profilu: ${name}.`)) return;
+
   const p = ensurePlayerStructure(state.stats[profKey]);
   const allPets = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).map(pet => pet.id);
   p.memoryAnimals = Array.from(new Set([...(p.memoryAnimals || []), ...allPets]));
@@ -1014,11 +1048,14 @@ function parentUnlockAllPetsForProfile(profKey) {
   if (typeof updateHeaderUI === "function") updateHeaderUI();
   updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
-  showParentStatus(`🐾 Odblokowano wszystkie ${allPets.length} zwierzaków wyłącznie dla: <strong>${PROFILE_META[profKey].name}</strong>!`);
+  showParentStatus(`🐾 Odblokowano wszystkie ${allPets.length} zwierzaków wyłącznie dla: <strong>${name}</strong>!`);
 }
 
 function parentLockAllPetsForProfile(profKey) {
   if (!state.stats[profKey]) return;
+  const name = PROFILE_META[profKey].name;
+  if (!confirmParentAction(`ZABLOKUJESZ (wyczyścisz) wszystkie zwierzaki towarzysze dla profilu: ${name}!`)) return;
+
   const p = ensurePlayerStructure(state.stats[profKey]);
   p.memoryAnimals = [];
   if (p.avatar) p.avatar.pet = "";
@@ -1028,7 +1065,7 @@ function parentLockAllPetsForProfile(profKey) {
   if (typeof updateHeaderUI === "function") updateHeaderUI();
   updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
-  showParentStatus(`🔒 Zablokowano wszystkie zwierzaki dla: <strong>${PROFILE_META[profKey].name}</strong>.`);
+  showParentStatus(`🔒 Zablokowano wszystkie zwierzaki dla: <strong>${name}</strong>.`);
 }
 
 function parentToggleSingleOutfitForProfile(profKey, src) {
@@ -1036,6 +1073,13 @@ function parentToggleSingleOutfitForProfile(profKey, src) {
   const p = ensurePlayerStructure(state.stats[profKey]);
   const cleanSrc = resolveOutfitPath(src);
   const exists = p.unlockedItems.includes(cleanSrc);
+  const itemLabel = cleanSrc.split("/").pop().replace(/\.png$/i, "");
+  const name = PROFILE_META[profKey].name;
+
+  const msg = exists
+    ? `Zablokujesz (odbierzesz) ubranie „${itemLabel}” profilowi: ${name}.`
+    : `Odblokujesz (dodasz) ubranie „${itemLabel}” profilowi: ${name}.`;
+  if (!confirmParentAction(msg)) return;
 
   if (exists) {
     p.unlockedItems = p.unlockedItems.filter(it => it !== cleanSrc);
@@ -1059,6 +1103,15 @@ function parentToggleSinglePetForProfile(profKey, petId) {
   if (!state.stats[profKey]) return;
   const p = ensurePlayerStructure(state.stats[profKey]);
   const exists = (p.memoryAnimals || []).includes(petId);
+  const petObj = (typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : []).find(a => a.id === petId);
+  const petLabel = petObj ? petObj.pl : petId;
+  const name = PROFILE_META[profKey].name;
+
+  const msg = exists
+    ? `Zablokujesz (odbierzesz) zwierzaka „${petLabel}” profilowi: ${name}.`
+    : `Odblokujesz (dodasz) zwierzaka „${petLabel}” profilowi: ${name}.`;
+  if (!confirmParentAction(msg)) return;
+
   if (exists) {
     p.memoryAnimals = p.memoryAnimals.filter(id => id !== petId);
     if (p.avatar && p.avatar.pet === petId) p.avatar.pet = "";
@@ -1304,8 +1357,11 @@ function renderParentLessonsManager() {
 function parentCycleWordAge(lessonId, idx) {
   const lesson = state.lessons.find(l => l.id === lessonId);
   if (!lesson || !lesson.items[idx]) return;
-  const cur = Array.isArray(lesson.items[idx].age) ? lesson.items[idx].age.join(",") : "4,6";
-  lesson.items[idx].age = cur === "4,6" ? [4] : (cur === "4" ? [6] : [4, 6]);
+  const word = lesson.items[idx];
+  const cur = Array.isArray(word.age) ? word.age.join(",") : "4,6";
+  const nextAge = cur === "4,6" ? [4] : (cur === "4" ? [6] : [4, 6]);
+  if (!confirmParentAction(`Zmienisz poziom wiekowy słówka „${word.en}” z [${cur}] na [${nextAge.join(",")}].`)) return;
+  word.age = nextAge;
   saveCloudData();
   renderParentLessonsManager();
 }
@@ -1317,13 +1373,17 @@ function parentDeleteWordFromLesson(lessonId, idx) {
     showParentStatus("⚠️ W lekcji musi pozostać przynajmniej 1 słówko!", true);
     return;
   }
+  const word = lesson.items[idx];
+  if (!confirmParentAction(`Usuniesz słówko „${word.en} (${word.pl})” z lekcji „${lesson.title}”.`)) return;
   lesson.items.splice(idx, 1);
   saveCloudData();
   renderParentLessonsManager();
 }
 
 function parentDeleteLesson(lessonId) {
-  if (!confirm("Czy na pewno usunąć tę lekcję?")) return;
+  const lesson = state.lessons.find(l => l.id === lessonId);
+  const title = lesson ? lesson.title : lessonId;
+  if (!confirmParentAction(`TRWALE usuniesz całą lekcję „${title}”!`)) return;
   state.lessons = state.lessons.filter(l => l.id !== lessonId);
   saveCloudData();
   refreshAllParentWidgets();
@@ -1359,10 +1419,12 @@ function renderParentHardWordsBox() {
 
 function parentClearHardWords(profKey) {
   if (!state.stats[profKey]) return;
+  const name = PROFILE_META[profKey].name;
+  if (!confirmParentAction(`Wyczyścisz całą listę trudnych słówek dla profilu: ${name}.`)) return;
   state.stats[profKey].hardWords = [];
   saveCloudData();
   renderParentHardWordsBox();
-  showParentStatus(`✅ Wyczyszczono listę trudnych słówek (${PROFILE_META[profKey].name}).`);
+  showParentStatus(`✅ Wyczyszczono listę trudnych słówek (${name}).`);
 }
 
 function renderRoundLengthButtons() {
@@ -1377,6 +1439,8 @@ function renderRoundLengthButtons() {
 }
 
 function parentSetRoundLength(n) {
+  if (state.questionsPerRound === n) return;
+  if (!confirmParentAction(`Zmienisz długość rundy z ${state.questionsPerRound} na ${n} pytań.`)) return;
   state.questionsPerRound = n;
   saveCloudData();
   renderRoundLengthButtons();
@@ -1385,17 +1449,20 @@ function parentSetRoundLength(n) {
 
 function parentGiveTestChest(profKey, tier) {
   if (!state.stats[profKey]) return;
+  const names = { bronze: "Brązową", silver: "Srebrną", gold: "Złotą" };
+  const playerName = PROFILE_META[profKey].name;
+  if (!confirmParentAction(`Wyślesz ${names[tier] || ""} Skrzynię w nagrodę dla: ${playerName}.`)) return;
+
   const p = ensurePlayerStructure(state.stats[profKey]);
   p.pendingChests.push({ tier, reason: "Specjalna skrzynia od Taty! 🎁", date: new Date().toISOString() });
   p.pendingChestsUpdatedAt = Date.now();
   state.stats[profKey] = p;
   saveCloudData();
-  const names = { bronze: "Brązową", silver: "Srebrną", gold: "Złotą" };
   const isCurrentUser = state.profile === profKey;
   const openNowBtn = isCurrentUser
     ? ` <button onclick="closeParentDashboard()" class="ml-2 px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow">🎁 Otwórz teraz!</button>`
     : "";
-  showParentStatus(`🎁 Wysłano ${names[tier] || ""} Skrzynię do ${PROFILE_META[profKey].name}! ${isCurrentUser ? "Zamknij panel lub kliknij obok, aby otworzyć:" : "Otworzy ją po wejściu na swój profil."}${openNowBtn}`);
+  showParentStatus(`🎁 Wysłano ${names[tier] || ""} Skrzynię do ${playerName}! ${isCurrentUser ? "Zamknij panel lub kliknij obok, aby otworzyć:" : "Otworzy ją po wejściu na swój profil."}${openNowBtn}`);
 }
 
 function parentScanWorksheetAI(inputEl) {
@@ -1487,14 +1554,22 @@ function parentExportBackupJson() {
 function parentImportBackupJson(inputEl) {
   const file = inputEl && inputEl.files && inputEl.files[0];
   if (!file) return;
+  if (!confirmParentAction(`Wczytasz kopię zapasową z pliku „${file.name}”. Nadpisze to obecne postępy wszystkich profili!`)) {
+    inputEl.value = "";
+    return;
+  }
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const parsed = JSON.parse(String(reader.result || "{}"));
+      const nowTs = Date.now();
       if (parsed.stats) {
-        state.stats.igor = ensurePlayerStructure(parsed.stats.igor);
-        state.stats.hubert = ensurePlayerStructure(parsed.stats.hubert);
-        state.stats.tata = ensurePlayerStructure(parsed.stats.tata);
+        ["igor", "hubert", "tata"].forEach(k => {
+          const p = ensurePlayerStructure(parsed.stats[k]);
+          p.wardrobeUpdatedAt = nowTs;
+          p.pendingChestsUpdatedAt = nowTs;
+          state.stats[k] = p;
+        });
         if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
       }
       if (Array.isArray(parsed.lessons)) state.lessons = parsed.lessons;
@@ -1505,13 +1580,16 @@ function parentImportBackupJson(inputEl) {
       showParentStatus("⬆️ Wczytano kopię zapasową i zapisano w chmurze!");
     } catch (e) {
       showParentStatus("❌ Nieprawidłowy plik kopii zapasowej JSON.", true);
+    } finally {
+      inputEl.value = "";
     }
   };
   reader.readAsText(file);
 }
 
 function resetEverythingAll() {
-  if (!confirm("⚠️ UWAGA! Czy na pewno zresetować wszystkie postępy, gwiazdki, ubrania i własne lekcje?")) return;
+  if (!confirmParentAction("UWAGA! Wyzerujesz WSZYSTKIE postępy, gwiazdki, ubrania, zwierzaki i własne lekcje!")) return;
+  if (!confirmParentAction("DRUGIE POTWIERDZENIE: tej operacji nie da się cofnąć bez kopii zapasowej (.json).")) return;
   localStorage.removeItem("akademia_save_v14");
   localStorage.removeItem("akademia_save_v12");
   localStorage.removeItem("akademia_save_v10");
@@ -1521,10 +1599,11 @@ function resetEverythingAll() {
   state.approvedLessonIds = [];
   state.equalizedLessonsForIgor = [];
   state.fortuneWheelPublishedForKids = false;
+  const nowTs = Date.now();
   state.stats = {
-    igor: createDefaultPlayerStats(),
-    hubert: createDefaultPlayerStats(),
-    tata: createDefaultPlayerStats(),
+    igor: { ...createDefaultPlayerStats(), wardrobeUpdatedAt: nowTs, pendingChestsUpdatedAt: nowTs },
+    hubert: { ...createDefaultPlayerStats(), wardrobeUpdatedAt: nowTs, pendingChestsUpdatedAt: nowTs },
+    tata: { ...createDefaultPlayerStats(), wardrobeUpdatedAt: nowTs, pendingChestsUpdatedAt: nowTs },
     stickers: []
   };
   saveCloudData();

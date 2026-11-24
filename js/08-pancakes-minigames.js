@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/08-pancakes-minigames.js
-   KUCHNIA PANKEJKÓW (4 OPCJE + LOSOWE DODAWANIE), LITERKI (4 OPCJE), MEMORY I MIKROFON
+   KUCHNIA PANKEJKÓW, LITERKI, MEMORY, MIKROFON, PRZYIMKI I FISZKI (EN + PL)
    ============================================================================ */
 
 const _origRenderTopGameBarV14 = typeof renderTopGameBar === "function" ? renderTopGameBar : null;
@@ -8,8 +8,9 @@ const _origRenderTopGameBarV14 = typeof renderTopGameBar === "function" ? render
 renderTopGameBar = function(lesson) {
   if (!state.isExamMode && !state.isHardWordsMode && !state.isCoopDragonMode && lesson && lesson.id === "pancakes_cooking" && state.profile !== "duel") {
     const totalQ = state.roundQuestions.length || 1;
-    const micBtn = `<button onclick="startLesson('${lesson.id}','mic_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'mic_game' ? 'bg-rose-600 text-white' : 'bg-white text-slate-700'}">🎤 Wymowa</button>`;
-    const flashBtn = `<button onclick="startFlashcards('${lesson.id}')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-indigo-50 text-indigo-800 border-indigo-300">🃏 Fiszki</button>`;
+    const isFlashcards = state.currentSubMode === "flashcards";
+    const micBtn = `<button onclick="startLesson('${lesson.id}','mic_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'mic_game' ? 'bg-rose-600 text-white border-rose-700' : 'bg-white text-slate-700'}">🎤 Wymowa</button>`;
+    const flashBtn = `<button onclick="startFlashcards('${lesson.id}')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${isFlashcards ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-indigo-50 text-indigo-800 border-indigo-300'}">🃏 Fiszki</button>`;
     const audioOnlyBtn = `<button onclick="startLesson('${lesson.id}','audio_only_quiz')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'audio_only_quiz' ? 'bg-teal-600 text-white border-teal-700' : 'bg-teal-50 text-teal-900 border-teal-300'}">🎧 Ze słuchu</button>`;
     const lettersBtn = `<button id="subModeBtn_letters_game" onclick="startLesson('${lesson.id}','letters_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'letters_game' ? 'bg-purple-600 text-white border-purple-700' : 'bg-purple-50 text-purple-900 border-purple-300'}">🧩 Literki</button>`;
     const cookBtn = `<button id="subModeBtn_pancake_cooking_game" onclick="startLesson('${lesson.id}','pancake_cooking_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'pancake_cooking_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">👨‍🍳 Kuchnia Pankejków</button>`;
@@ -30,13 +31,17 @@ renderTopGameBar = function(lesson) {
       dotsHtml += `<div class="w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${bg}">${badgeTxt}</div>`;
     }
 
+    const rightBtn = isFlashcards
+      ? `<button onclick="startLesson('pancakes_cooking')" class="px-3 py-1 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 text-xs font-extrabold border border-rose-300">Zakończ fiszki ⏹️</button>`
+      : `<button onclick="showLessonMenu()" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Menu 🏠</button>`;
+
     return `
       <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-amber-300 flex flex-col gap-2 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex flex-wrap gap-1.5 items-center">${flashBtn}${quizBtn}${audioOnlyBtn}${cookBtn}${lettersBtn}${micBtn}${tataSwitchBar}</div>
-          <button onclick="showLessonMenu()" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Menu 🏠</button>
+          ${rightBtn}
         </div>
-        ${state.currentSubMode !== "pancake_cooking_game" ? `<div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100"><span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}</div>` : ""}
+        ${(state.currentSubMode !== "pancake_cooking_game" && !isFlashcards) ? `<div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100"><span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}</div>` : ""}
       </div>
     `;
   }
@@ -499,7 +504,7 @@ function startMemoryGame() {
   const isAdvanced = !isEffectiveIgorMode(), numPairs = isAdvanced ? 8 : 6;
   let pool = [];
   state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
-    if (l.type === "vocab" && l.id !== "memory_game") getVisibleLessonItems(l.items, true, l.id).forEach(it => pool.push(it));
+    if (l.type === "vocab" && l.id !== "memory_game" && !l.audioQuizOnly) getVisibleLessonItems(l.items, true, l.id).forEach(it => pool.push(it));
   });
   pool = shuffleArray(pool).slice(0, numPairs);
   let cards = [];
@@ -780,7 +785,7 @@ function approveMicAnswer(msg) {
 }
 
 // ------------------------------------------------------------------------
-// LEKCJA 1: PRZYIMKI (IN, ON, UNDER) + FISZKI
+// LEKCJA 1: PRZYIMKI (IN, ON, UNDER) + FISZKI (Z POLSKIM LEKTOREM I NAWIGACJĄ)
 // ------------------------------------------------------------------------
 function startPrepositionExplain(lesson) {
   const mc = document.getElementById("mainContainer"); if (!mc) return;
@@ -835,14 +840,79 @@ function checkPrepPic(idx) {
 }
 
 function startFlashcards(lessonId) {
-  cancelAllSpeechAndTimers(); const lesson = state.lessons.find(l => l.id === lessonId); if (!lesson) return;
-  state.flashcardIndex = 0; state.currentLessonId = lessonId; state.currentSubMode = "flashcards"; renderFlashcard(lesson);
+  cancelAllSpeechAndTimers();
+  const lesson = state.lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+  state.flashcardIndex = 0;
+  state.currentLessonId = lessonId;
+  state.lastPlayedLessonId = lessonId;
+  state.currentSubMode = "flashcards";
+  renderFlashcard(lesson);
 }
+
 function renderFlashcard(lesson) {
-  const visItems = getVisibleLessonItems(lesson.items, true, lesson.id), list = visItems.length ? visItems : lesson.items;
+  const visItems = getVisibleLessonItems(lesson.items, true, lesson.id);
+  const list = visItems.length ? visItems : lesson.items;
+  if (!list || !list.length) return;
+  if (state.flashcardIndex < 0) state.flashcardIndex = list.length - 1;
   if (state.flashcardIndex >= list.length) state.flashcardIndex = 0;
-  const item = list[state.flashcardIndex], mc = document.getElementById("mainContainer"); if (!mc) return;
-  mc.innerHTML = `<div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-indigo-200 flex justify-between items-center shadow-sm"><div class="font-extrabold text-indigo-900 px-2 text-sm">🃏 Fiszki: ${lesson.title} (${state.flashcardIndex + 1}/${list.length})</div><button onclick="showLessonMenu()" class="px-3 py-1.5 rounded-xl bg-slate-100 font-bold text-xs hover:bg-slate-200">Koniec ⏹️</button></div><div class="bg-white rounded-3xl shadow-xl border-4 border-indigo-300 p-8 text-center max-w-xl mx-auto flex flex-col items-center justify-between min-h-[350px]"><div class="text-8xl drop-shadow-md my-4 float-anim cursor-pointer flex justify-center" onclick="speakSequence([{lang:'en',text:'${item.en.replace(/'/g,"\\'")}'}])">${item.icon || item.animal || '📘'}</div><div><h2 class="text-4xl font-extrabold text-slate-900 mb-1">"${item.en}"</h2><p class="text-sm font-bold text-slate-400 mb-4">${item.phonetic ? '[' + item.phonetic + ']' : ''}</p><p class="text-2xl font-bold text-slate-700">${item.pl}</p></div><div class="mt-8 flex gap-3"><button onclick="speakSequence([{lang:'en',text:'${item.en.replace(/'/g,"\\'")}'}])" class="kid-card px-5 py-3 rounded-2xl bg-indigo-100 text-indigo-900 font-bold border-2 border-indigo-300 shadow">Posłuchaj 🔊</button><button onclick="nextFlashcard()" class="kid-card px-6 py-3 rounded-2xl bg-indigo-500 text-white font-extrabold shadow-lg">Następne ▶</button></div></div>`;
-  speakSequence([{ lang: "en", text: item.en }]);
+
+  const item = list[state.flashcardIndex];
+  const mc = document.getElementById("mainContainer");
+  if (!mc) return;
+
+  const safeEn = (item.en || "").replace(/'/g, "\\'");
+  const safePl = (item.pl || "").replace(/'/g, "\\'");
+
+  mc.innerHTML = `
+    ${renderTopGameBar(lesson)}
+    <div class="bg-white rounded-3xl shadow-xl border-4 border-indigo-300 p-5 md:p-7 text-center max-w-2xl mx-auto flex flex-col items-center justify-between min-h-[370px]">
+      <div class="w-full flex items-center justify-between text-xs font-extrabold text-indigo-800 bg-indigo-50 px-3.5 py-2 rounded-2xl border border-indigo-200">
+        <span>🃏 Fiszki: ${lesson.title}</span>
+        <span>Karta ${state.flashcardIndex + 1} / ${list.length}</span>
+      </div>
+
+      <div class="text-8xl drop-shadow-md my-4 float-anim cursor-pointer flex justify-center" onclick="speakSequence([{lang:'en',text:'${safeEn}'},{lang:'pl',text:'${safePl}'}])" title="Kliknij, aby posłuchać po angielsku i po polsku">
+        ${item.icon || item.animal || '📘'}
+      </div>
+
+      <div>
+        <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-1">"${item.en}"</h2>
+        <p class="text-sm font-bold text-slate-400 mb-3">${item.phonetic ? '[' + item.phonetic + ']' : ''}</p>
+        <p class="text-2xl md:text-3xl font-extrabold text-indigo-900">${item.pl}</p>
+      </div>
+
+      <div class="mt-6 flex flex-wrap justify-center gap-2.5">
+        <button onclick="speakSequence([{lang:'en',text:'${safeEn}'},{lang:'pl',text:'${safePl}'}])" class="kid-card px-4 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold text-sm shadow">
+          🦉🔊 Posłuchaj (EN + PL)
+        </button>
+        <button onclick="speakSequence([{lang:'en',text:'${safeEn}'}])" class="kid-card px-3.5 py-2.5 rounded-2xl bg-indigo-100 hover:bg-indigo-200 text-indigo-950 font-bold text-xs border-2 border-indigo-300">
+          🇬🇧 Po angielsku
+        </button>
+        <button onclick="speakSequence([{lang:'pl',text:'${safePl}'}])" class="kid-card px-3.5 py-2.5 rounded-2xl bg-emerald-100 hover:bg-emerald-200 text-emerald-950 font-bold text-xs border-2 border-emerald-300">
+          🇵🇱 Po polsku
+        </button>
+      </div>
+
+      <div class="mt-5 pt-4 border-t border-slate-100 w-full flex items-center justify-between gap-3">
+        <button onclick="prevFlashcard()" class="kid-card px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-sm border-2 border-slate-300">
+          ⬅️ Poprzednie
+        </button>
+        <button onclick="nextFlashcard()" class="kid-card px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm shadow-lg">
+          Następne ▶
+        </button>
+      </div>
+    </div>
+  `;
+  speakSequence([{ lang: "en", text: item.en }, { lang: "pl", text: item.pl }]);
 }
-function nextFlashcard() { state.flashcardIndex++; renderFlashcard(state.lessons.find(l => l.id === state.currentLessonId)); }
+
+function prevFlashcard() {
+  state.flashcardIndex--;
+  renderFlashcard(state.lessons.find(l => l.id === state.currentLessonId));
+}
+
+function nextFlashcard() {
+  state.flashcardIndex++;
+  renderFlashcard(state.lessons.find(l => l.id === state.currentLessonId));
+}

@@ -501,18 +501,7 @@ function buyChestWithStars(tier, cost) {
   }, 120);
 }
 
-function openPendingChestByIndex(profKey, idx) {
-  const p = ensurePlayerStructure(state.stats[profKey]);
-  if (!Array.isArray(p.pendingChests) || !p.pendingChests[idx]) return;
-  const item = p.pendingChests.splice(idx, 1)[0];
-  state.stats[profKey] = p;
-  saveCloudData();
-  const tier = typeof item === "string" ? item : (item.tier || "bronze");
-  const reason = (typeof item === "object" && item.reason) ? item.reason : "Nagroda od Taty!";
-  const kidName = PROFILE_META[profKey] ? PROFILE_META[profKey].name : "Bohater";
-  const chestLabel = tier === "gold" ? "👑 Złota Skrzynia!" : tier === "silver" ? "🥈 Srebrna Skrzynia!" : "📦 Brązowa Skrzynia!";
-  renderChestOpeningInsidePopup(profKey, tier, `🎁 Nagroda dla: ${kidName} (${reason}) • ${chestLabel}`);
-}
+function openPendingChestByIndex
 
 function processNextRewardInQueue() {
   if (state.rewardQueue.length === 0) return;

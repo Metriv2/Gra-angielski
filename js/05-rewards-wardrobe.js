@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/05-rewards-wardrobe.js
-   OSIĄGNIĘCIA, SKRZYNIE, GARDEROBA (131 DOKŁADNYCH PLIKÓW), SPIŻARNIA I ASYSTENT
+   OSIĄGNIĘCIA, SKRZYNIE, GARDEROBA (131 UBRAŃ), 50 ZWIERZAKÓW, SPIŻARNIA, KLASER
    ============================================================================ */
 
 const OUTFITS_DB = {
@@ -10,8 +10,8 @@ const OUTFITS_DB = {
       "cap_purple.png", "cap_red.png", "cap_white.png", "cap_yellow.png"
     ],
     torso: [
-      "Shirt_black.png", "shirt_blue.png", "Shirt_green.png", "Shirt_pink.png",
-      "Shirt_red.png", "Shirt_white.png", "Shirt_yellow.png"
+      "shirt_black.png", "shirt_blue.png", "shirt_green.png", "shirt_pink.png",
+      "shirt_red.png", "shirt_white.png", "shirt_yellow.png"
     ],
     legs: [
       "jeans_black.png", "jeans_blue.png", "jeans_braun.png", "jeans_green.png",
@@ -53,7 +53,7 @@ const OUTFITS_DB = {
     ],
     torso: [
       "armor_batman.png", "armor_cyberdragon.png", "armor_knight.png",
-      "jacket_diver.png", "jacket_electrician.png", "jacket_firefighter.png", "jacket_paramedic.png",
+      "jacket_diver.png", "jacket_electician.png", "jacket_firefighter.png", "jacket_paramedic.png",
       "shirt_barcelona.png", "shirt_commando.png", "shirt_poland.png", "shirt_police.png",
       "shirt_soldier.png", "suit_astronaut.png", "suit_hot-dog.png", "suit_skeleton.png"
     ],
@@ -116,90 +116,105 @@ const COMPANION_PETS = [
   { id: "p_dog", pl: "Piesek", en: "Dog", icon: "🐶" },
   { id: "p_cat", pl: "Kotek", en: "Cat", icon: "🐱" },
   { id: "p_rabbit", pl: "Królik", en: "Rabbit", icon: "🐰" },
-  { id: "p_fox", pl: "Lisek", en: "Fox", icon: "🦊" },
-  { id: "p_owl", pl: "Sówka", en: "Owl", icon: "🦉" },
-  { id: "p_bear", pl: "Miś", en: "Bear", icon: "🐻" },
-  { id: "p_panda", pl: "Panda", en: "Panda", icon: "🐼" },
-  { id: "p_koala", pl: "Koala", en: "Koala", icon: "🐨" },
-  { id: "p_tiger", pl: "Tygrysek", en: "Tiger", icon: "🐯" },
-  { id: "p_lion", pl: "Lew", en: "Lion", icon: "🦁" },
-  { id: "p_monkey", pl: "Małpka", en: "Monkey", icon: "🐵" },
-  { id: "p_frog", pl: "Żabka", en: "Frog", icon: "🐸" },
-  { id: "p_penguin", pl: "Pingwin", en: "Penguin", icon: "🐧" },
-  { id: "p_chick", pl: "Kurczaczek", en: "Chick", icon: "🐥" },
-  { id: "p_duck", pl: "Kaczuszka", en: "Duck", icon: "🦆" },
-  { id: "p_eagle", pl: "Orzeł", en: "Eagle", icon: "🦅" },
+  { id: "p_hamster", pl: "Chomik", en: "Hamster", icon: "🐹" },
   { id: "p_parrot", pl: "Papuga", en: "Parrot", icon: "🦜" },
-  { id: "p_flamingo", pl: "Flaming", en: "Flamingo", icon: "🦩" },
-  { id: "p_swan", pl: "Łabędź", en: "Swan", icon: "🦢" },
-  { id: "p_peacock", pl: "Paw", en: "Peacock", icon: "🦚" },
+  { id: "p_fish", pl: "Rybka", en: "Fish", icon: "🐠" },
   { id: "p_turtle", pl: "Żółwik", en: "Turtle", icon: "🐢" },
-  { id: "p_snake", pl: "Wąż", en: "Snake", icon: "🐍" },
-  { id: "p_croc", pl: "Krokodyl", en: "Crocodile", icon: "🐊" },
-  { id: "p_dino", pl: "Dinozaur", en: "Dinosaur", icon: "🦕" },
-  { id: "p_trex", pl: "Tyranozaur", en: "T-Rex", icon: "🦖" },
-  { id: "p_dragon", pl: "Smoczek", en: "Dragon", icon: "🐲" },
-  { id: "p_unicorn", pl: "Jednorożec", en: "Unicorn", icon: "🦄" },
-  { id: "p_horse", pl: "Konik", en: "Horse", icon: "🐴" },
-  { id: "p_zebra", pl: "Zebra", en: "Zebra", icon: "🦓" },
-  { id: "p_giraffe", pl: "Żyrafa", en: "Giraffe", icon: "🦒" },
-  { id: "p_elephant", pl: "Słonik", en: "Elephant", icon: "🐘" },
-  { id: "p_hippo", pl: "Hipopotam", en: "Hippo", icon: "🦛" },
-  { id: "p_rhino", pl: "Nosorożec", en: "Rhino", icon: "🦏" },
-  { id: "p_pig", pl: "Świnka", en: "Pig", icon: "🐷" },
+  { id: "p_mouse", pl: "Myszka", en: "Mouse", icon: "🐭" },
+  { id: "p_canary", pl: "Kanarek", en: "Canary", icon: "🐤" },
+  { id: "p_guinea", pl: "Świnka morska", en: "Guinea pig", icon: "🐹" },
   { id: "p_cow", pl: "Krówka", en: "Cow", icon: "🐮" },
+  { id: "p_pig", pl: "Świnka", en: "Pig", icon: "🐷" },
+  { id: "p_horse", pl: "Konik", en: "Horse", icon: "🐴" },
   { id: "p_sheep", pl: "Owieczka", en: "Sheep", icon: "🐑" },
   { id: "p_goat", pl: "Kózka", en: "Goat", icon: "🐐" },
-  { id: "p_deer", pl: "Jelonek", en: "Deer", icon: "🦌" },
-  { id: "p_hedgehog", pl: "Jeżyk", en: "Hedgehog", icon: "🦔" },
+  { id: "p_chicken", pl: "Kurka", en: "Chicken", icon: "🐔" },
+  { id: "p_duck", pl: "Kaczuszka", en: "Duck", icon: "🦆" },
+  { id: "p_goose", pl: "Gąska", en: "Goose", icon: "🪿" },
+  { id: "p_turkey", pl: "Indyk", en: "Turkey", icon: "🦃" },
+  { id: "p_donkey", pl: "Osiołek", en: "Donkey", icon: "🫏" },
+  { id: "p_bear", pl: "Miś", en: "Bear", icon: "🐻" },
+  { id: "p_wolf", pl: "Wilk", en: "Wolf", icon: "🐺" },
+  { id: "p_fox", pl: "Lisek", en: "Fox", icon: "🦊" },
+  { id: "p_boar", pl: "Dzik", en: "Boar", icon: "🐗" },
+  { id: "p_deer", pl: "Jeleń", en: "Deer", icon: "🦌" },
+  { id: "p_owl", pl: "Sówka", en: "Owl", icon: "🦉" },
   { id: "p_squirrel", pl: "Wiewiórka", en: "Squirrel", icon: "🐿️" },
-  { id: "p_hamster", pl: "Chomik", en: "Hamster", icon: "🐹" },
-  { id: "p_mouse", pl: "Myszka", en: "Mouse", icon: "🐭" },
-  { id: "p_bat", pl: "Nietoperz", en: "Bat", icon: "🦇" },
-  { id: "p_dolphin", pl: "Delfin", en: "Dolphin", icon: "🐬" },
-  { id: "p_whale", pl: "Wieloryb", en: "Whale", icon: "🐳" },
-  { id: "p_shark", pl: "Rekin", en: "Shark", icon: "🦈" },
-  { id: "p_octopus", pl: "Ośmiornica", en: "Octopus", icon: "🐙" },
-  { id: "p_crab", pl: "Krab", en: "Crab", icon: "🦀" },
-  { id: "p_bee", pl: "Pszczółka", en: "Bee", icon: "🐝" },
-  { id: "p_butterfly", pl: "Motylek", en: "Butterfly", icon: "🦋" }
+  { id: "p_hedgehog", pl: "Jeżyk", en: "Hedgehog", icon: "🦔" },
+  { id: "p_badger", pl: "Borsuk", en: "Badger", icon: "🦡" },
+  { id: "p_frog", pl: "Żabka", en: "Frog", icon: "🐸" },
+  { id: "p_lion", pl: "Lew", en: "Lion", icon: "🦁" },
+  { id: "p_tiger", pl: "Tygrysek", en: "Tiger", icon: "🐯" },
+  { id: "p_elephant", pl: "Słonik", en: "Elephant", icon: "🐘" },
+  { id: "p_monkey", pl: "Małpka", en: "Monkey", icon: "🐵" },
+  { id: "p_giraffe", pl: "Żyrafa", en: "Giraffe", icon: "🦒" },
+  { id: "p_zebra", pl: "Zebra", en: "Zebra", icon: "🦓" },
+  { id: "p_hippo", pl: "Hipopotam", en: "Hippo", icon: "🦛" },
+  { id: "p_rhino", pl: "Nosorożec", en: "Rhino", icon: "🦏" },
+  { id: "p_croc", pl: "Krokodyl", en: "Crocodile", icon: "🐊" },
+  { id: "p_snake", pl: "Wąż", en: "Snake", icon: "🐍" },
+  { id: "p_dragon", pl: "Smoczek", en: "Dragon", icon: "🐲" },
+  { id: "p_unicorn", pl: "Jednorożec", en: "Unicorn", icon: "🦄" },
+  { id: "p_alien", pl: "Kosmita", en: "Alien", icon: "👽" },
+  { id: "p_ghost", pl: "Duszek", en: "Ghost", icon: "👻" },
+  { id: "p_robot", pl: "Robot", en: "Robot", icon: "🤖" },
+  { id: "p_monster", pl: "Stworek", en: "Monster", icon: "👾" },
+  { id: "p_fairy", pl: "Wróżka", en: "Fairy", icon: "🧚" },
+  { id: "p_troll", pl: "Troll", en: "Troll", icon: "🧌" },
+  { id: "p_phoenix", pl: "Feniks", en: "Phoenix", icon: "🐦‍🔥" },
+  { id: "p_genie", pl: "Dżin", en: "Genie", icon: "🧞" }
 ];
 
 const PET_FOOD_POOL = [
-  { id: "food_apple",      pl: "Jabłko",    en: "Apple",      icon: "🍎" },
-  { id: "food_carrot",     pl: "Marchewka", en: "Carrot",     icon: "🥕" },
-  { id: "food_banana",     pl: "Banan",     en: "Banana",     icon: "🍌" },
-  { id: "food_strawberry", pl: "Truskawka", en: "Strawberry", icon: "🍓" },
-  { id: "food_watermelon", pl: "Arbuz",     en: "Watermelon", icon: "🍉" },
-  { id: "food_honey",      pl: "Miód",      en: "Honey",      icon: "🍯" }
+  { id: "food_apple",      pl: "Jabłko",     en: "Apple",      icon: "🍎" },
+  { id: "food_banana",     pl: "Banan",      en: "Banana",     icon: "🍌" },
+  { id: "food_pear",       pl: "Gruszka",    en: "Pear",       icon: "🍐" },
+  { id: "food_strawberry", pl: "Truskawka",  en: "Strawberry", icon: "🍓" },
+  { id: "food_watermelon", pl: "Arbuz",      en: "Watermelon", icon: "🍉" },
+  { id: "food_grapes",     pl: "Winogrona",  en: "Grapes",     icon: "🍇" },
+  { id: "food_cherry",     pl: "Wiśnia",     en: "Cherry",     icon: "🍒" },
+  { id: "food_carrot",     pl: "Marchewka",  en: "Carrot",     icon: "🥕" },
+  { id: "food_tomato",     pl: "Pomidor",    en: "Tomato",     icon: "🍅" },
+  { id: "food_broccoli",   pl: "Brokuł",     en: "Broccoli",   icon: "🥦" },
+  { id: "food_corn",       pl: "Kukurydza",  en: "Corn",       icon: "🌽" },
+  { id: "food_cucumber",   pl: "Ogórek",     en: "Cucumber",   icon: "🥒" },
+  { id: "food_honey",      pl: "Miód",       en: "Honey",      icon: "🍯" }
 ];
 
 const STICKER_CATEGORIES = [
-  { id: "all",      name: "Wszystkie",       icon: "🎁" },
-  { id: "animals",  name: "Zwierzęta",       icon: "🐾" },
-  { id: "vehicles", name: "Pojazdy",         icon: "🚀" },
-  { id: "food",     name: "Smakołyki",       icon: "🍓" },
-  { id: "stars",    name: "Skarby i Sport",  icon: "👑" }
+  { id: "all",       name: "Wszystkie",  icon: "🎁" },
+  { id: "animals",   name: "Zwierzęta",  icon: "🦁" },
+  { id: "dinos",     name: "Dinozaury",  icon: "🦖" },
+  { id: "vehicles",  name: "Pojazdy",    icon: "🚒" },
+  { id: "space",     name: "Kosmos",     icon: "🚀" },
+  { id: "sport",     name: "Sport",      icon: "⚽" },
+  { id: "fruits",    name: "Owoce",      icon: "🍓" },
+  { id: "veggies",   name: "Warzywa",    icon: "🥕" },
+  { id: "sweets",    name: "Słodycze",   icon: "🍩" },
+  { id: "nature",    name: "Natura",     icon: "🌈" },
+  { id: "magic",     name: "Magia",      icon: "👑" }
 ];
 
 const STICKER_POOL = (() => {
-  const groups = [
-    { cat: "animals", icons: ["🦁","🐯","🐘","🦒","🦓","🐒","🦍","🦏","🦛","🐊","🐢","🐍","🦎","🦖","🦕","🐬","🐳","🦈","🐙","🦀","🦞","🐠","🐡","🦅","🦉","🦜","🦩","🦚","🐧","🦢","🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐷","🐮","🐸","🦄","🐝","🦋","🐞","🐌","🦔","🐿️","🦌"] },
-    { cat: "vehicles", icons: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🚚","🚛","🚜","🏍️","🚲","🛴","🚂","🚆","🚇","🚊","✈️","🛫","🚁","🚀","🛸","⛵","🚤","🛳️","⛴️","⚓"] },
-    { cat: "food", icons: ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍒","🍑","🍍","🥝","🍅","🥕","🌽","🥦","🥔","🍞","🥐","🥞","🧀","🍕","🍔","🍟","🌭","🍿","🍩","🍪","🎂"] },
-    { cat: "stars", icons: ["⚽","🏀","🏈","⚾","🎾","🏐","🏆","🥇","🎖️","👑","💎","🎁","🎈","🎉","🎨","🎸","🎺","🥁","🧩","🧸"] }
+  const defs = [
+    { cat: "animals",  prefix: "st_an", suffix: "",   items: [["Lew","🦁"],["Tygrys","🐯"],["Słoń","🐘"],["Żyrafa","🦒"],["Zebra","🦓"],["Małpka","🐒"],["Rekin","🦈"],["Delfin","🐬"],["Sowa","🦉"],["Panda","🐼"]] },
+    { cat: "dinos",    prefix: "st_dn", suffix: "",   items: [["Tyranozaur","🦖"],["Brontozaur","🦕"],["Jajo dino","🥚"],["Wulkan","🌋"],["Skamieniałość","🦴"],["Krokodyl","🐊"],["Jaszczurka","🦎"],["Żółw","🐢"],["Smok","🐉"],["Pterodaktyl","🦅"]] },
+    { cat: "vehicles", prefix: "st_vh", suffix: "",   items: [["Samochód","🚗"],["Radiowóz","🚓"],["Wóz strażacki","🚒"],["Karetka","🚑"],["Traktor","🚜"],["Pociąg","🚂"],["Samolot","✈️"],["Helikopter","🚁"],["Rower","🚲"],["Statek","🚢"]] },
+    { cat: "space",    prefix: "st_sp", suffix: "",   items: [["Rakieta","🚀"],["UFO","🛸"],["Planeta","🪐"],["Ziemia","🌍"],["Księżyc","🌕"],["Gwiazda","⭐"],["Kometa","☄️"],["Astronauta","👨‍🚀"],["Kosmita","👽"],["Teleskop","🔭"]] },
+    { cat: "sport",    prefix: "st_sp", suffix: "_s", items: [["Piłka nożna","⚽"],["Koszykówka","🏀"],["Siatkówka","🏐"],["Tenis","🎾"],["Puchar","🏆"],["Złoty medal","🥇"],["Rowerzysta","🚴"],["Deskorolka","🛹"],["Łyżwy","⛸️"],["Boks","🥊"]] },
+    { cat: "fruits",   prefix: "st_fr", suffix: "",   items: [["Jabłko","🍎"],["Gruszka","🍐"],["Banan","🍌"],["Truskawka","🍓"],["Arbuz","🍉"],["Winogrona","🍇"],["Wiśnia","🍒"],["Brzoskwinia","🍑"],["Ananas","🍍"],["Pomarańcza","🍊"]] },
+    { cat: "veggies",  prefix: "st_vg", suffix: "",   items: [["Marchewka","🥕"],["Pomidor","🍅"],["Ogórek","🥒"],["Brokuł","🥦"],["Kukurydza","🌽"],["Ziemniak","🥔"],["Papryka","🫑"],["Sałata","🥬"],["Cebula","🧅"],["Czosnek","🧄"]] },
+    { cat: "sweets",   prefix: "st_sw", suffix: "",   items: [["Lody","🍦"],["Pączek","🍩"],["Ciastko","🍪"],["Tort","🎂"],["Babeczka","🧁"],["Czekolada","🍫"],["Cukierek","🍬"],["Lizak","🍭"],["Naleśniki","🥞"],["Miód","🍯"]] },
+    { cat: "nature",   prefix: "st_nt", suffix: "",   items: [["Słońce","☀️"],["Tęcza","🌈"],["Drzewo","🌳"],["Kwiatek","🌻"],["Grzybek","🍄"],["Góra","⛰️"],["Fala","🌊"],["Śnieżynka","❄️"],["Błyskawica","⚡"],["Motyl","🦋"]] },
+    { cat: "magic",    prefix: "st_mg", suffix: "",   items: [["Korona","👑"],["Diament","💎"],["Jednorożec","🦄"],["Czarodziej","🧙"],["Różdżka","🪄"],["Zamek","🏰"],["Skrzynia","🎁"],["Tarcza","🛡️"],["Miecz","⚔️"],["Klucz","🗝️"]] }
   ];
-  const res = [];
-  let idx = 1;
-  groups.forEach(g => {
-    g.icons.forEach(ic => {
-      if (idx <= 100) {
-        res.push({ id: `st_${idx}`, cat: g.cat, name: `Naklejka #${idx}`, icon: ic });
-        idx++;
-      }
+  const out = [];
+  defs.forEach(g => {
+    g.items.forEach((pair, i) => {
+      out.push({ id: `${g.prefix}${i + 1}${g.suffix}`, cat: g.cat, name: pair[0], icon: pair[1] });
     });
   });
-  return res;
+  return out;
 })();
 
 function getActiveProfileKey() {
@@ -500,7 +515,20 @@ function buyChestWithStars(tier, cost) {
     speakSequence([{ lang: "pl", text: `Super! Wymieniono ${cost} gwiazdek na ${tierSpeak}! Kliknij skrzynię, aby ją otworzyć!` }]);
   }, 120);
 }
-p.pendingChestsUpdatedAt = Date.now();
+
+function openPendingChestByIndex(profKey, idx) {
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  if (!Array.isArray(p.pendingChests) || !p.pendingChests[idx]) return;
+  const item = p.pendingChests.splice(idx, 1)[0];
+  p.pendingChestsUpdatedAt = Date.now();
+  state.stats[profKey] = p;
+  saveCloudData();
+  const tier = typeof item === "string" ? item : (item.tier || "bronze");
+  const reason = (typeof item === "object" && item.reason) ? item.reason : "Nagroda od Taty!";
+  const kidName = PROFILE_META[profKey] ? PROFILE_META[profKey].name : "Bohater";
+  const chestLabel = tier === "gold" ? "👑 Złota Skrzynia!" : tier === "silver" ? "🥈 Srebrna Skrzynia!" : "📦 Brązowa Skrzynia!";
+  renderChestOpeningInsidePopup(profKey, tier, `🎁 Nagroda dla: ${kidName} (${reason}) • ${chestLabel}`);
+}
 
 function processNextRewardInQueue() {
   if (state.rewardQueue.length === 0) return;
@@ -654,11 +682,12 @@ function closeStickersModal() { const m = document.getElementById("stickersModal
 function renderStickers() {
   const tabs = document.getElementById("stickerCategoryTabs"), grid = document.getElementById("stickersGrid"), total = document.getElementById("stickerModalTotal");
   if (!tabs || !grid || !total) return;
-  total.textContent = (state.stats.stickers || []).length;
+  const ownedSet = new Set(state.stats.stickers || []);
+  total.textContent = STICKER_POOL.filter(s => ownedSet.has(s.id)).length;
   tabs.innerHTML = STICKER_CATEGORIES.map(c => `<button onclick="state.selectedStickerCat='${c.id}'; renderStickers();" class="px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${state.selectedStickerCat === c.id ? 'bg-pink-500 text-white border-pink-600' : 'bg-white text-pink-700 border-pink-200'} shadow-sm">${c.icon} ${c.name}</button>`).join("");
   const filtered = state.selectedStickerCat === "all" ? STICKER_POOL : STICKER_POOL.filter(s => s.cat === state.selectedStickerCat);
   grid.innerHTML = filtered.map(s => {
-    const owns = (state.stats.stickers || []).includes(s.id);
+    const owns = ownedSet.has(s.id);
     if (owns) return `<div class="bg-white rounded-2xl p-2 flex flex-col items-center justify-center border-2 border-pink-300 shadow-sm"><div class="text-4xl drop-shadow-md float-anim">${s.icon}</div><div class="text-[9px] font-bold text-pink-800 mt-2 text-center leading-tight">${s.name}</div></div>`;
     return `<div class="bg-slate-200/50 rounded-2xl p-2 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 opacity-60"><div class="text-3xl grayscale">❓</div><div class="text-[9px] font-bold text-slate-500 mt-2 text-center leading-tight">Nieodkryte</div></div>`;
   }).join("");

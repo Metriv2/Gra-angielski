@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/07-games-core.js
-   PASEK GRY, PYTANIA ZE SŁUCHU (PL->EN), WALKA ZE SMOKIEM, POJEDYNEK I QUIZ
+   PASEK GRY, PYTANIA ZE SŁUCHU (PL ⇄ EN), WALKA ZE SMOKIEM, POJEDYNEK I QUIZ
    ============================================================================ */
 
 (function ensureDragonFullscreenStyles() {
@@ -312,36 +312,40 @@ function playDragonAttackSequence(type, speechPl) {
 
 function renderTopGameBar(lesson) {
   const totalQ = state.roundQuestions.length;
+  const isFlashcards = state.currentSubMode === "flashcards";
   let subModesHtml = "";
 
   if (!state.isExamMode && !state.isHardWordsMode && !state.isCoopDragonMode && lesson && state.profile !== "duel") {
-    const micBtn = `<button onclick="startLesson('${lesson.id}','mic_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'mic_game' ? 'bg-rose-600 text-white' : 'bg-white text-slate-700'}">🎤 Wymowa</button>`;
-    const flashBtn = `<button onclick="startFlashcards('${lesson.id}')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-indigo-50 text-indigo-800 border-indigo-300">🃏 Fiszki</button>`;
+    const micBtn = `<button onclick="startLesson('${lesson.id}','mic_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'mic_game' ? 'bg-rose-600 text-white border-rose-700' : 'bg-white text-slate-700'}">🎤 Wymowa</button>`;
+    const flashBtn = `<button onclick="startFlashcards('${lesson.id}')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${isFlashcards ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-indigo-50 text-indigo-800 border-indigo-300'}">🃏 Fiszki</button>`;
     const audioOnlyBtn = (lesson.type !== "memory_game")
       ? `<button onclick="startLesson('${lesson.id}','audio_only_quiz')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'audio_only_quiz' ? 'bg-teal-600 text-white border-teal-700' : 'bg-teal-50 text-teal-900 border-teal-300'}">🎧 Ze słuchu</button>`
       : "";
     const lettersBtn = (lesson.type !== "prepositions" && lesson.type !== "mic_only")
       ? `<button id="subModeBtn_letters_game" onclick="startLesson('${lesson.id}','letters_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'letters_game' ? 'bg-purple-600 text-white border-purple-700' : 'bg-purple-50 text-purple-900 border-purple-300'}">🧩 Literki</button>`
       : "";
+    const visualQuizBtn = !lesson.audioQuizOnly
+      ? `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>`
+      : "";
 
     if (lesson.type === "prepositions") {
-      subModesHtml = `<button onclick="startPrepositionExplain(state.lessons.find(l=>l.id==='prepositions'))" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 bg-amber-100 border-amber-400 text-amber-900">🦉 Wyjaśnienie</button>` +
+      subModesHtml = `<button onclick="startPrepositionExplain(state.lessons.find(l=>l.id==='prepositions'))" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'prep_explain' ? 'bg-amber-400 text-amber-950 border-amber-600' : 'bg-amber-100 border-amber-400 text-amber-900'}">🦉 Wyjaśnienie</button>` +
                      `<button onclick="startLesson('prepositions','prep_choose_word')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'prep_choose_word' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">🤔 Słówka</button>` +
                      `<button onclick="startLesson('prepositions','prep_choose_pic')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'prep_choose_pic' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">🖼️ Obrazki</button>` + audioOnlyBtn + flashBtn + micBtn;
     } else if (lesson.type === "vocab_and_shop") {
       subModesHtml = flashBtn +
-                     `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
+                     visualQuizBtn +
                      audioOnlyBtn +
                      `<button id="subModeBtn_shop_cart_game" onclick="startLesson('${lesson.id}','shop_cart_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'shop_cart_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">🛒 Koszyk</button>` +
                      `<button onclick="startLesson('${lesson.id}','shop_phrases_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'shop_phrases_game' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-emerald-50 text-emerald-900 border-emerald-300'}">👋 Zwroty</button>` + lettersBtn + micBtn;
     } else if (lesson.id === "body_hurts") {
       subModesHtml = flashBtn +
-                     `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
+                     visualQuizBtn +
                      audioOnlyBtn +
                      `<button id="subModeBtn_doctor_game" onclick="startLesson('${lesson.id}','doctor_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'doctor_game' ? 'bg-rose-500 text-white border-rose-600' : 'bg-rose-50 text-rose-900 border-rose-300'}">🩺 Mały Lekarz</button>` + lettersBtn + micBtn;
     } else if (lesson.id === "jungle_animals") {
       subModesHtml = flashBtn +
-                     `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` +
+                     visualQuizBtn +
                      audioOnlyBtn +
                      `<button id="subModeBtn_riddles_game" onclick="startLesson('${lesson.id}','riddles_game')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'riddles_game' ? 'bg-amber-500 text-white border-amber-600' : 'bg-amber-50 text-amber-900 border-amber-300'}">🕵️‍♂️ Zagadki Sówki</button>` + lettersBtn + micBtn;
     } else if (lesson.id === "colors") {
@@ -352,7 +356,7 @@ function renderTopGameBar(lesson) {
     } else if (lesson.type === "mic_only") {
       subModesHtml = flashBtn + micBtn + audioOnlyBtn;
     } else {
-      subModesHtml = flashBtn + `<button onclick="startLesson('${lesson.id}','listen_pick')" class="px-2.5 py-1 rounded-xl font-bold text-xs border-2 ${state.currentSubMode === 'listen_pick' ? 'bg-sky-500 text-white border-sky-600' : 'bg-white text-slate-700'}">👂 Quiz</button>` + audioOnlyBtn + lettersBtn + micBtn;
+      subModesHtml = flashBtn + visualQuizBtn + audioOnlyBtn + lettersBtn + micBtn;
     }
   }
 
@@ -450,16 +454,22 @@ function renderTopGameBar(lesson) {
 
   const examBar = state.isExamMode ? `<div class="mb-2 p-2 rounded-2xl bg-orange-100 border-2 border-orange-400 text-orange-950 font-extrabold text-center text-xs shadow-sm uppercase">🎓 Wielki Sprawdzian (Pytanie ${state.roundIndex+1}/15)</div>` : "";
   const hardBar = state.isHardWordsMode ? `<div class="mb-2 p-2 rounded-2xl bg-rose-100 border-2 border-rose-400 text-rose-950 font-extrabold text-center text-xs shadow-sm uppercase">🎯 Trening Trudnych Słówek • Za odpowiedź bez błędu: +2 ⭐!</div>` : "";
+  const rightActionBtn = isFlashcards
+    ? `<button onclick="startLesson('${lesson ? lesson.id : ''}')" class="px-3 py-1 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 text-xs font-extrabold border border-rose-300">Zakończ fiszki ⏹️</button>`
+    : `<button onclick="advanceNextQuestion(true)" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Pomiń ⏭️</button>`;
+
   return `
     ${dragonHud} ${duelBar} ${examBar} ${hardBar}
     <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-sky-200 flex flex-col gap-2 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-wrap gap-1.5 items-center">${subModesHtml}${tataSwitchBar}</div>
-        <button onclick="advanceNextQuestion(true)" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Pomiń ⏭️</button>
+        ${rightActionBtn}
       </div>
-      <div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100">
-        <span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}
-      </div>
+      ${!isFlashcards ? `
+        <div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100">
+          <span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}
+        </div>
+      ` : ""}
     </div>
   `;
 }
@@ -519,7 +529,7 @@ function renderCurrentQuestion() {
 
   const lesson = state.lessons.find(l => l.id === state.currentLessonId) || { id: "mix", type: "vocab", items: state.roundQuestions };
 
-  if (q._audioOnlyQuestion || activeMode === "audio_only_quiz") {
+  if (q._audioOnlyQuestion || q.audioOnly || activeMode === "audio_only_quiz") {
     return renderAudioOnlyQuiz(lesson);
   }
 
@@ -545,19 +555,25 @@ function renderCurrentQuestion() {
 }
 
 // ------------------------------------------------------------------------
-// PYTANIA ZE SŁUCHU (LEKTOR PO POLSKU -> WYBÓR Z SAMYCH GŁOŚNIKÓW BEZ IKON)
+// PYTANIA ZE SŁUCHU (PL ➔ EN ORAZ EN ➔ PL – SAMO SŁUCHANIE Z GŁOŚNIKÓW)
 // ------------------------------------------------------------------------
 function playAudioOnlyChoice(idx) {
+  const q = state.roundQuestions[state.roundIndex];
   const chosen = window._currentChoices && window._currentChoices[idx];
   if (!chosen) return;
   document.querySelectorAll(".audio-speaker-card").forEach(el => el.classList.remove("ring-4", "ring-amber-400", "bg-amber-50"));
   const card = document.getElementById(`aCard_${idx}`);
   if (card) card.classList.add("ring-4", "ring-amber-400", "bg-amber-50");
-  speakSequence([{ lang: "en", text: chosen.en }]);
+  const isEnToPl = q && q._audioDirection === "en_to_pl";
+  speakSequence([{ lang: isEnToPl ? "pl" : "en", text: isEnToPl ? chosen.pl : chosen.en }]);
 }
 
 function renderAudioOnlyQuiz(lesson) {
   const q = state.roundQuestions[state.roundIndex];
+  if (!q._audioDirection) {
+    q._audioDirection = Math.random() < 0.5 ? "pl_to_en" : "en_to_pl";
+  }
+  const isEnToPl = q._audioDirection === "en_to_pl";
   const isIgorTurn = isEffectiveIgorMode();
   const numChoices = !isIgorTurn ? 6 : 4;
   const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
@@ -597,15 +613,27 @@ function renderAudioOnlyQuiz(lesson) {
   const mc = document.getElementById("mainContainer");
   if (!mc) return;
 
+  const headerSub = isEnToPl
+    ? "🎧 Pytanie ze słuchu (EN ➔ PL) • Posłuchaj angielskiego słowa i wskaż polskie tłumaczenie!"
+    : "🎧 Pytanie ze słuchu (PL ➔ EN) • Posłuchaj polskiego słowa i wskaż angielską odpowiedź!";
+
+  const topReplayOnclick = isEnToPl
+    ? `speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])`
+    : `speakSequence([{lang:'pl',text:'Jak będzie po angielsku: ${promptPl.replace(/'/g,"\\'")}?'}])`;
+
+  const promptLabel = isEnToPl ? "Co oznacza po polsku:" : "Jak będzie po angielsku:";
+  const promptWord = isEnToPl ? `"${q.en}"?` : `"${q.pl}"?`;
+  const speakerSubTag = isEnToPl ? "Odsłuchaj PL" : "Odsłuchaj EN";
+
   mc.innerHTML = `
     ${renderTopGameBar(lesson)}
     <div class="bg-white rounded-3xl shadow-xl border-4 border-teal-400 p-4 md:p-6 text-center">
-      <div class="text-xs font-extrabold text-teal-800 uppercase mb-1">🎧 Pytanie ze słuchu • Odsłuchaj głośniki i wskaż poprawną odpowiedź!</div>
+      <div class="text-xs font-extrabold text-teal-800 uppercase mb-1">${headerSub}</div>
       <div class="flex items-center justify-between bg-teal-50 p-3.5 rounded-2xl border-2 border-teal-200 mb-3 drop-shadow-sm">
-        <button onclick="speakSequence([{lang:'pl',text:'Jak będzie po angielsku: ${promptPl.replace(/'/g,"\\'")}?'}])" class="kid-card w-12 h-12 rounded-2xl bg-teal-600 text-white text-2xl shadow flex items-center justify-center shrink-0">🔊</button>
+        <button onclick="${topReplayOnclick}" class="kid-card w-12 h-12 rounded-2xl bg-teal-600 text-white text-2xl shadow flex items-center justify-center shrink-0">🔊</button>
         <div class="flex-1 px-2">
-          <div class="text-xs font-bold text-teal-800">Jak będzie po angielsku:</div>
-          <div class="text-xl md:text-3xl font-extrabold text-slate-900 tracking-wide">"${q.pl}"?</div>
+          <div class="text-xs font-bold text-teal-800">${promptLabel}</div>
+          <div class="text-xl md:text-3xl font-extrabold text-slate-900 tracking-wide">${promptWord}</div>
         </div>
         <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-teal-300 text-teal-900">${numChoices} głośniki</span>
       </div>
@@ -615,7 +643,7 @@ function renderAudioOnlyQuiz(lesson) {
           <div id="aCard_${idx}" class="audio-speaker-card kid-card rounded-3xl border-4 border-slate-200 bg-slate-50 hover:border-teal-400 p-4 shadow flex flex-col items-center justify-between">
             <button onclick="playAudioOnlyChoice(${idx})" class="w-full py-3 rounded-2xl bg-gradient-to-b from-sky-400 to-blue-600 hover:from-sky-500 hover:to-blue-700 text-white shadow-md flex flex-col items-center justify-center gap-1">
               <span class="text-5xl md:text-6xl drop-shadow">🔊</span>
-              <span class="text-xs font-extrabold uppercase tracking-wider">Posłuchaj #${idx + 1}</span>
+              <span class="text-xs font-extrabold uppercase tracking-wider">${speakerSubTag} #${idx + 1}</span>
             </button>
             <button id="aLabel_${idx}" onclick="checkAudioOnlyAnswer(${idx})" class="w-full py-2.5 px-2 mt-3 rounded-xl bg-white hover:bg-emerald-50 border-2 border-teal-400 font-extrabold text-teal-950 text-sm shadow-sm uppercase tracking-wide">
               ✅ Wybierz
@@ -625,12 +653,23 @@ function renderAudioOnlyQuiz(lesson) {
       </div>
     </div>
   `;
-  speakSequence([{ lang: "pl", text: `Jak będzie po angielsku: ${promptPl}? Odsłuchaj głośniki i wybierz!` }]);
+
+  if (isEnToPl) {
+    speakSequence([
+      { lang: "pl", text: "Posłuchaj po angielsku i wskaż polskie tłumaczenie:" },
+      { lang: "en", text: q.en }
+    ]);
+  } else {
+    speakSequence([
+      { lang: "pl", text: `Jak będzie po angielsku: ${promptPl}? Odsłuchaj głośniki i wybierz!` }
+    ]);
+  }
 }
 
 function checkAudioOnlyAnswer(idx) {
   if (state.answeredCurrent) return;
   const q = state.roundQuestions[state.roundIndex];
+  const isEnToPl = q && q._audioDirection === "en_to_pl";
   const chosen = window._currentChoices[idx];
   const card = document.getElementById(`aCard_${idx}`);
   const lbl = document.getElementById(`aLabel_${idx}`);
@@ -661,14 +700,14 @@ function checkAudioOnlyAnswer(idx) {
       playEffect("success");
       if (fb) fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! "${q.en}" znaczy "${q.pl}"!</span>`;
       awardCorrectAnswer();
-      speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Brawo! ${q.pl} to po angielsku ${q.en}!` }], () => advanceNextQuestion());
+      speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Brawo! ${q.en} to po polsku ${q.pl}!` }], () => advanceNextQuestion());
     }
   } else {
     state.roundMistakes++;
     state.currentQuestionMistakes++;
     if (card) card.classList.add("shake-wrong");
     recordHardWordForActivePlayer(q);
-    if (lbl) lbl.textContent = `❌ ${chosen.pl}`;
+    if (lbl) lbl.textContent = isEnToPl ? `❌ ${chosen.en}` : `❌ ${chosen.pl}`;
 
     if (state.isCoopDragonMode) {
       state.answeredCurrent = true;
@@ -688,11 +727,17 @@ function checkAudioOnlyAnswer(idx) {
       playBattleAttackSequence("fire", `Niestety ${attackerName}! ${defenderName} kontratakuje!`, "duel");
     } else {
       playEffect("wrong");
-      if (fb) fb.innerHTML = `<span class="text-rose-600">❌ Ten głośnik mówił "${chosen.pl}". Posłuchaj pozostałych i znajdź "${q.pl}"!</span>`;
-      speakSequence([{ lang: "pl", text: `Oj nie! To znaczy ${chosen.pl}. Posłuchaj pozostałych głośników i znajdź jak będzie po angielsku: ${q.pl.toLowerCase()}!` }]);
+      if (isEnToPl) {
+        if (fb) fb.innerHTML = `<span class="text-rose-600">❌ Ten głośnik mówił "${chosen.pl}" (${chosen.en}). Posłuchaj pozostałych!</span>`;
+        speakSequence([{ lang: "pl", text: `Oj nie! To znaczy ${chosen.en}. Posłuchaj pozostałych głośników i znajdź tłumaczenie słowa:` }, { lang: "en", text: q.en }]);
+      } else {
+        if (fb) fb.innerHTML = `<span class="text-rose-600">❌ Ten głośnik mówił "${chosen.pl}". Posłuchaj pozostałych i znajdź "${q.pl}"!</span>`;
+        speakSequence([{ lang: "pl", text: `Oj nie! To znaczy ${chosen.pl}. Posłuchaj pozostałych głośników i znajdź jak będzie po angielsku: ${q.pl.toLowerCase()}!` }]);
+      }
     }
   }
 }
+
 function renderColorMixGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const choices = buildColorMixChoicesForQuestion(q);
@@ -1034,6 +1079,9 @@ function renderShopCartGame(lesson) {
 
 function renderUniversalVisualQuiz(lesson) {
   const q = state.roundQuestions[state.roundIndex];
+  if (q && (q._audioOnlyQuestion || q.audioOnly || (lesson && lesson.audioQuizOnly))) {
+    return renderAudioOnlyQuiz(lesson);
+  }
   const isIgorTurn = isEffectiveIgorMode();
   const numChoices = !isIgorTurn ? 6 : 4;
   const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";

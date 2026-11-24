@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/05-rewards-wardrobe.js
-   OSIĄGNIĘCIA, SKRZYNIE, GARDEROBA (131 UBRAŃ), 50 ZWIERZAKÓW, SPIŻARNIA, KLASER
+   OSIĄGNIĘCIA, SKRZYNIE, GARDEROBA (131 UBRAŃ + POLSKI LEKTOR), SPIŻARNIA, KLASER
    ============================================================================ */
 
 const OUTFITS_DB = {
@@ -65,6 +65,163 @@ const OUTFITS_DB = {
     ]
   }
 };
+
+const OUTFIT_TYPES_PL = {
+  cap:    { gender: "f", nom: "czapka",   acc: "czapkę" },
+  shirt:  { gender: "f", nom: "koszulka", acc: "koszulkę" },
+  jacket: { gender: "f", nom: "kurtka",   acc: "kurtkę" },
+  mask:   { gender: "f", nom: "maska",    acc: "maskę" },
+  armor:  { gender: "f", nom: "zbroja",   acc: "zbroję" },
+  helmet: { gender: "m", nom: "hełm",     acc: "hełm" },
+  suit:   { gender: "m", nom: "strój",    acc: "strój" },
+  jeans:  { gender: "p", nom: "dżinsy",   acc: "dżinsy" },
+  short:  { gender: "p", nom: "spodenki", acc: "spodenki" },
+  shorts: { gender: "p", nom: "spodenki", acc: "spodenki" },
+  pants:  { gender: "p", nom: "spodnie",  acc: "spodnie" }
+};
+
+const OUTFIT_COLORS_PL = {
+  black:     { fNom: "Czarna",       fAcc: "czarną",       mNom: "Czarny",       mAcc: "czarny",       pNom: "Czarne",       pAcc: "czarne" },
+  blue:      { fNom: "Niebieska",    fAcc: "niebieską",    mNom: "Niebieski",    mAcc: "niebieski",    pNom: "Niebieskie",   pAcc: "niebieskie" },
+  green:     { fNom: "Zielona",      fAcc: "zieloną",      mNom: "Zielony",      mAcc: "zielony",      pNom: "Zielone",      pAcc: "zielone" },
+  orange:    { fNom: "Pomarańczowa", fAcc: "pomarańczową", mNom: "Pomarańczowy", mAcc: "pomarańczowy", pNom: "Pomarańczowe", pAcc: "pomarańczowe" },
+  purple:    { fNom: "Fioletowa",    fAcc: "fioletową",    mNom: "Fioletowy",    mAcc: "fioletowy",    pNom: "Fioletowe",    pAcc: "fioletowe" },
+  red:       { fNom: "Czerwona",     fAcc: "czerwoną",     mNom: "Czerwony",     mAcc: "czerwony",     pNom: "Czerwone",     pAcc: "czerwone" },
+  white:     { fNom: "Biała",        fAcc: "białą",        mNom: "Biały",        mAcc: "biały",        pNom: "Białe",        pAcc: "białe" },
+  yellow:    { fNom: "Żółta",        fAcc: "żółtą",        mNom: "Żółty",        mAcc: "żółty",        pNom: "Żółte",        pAcc: "żółte" },
+  pink:      { fNom: "Różowa",       fAcc: "różową",       mNom: "Różowy",       mAcc: "różowy",       pNom: "Różowe",       pAcc: "różowe" },
+  brown:     { fNom: "Brązowa",      fAcc: "brązową",      mNom: "Brązowy",      mAcc: "brązowy",      pNom: "Brązowe",      pAcc: "brązowe" },
+  braun:     { fNom: "Brązowa",      fAcc: "brązową",      mNom: "Brązowy",      mAcc: "brązowy",      pNom: "Brązowe",      pAcc: "brązowe" },
+  seledin:   { fNom: "Seledynowa",   fAcc: "seledynową",   mNom: "Seledynowy",   mAcc: "seledynowy",   pNom: "Seledynowe",   pAcc: "seledynowe" },
+  grey:      { fNom: "Szara",        fAcc: "szarą",        mNom: "Szary",        mAcc: "szary",        pNom: "Szare",        pAcc: "szare" },
+  gray:      { fNom: "Szara",        fAcc: "szarą",        mNom: "Szary",        mAcc: "szary",        pNom: "Szare",        pAcc: "szare" },
+  gold:      { fNom: "Złota",        fAcc: "złotą",        mNom: "Złoty",        mAcc: "złoty",        pNom: "Złote",        pAcc: "złote" },
+  silver:    { fNom: "Srebrna",      fAcc: "srebrną",      mNom: "Srebrny",      mAcc: "srebrny",      pNom: "Srebrne",      pAcc: "srebrne" }
+};
+
+const OUTFIT_THEMES_PL = {
+  basketball:  "do koszykówki",
+  handball:    "do piłki ręcznej",
+  soccer:      "do piłki nożnej",
+  football:    "do piłki nożnej",
+  volleyball:  "do siatkówki",
+  batman:      "Batmana",
+  captain:     "Kapitana Ameryki",
+  cat:         "z kotkiem",
+  pigeon:      "z gołębiem",
+  pikachu:     "z Pikachu",
+  pokeball:    "z Pokeballem",
+  poop:        "z kupką",
+  pterodactyl: "z pterodaktylem",
+  superman:    "Supermana",
+  "t-rex":     "z Tyranozaurem",
+  trex:        "z Tyranozaurem",
+  barcelona:   "Barcelony",
+  "hot-dog":   "hot-doga",
+  hotdog:      "hot-doga",
+  paramedic:   "ratownika medycznego",
+  poland:      "Polski",
+  police:      "policjanta",
+  soldier:     "żołnierza",
+  astronaut:   "kosmonauty",
+  commando:    "komandosa",
+  cyberdragon: "cybersmoka",
+  diver:       "nurka",
+  electrician: "elektryka",
+  firefighter: "strażaka",
+  knight:      "rycerza",
+  skeleton:    "szkieletu",
+  pirate:      "pirata",
+  ninja:       "ninja",
+  viking:      "wikinga",
+  robot:       "robota",
+  dragon:      "ze smokiem",
+  dino:        "z dinozaurem",
+  shark:       "z rekinem",
+  tiger:       "z tygrysem",
+  lion:        "z lwem",
+  rocket:      "z rakietą",
+  pilot:       "pilota",
+  chef:        "kucharza",
+  cowboy:      "kowboja",
+  king:        "króla",
+  wizard:      "czarodzieja",
+  superhero:   "superbohatera",
+  spiderman:   "Spidermana"
+};
+
+function getStringEditDistance(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+    }
+  }
+  return dp[m][n];
+}
+
+function findBestOutfitDictMatch(key, dictObj) {
+  if (dictObj[key]) return dictObj[key];
+  if (key.length < 5) return null;
+  const maxDist = key.length >= 7 ? 2 : 1;
+  let bestVal = null;
+  let bestDist = maxDist + 1;
+  Object.keys(dictObj).forEach(candidate => {
+    if (Math.abs(candidate.length - key.length) > maxDist) return;
+    const d = getStringEditDistance(key, candidate);
+    if (d < bestDist) {
+      bestDist = d;
+      bestVal = dictObj[candidate];
+    }
+  });
+  return bestVal;
+}
+
+function capitalizeFirstPl(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+}
+
+function getOutfitPolishInfo(srcOrName) {
+  const rawBase = String(srcOrName || "").split("/").pop().replace(/\.png$/i, "");
+  const clean = rawBase.toLowerCase();
+  const match = clean.match(/^(cap|shirt|jacket|mask|armor|helmet|suit|jeans|shorts|short|pants)[_-](.+)$/);
+
+  if (!match) {
+    const fallback = rawBase.replace(/[_-]+/g, " ").trim() || "nowe przebranie";
+    return { display: capitalizeFirstPl(fallback), acc: fallback };
+  }
+
+  const typeInfo = OUTFIT_TYPES_PL[match[1]];
+  const themeKey = match[2].replace(/\d+$/, "").replace(/_/g, "-");
+
+  const colorObj = findBestOutfitDictMatch(themeKey, OUTFIT_COLORS_PL);
+  if (colorObj) {
+    const adjNom = typeInfo.gender === "f" ? colorObj.fNom : (typeInfo.gender === "m" ? colorObj.mNom : colorObj.pNom);
+    const adjAcc = typeInfo.gender === "f" ? colorObj.fAcc : (typeInfo.gender === "m" ? colorObj.mAcc : colorObj.pAcc);
+    return {
+      display: `${adjNom} ${typeInfo.nom}`,
+      acc: `${adjAcc} ${typeInfo.acc}`
+    };
+  }
+
+  const themePl = findBestOutfitDictMatch(themeKey, OUTFIT_THEMES_PL);
+  if (themePl) {
+    return {
+      display: `${capitalizeFirstPl(typeInfo.nom)} ${themePl}`,
+      acc: `${typeInfo.acc} ${themePl}`
+    };
+  }
+
+  const cleanTheme = themeKey.replace(/-/g, " ");
+  return {
+    display: `${capitalizeFirstPl(typeInfo.nom)} ${cleanTheme}`,
+    acc: `${typeInfo.acc} ${cleanTheme}`
+  };
+}
 
 function toggleFilenameFirstLetterCase(path) {
   const idx = path.lastIndexOf("/");
@@ -402,10 +559,15 @@ function getAll131OutfitsFlat() {
         OUTFITS_DB[tier][slot].forEach(file => {
           const fn = file.replace(/\.png$/i, "");
           const tierLabel = tier === "gold" ? "Złota" : tier === "silver" ? "Srebrna" : "Brązowa";
+          const src = `grafiki/${tier === 'bronze' ? '' : (tier === 'silver' ? 'srebrna/' : 'zlota/')}${file}`;
+          const plInfo = getOutfitPolishInfo(src);
           flat.push({
-            src: `grafiki/${tier === 'bronze' ? '' : (tier === 'silver' ? 'srebrna/' : 'zlota/')}${file}`,
+            src,
             fallbackSrc: tier === "gold" ? `grafiki/srebrna/zlota/${file}` : "",
-            name: fn, tier, tierLabel, slot
+            name: fn,
+            displayName: plInfo.display,
+            speechAcc: plInfo.acc,
+            tier, tierLabel, slot
           });
         });
       }
@@ -620,10 +782,11 @@ function openChestReal(profKey, tier) {
     const outfit = unownedOutfits[Math.floor(Math.random() * unownedOutfits.length)];
     p.unlockedItems.push(outfit.src);
     p.wardrobeUpdatedAt = Date.now();
-    rewardName = `Ubranie: ${outfit.name}`;
+    const plInfo = getOutfitPolishInfo(outfit.src);
+    rewardName = plInfo.display;
     const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.9";
     rewardHtml = `<img src="${outfit.src}?v=${ver}" decoding="async" class="w-28 h-28 object-contain mx-auto my-2 drop-shadow-xl pop-correct bg-white/70 rounded-full p-2" onerror="handleOutfitImgError(this, '${outfit.src}', '${outfit.fallbackSrc}')" />`;
-    speechSegments.push({ lang: "pl", text: `Ekstra ${kidName}! Wylosowano nowe przebranie do garderoby:` }, { lang: "en", text: outfit.name.replace(/[_-]/g, " ") });
+    speechSegments.push({ lang: "pl", text: `Gratulacje ${kidName}! Dostałeś ${plInfo.acc}!` });
   } else {
     p.stars = (p.stars || 0) + 25;
     rewardName = "Bonus: +25 Złotych Gwiazdek!";
@@ -827,9 +990,10 @@ function renderAvatarItems() {
     catItems.forEach(item => {
       const isUnlocked = p.unlockedItems.includes(item.src), isEquipped = p.avatar && p.avatar[cat.key] === item.src;
       const tierBadgeColor = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-800" : "bg-amber-700 text-white";
+      const labelPl = item.displayName || item.name;
       html += isUnlocked
-        ? `<div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm"><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><img src="${item.src}?v=${ver}" loading="lazy" decoding="async" class="w-14 h-14 object-contain mb-1 drop-shadow" onerror="handleOutfitImgError(this, '${item.src}', '${item.fallbackSrc}')" /><div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}</div>`
-        : `<div class="rounded-2xl border-2 border-slate-200 bg-slate-100 p-2 flex flex-col items-center justify-between text-center opacity-55"><span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><div class="text-2xl my-2">🔒</div><div class="text-[10px] font-bold text-slate-500 leading-tight break-all">${item.name}</div></div>`;
+        ? `<div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm"><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><img src="${item.src}?v=${ver}" loading="lazy" decoding="async" class="w-14 h-14 object-contain mb-1 drop-shadow" onerror="handleOutfitImgError(this, '${item.src}', '${item.fallbackSrc}')" /><div class="text-[10px] font-bold text-slate-700 leading-tight">${labelPl}</div>${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}</div>`
+        : `<div class="rounded-2xl border-2 border-slate-200 bg-slate-100 p-2 flex flex-col items-center justify-between text-center opacity-55"><span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><div class="text-2xl my-2">🔒</div><div class="text-[10px] font-bold text-slate-500 leading-tight">${labelPl}</div></div>`;
     });
     html += `</div></div>`;
   });

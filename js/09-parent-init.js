@@ -1068,7 +1068,7 @@ function renderParentWardrobeManager() {
                 unlocked ? "bg-emerald-50 border-emerald-500 text-slate-900 shadow-sm" : "bg-slate-100 border-slate-300 text-slate-500 opacity-75"
               }">
               <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadge} mb-1">${item.tierLabel}</span>
-              <img src="${item.src}" class="w-12 h-12 object-contain my-0.5" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${item.fallbackSrc}'){this.src='${item.fallbackSrc}';}else{this.style.display='none';}" />
+              <img src="${item.src}?v=${CURRENT_GAME_VERSION}" loading="lazy" decoding="async" class="w-12 h-12 object-contain my-0.5" onerror="handleOutfitImgError(this, '${item.src}', '${item.fallbackSrc}')" />
               <span class="text-[10px] font-bold leading-tight break-all">${item.name}</span>
               <span class="mt-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold ${unlocked ? "bg-emerald-600 text-white" : "bg-slate-300 text-slate-700"}">
                 ${unlocked ? "✓ Ma to" : "🔒 Brak"}

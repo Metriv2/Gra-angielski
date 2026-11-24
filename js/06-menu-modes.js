@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/06-menu-modes.js
-   EKRAN STARTOWY, MENU LEKCJI, KOŁO FORTUNY (TESTOWE U TATY -> ZATWIERDZANE), QUIZ
+   EKRAN STARTOWY, MENU LEKCJI, KOŁO FORTUNY, TRYB SŁUCHOWY (PL ⇄ EN) I QUIZ
    ============================================================================ */
 
 const COLOR_MIX_COLORS = [
@@ -88,7 +88,12 @@ function injectAudioOnlyQuestionsIntoRound(questions, ratio = 0.35) {
   const picked = new Set(shuffleArray(eligibleIndices).slice(0, targetCount));
   return questions.map((q, idx) => {
     const copy = Object.assign({}, q);
-    if (picked.has(idx)) copy._audioOnlyQuestion = true;
+    if (copy.audioOnly || picked.has(idx)) {
+      copy._audioOnlyQuestion = true;
+      if (!copy._audioDirection) {
+        copy._audioDirection = Math.random() < 0.5 ? "pl_to_en" : "en_to_pl";
+      }
+    }
     return copy;
   });
 }
@@ -158,7 +163,13 @@ function recordHardWordForActivePlayer(q) {
   const p = ensurePlayerStructure(state.stats[profKey]);
   if (!Array.isArray(p.hardWords)) p.hardWords = [];
   if (!p.hardWords.some(w => w.en === q.en)) {
-    p.hardWords.push({ en: q.en, pl: q.pl || "", phonetic: q.phonetic || "", icon: q.icon || q.animal || "⭐" });
+    p.hardWords.push({
+      en: q.en,
+      pl: q.pl || "",
+      phonetic: q.phonetic || "",
+      icon: q.icon || q.animal || "⭐",
+      audioOnly: Boolean(q.audioOnly)
+    });
     state.stats[profKey] = p;
     saveCloudData();
   }
@@ -484,9 +495,11 @@ function showStartScreen() {
 
   const igorPendingCount = ((state.stats.igor && state.stats.igor.pendingChests) || []).length;
   const hubertPendingCount = ((state.stats.hubert && state.stats.hubert.pendingChests) || []).length;
+  const tataPendingCount = ((state.stats.tata && state.stats.tata.pendingChests) || []).length;
 
   const igorGiftBadge = igorPendingCount > 0 ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold animate-bounce">🎁 Czeka skrzynia od Taty (${igorPendingCount})!</div>` : "";
   const hubertGiftBadge = hubertPendingCount > 0 ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold animate-bounce">🎁 Czeka skrzynia od Taty (${hubertPendingCount})!</div>` : "";
+  const tataGiftBadge = tataPendingCount > 0 ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold animate-bounce">🎁 Czeka skrzynia (${tataPendingCount})!</div>` : "";
 
   const igorBday = isPlayerBirthdayToday("igor") ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold animate-bounce">🎂 DZIŚ URODZINY! ZŁOTA SKRZYNIA!</div>` : `<div class="text-[10px] font-bold text-amber-700">🎂 ur. 29.06.2022</div>`;
   const hubertBday = isPlayerBirthdayToday("hubert") ? `<div class="mt-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold animate-bounce">🎂 DZIŚ URODZINY! ZŁOTA SKRZYNIA!</div>` : `<div class="text-[10px] font-bold text-sky-700">🎂 ur. 17.08.2020</div>`;
@@ -526,7 +539,7 @@ function showStartScreen() {
 
         <div onclick="openParentPinModal('tata_login')" class="kid-card cursor-pointer rounded-3xl border-4 border-emerald-400 bg-gradient-to-b from-emerald-50 to-teal-100 p-4 shadow-lg flex flex-col items-center justify-between">
           ${renderBoyAvatarSvg('tata', 90)}
-          <div class="mt-1"><h2 class="text-xl font-extrabold text-emerald-950">🔒 TATA (${tataAge} l.)</h2>${tataBday}</div>
+          <div class="mt-1"><h2 class="text-xl font-extrabold text-emerald-950">🔒 TATA (${tataAge} l.)</h2>${tataBday}${tataGiftBadge}</div>
           <div class="text-[11px] font-bold text-emerald-900 my-2 bg-white px-2.5 py-1.5 rounded-xl border border-emerald-300 w-full">⭐ ${state.stats.tata.stars} | 🏆 ${state.stats.tata.cups} | 🔥 ${state.stats.tata.streakDays} dni</div>
           <span class="w-full py-2.5 bg-emerald-600 text-white font-extrabold rounded-2xl shadow text-sm">Konto Testowe 🔒</span>
         </div>
@@ -822,7 +835,11 @@ function startLesson(lessonId, subMode = null) {
   if (!subMode) {
     if (lesson.type === "prepositions") subMode = "prep_explain";
     else if (lesson.type === "mic_only") subMode = "mic_game";
+    else if (lesson.audioQuizOnly) subMode = "audio_only_quiz";
     else subMode = "listen_pick";
+  }
+  if (lesson.audioQuizOnly && subMode === "listen_pick") {
+    subMode = "audio_only_quiz";
   }
   if (state.profile === "duel" && subMode === "mic_game") subMode = "listen_pick";
 
@@ -859,7 +876,12 @@ function startLesson(lessonId, subMode = null) {
   for (let i = 0; i < totalQ; i++) rawQuestions.push(Object.assign({}, shuffled[i % shuffled.length]));
 
   if (subMode === "audio_only_quiz") {
-    state.roundQuestions = rawQuestions.map(q => ({ ...q, _audioOnlyQuestion: true }));
+    const directions = shuffleArray(rawQuestions.map((_, i) => (i % 2 === 0 ? "pl_to_en" : "en_to_pl")));
+    state.roundQuestions = rawQuestions.map((q, i) => ({
+      ...q,
+      _audioOnlyQuestion: true,
+      _audioDirection: directions[i]
+    }));
   } else if (subMode === "prep_explain" || subMode === "letters_game" || subMode === "mic_game") {
     state.roundQuestions = rawQuestions;
   } else {

@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/03-state-cloud.js
-   STAN GRY, KOŁO FORTUNY (TESTOWE U TATY -> ZATWIERDZANE) I CHMURA GAS
+   STAN GRY, KOŁO FORTUNY, SYNCHRONIZACJA GARDEROBY (ANTY-CACHE) I CHMURA GAS
    ============================================================================ */
 
 const PROFILE_META = {
@@ -197,7 +197,7 @@ let cloudSyncReady = false;
 function createDefaultPlayerStats() {
   return {
     stars: 0, cups: 0, perfectRounds: 0, examsDone: 0, duelsWon: 0, streakDays: 0, lastPlayDate: "", micCount: 0,
-    lastBirthdayRewardYear: 0, lastWheelSpinDate: "", nakedStartMigrated: true, seenVersion: "",
+    lastBirthdayRewardYear: 0, lastWheelSpinDate: "", nakedStartMigrated: true, seenVersion: "", wardrobeUpdatedAt: 0,
     badges: [], avatar: { head: "", torso: "", legs: "", pet: "" },
     unlockedItems: [], memoryAnimals: [], hardWords: [],
     pendingChests: [],
@@ -255,6 +255,7 @@ function ensurePlayerStructure(p) {
     lastWheelSpinDate: p.lastWheelSpinDate || "",
     nakedStartMigrated: true,
     seenVersion: p.seenVersion || "",
+    wardrobeUpdatedAt: Number(p.wardrobeUpdatedAt) || 0,
     badges: Array.isArray(p.badges) ? p.badges : [],
     unlockedItems: Array.from(new Set(rawUnlocked)),
     memoryAnimals: Array.from(new Set(rawAnimals)),
@@ -303,6 +304,23 @@ function mergePlayerProgressSafe(localRaw, cloudRaw) {
     if (mergedPetFood[k] === undefined) mergedPetFood[k] = loc.petFood[k];
   });
 
+  const locWTime = Number(loc.wardrobeUpdatedAt) || 0;
+  const cldWTime = Number(cld.wardrobeUpdatedAt) || 0;
+  let finalUnlockedItems;
+  let finalMemoryAnimals;
+  let finalWardrobeUpdatedAt = Math.max(locWTime, cldWTime);
+
+  if (cldWTime > locWTime) {
+    finalUnlockedItems = [...(cld.unlockedItems || [])];
+    finalMemoryAnimals = [...(cld.memoryAnimals || [])];
+  } else if (locWTime > cldWTime) {
+    finalUnlockedItems = [...(loc.unlockedItems || [])];
+    finalMemoryAnimals = [...(loc.memoryAnimals || [])];
+  } else {
+    finalUnlockedItems = Array.from(new Set([...(loc.unlockedItems || []), ...(cld.unlockedItems || [])]));
+    finalMemoryAnimals = Array.from(new Set([...(loc.memoryAnimals || []), ...(cld.memoryAnimals || [])]));
+  }
+
   return {
     ...loc,
     ...cld,
@@ -317,9 +335,10 @@ function mergePlayerProgressSafe(localRaw, cloudRaw) {
     lastWheelSpinDate: (cld.lastWheelSpinDate || "") >= (loc.lastWheelSpinDate || "") ? cld.lastWheelSpinDate : loc.lastWheelSpinDate,
     lastBirthdayRewardYear: Math.max(loc.lastBirthdayRewardYear || 0, cld.lastBirthdayRewardYear || 0),
     seenVersion: cld.seenVersion || loc.seenVersion || "",
+    wardrobeUpdatedAt: finalWardrobeUpdatedAt,
     badges: Array.from(new Set([...(loc.badges || []), ...(cld.badges || [])])),
-    unlockedItems: Array.from(new Set([...(loc.unlockedItems || []), ...(cld.unlockedItems || [])])),
-    memoryAnimals: Array.from(new Set([...(loc.memoryAnimals || []), ...(cld.memoryAnimals || [])])),
+    unlockedItems: finalUnlockedItems,
+    memoryAnimals: finalMemoryAnimals,
     hardWords: (cld.hardWords && cld.hardWords.length > 0) ? cld.hardWords : (loc.hardWords || []),
     pendingChests: [...(cld.pendingChests || []), ...(loc.pendingChests || [])].filter((v, i, arr) => arr.findIndex(x => JSON.stringify(x) === JSON.stringify(v)) === i),
     dragonChestDaily: mergeDailyCounterSafe(loc.dragonChestDaily, cld.dragonChestDaily),
@@ -492,7 +511,8 @@ function loadCloudData() {
     }
   } catch (e) {}
 
-  fetch(GAS_API_URL)
+  const sep = GAS_API_URL.includes("?") ? "&" : "?";
+  fetch(`${GAS_API_URL}${sep}t=${Date.now()}`, { cache: "no-store" })
     .then(res => res.json())
     .then(data => {
       if (data.stats) {

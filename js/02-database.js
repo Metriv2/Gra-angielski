@@ -3,17 +3,6 @@
    BAZA LEKCJI (1–20 + MEMORY + STUDIO WYMOWY), ZAGADEK SÓWKI I SŁÓWEK RODZICA
    ============================================================================ */
 
-function getDayCalendarSvg(dayNum, shortPl, headerBg, borderCol) {
-  return `<svg width="64" height="64" viewBox="0 0 64 64" class="inline-block drop-shadow-sm" aria-label="${shortPl}">
-    <rect x="8" y="10" width="48" height="46" rx="8" fill="#ffffff" stroke="${borderCol}" stroke-width="3"/>
-    <path d="M8 18 C8 13.5 11.5 10 16 10 L48 10 C52.5 10 56 13.5 56 18 L56 24 L8 24 Z" fill="${headerBg}"/>
-    <rect x="19" y="5" width="5" height="9" rx="2.5" fill="#475569"/>
-    <rect x="40" y="5" width="5" height="9" rx="2.5" fill="#475569"/>
-    <text x="32" y="19.5" font-family="sans-serif" font-size="8.5" font-weight="900" fill="#ffffff" text-anchor="middle">${shortPl}</text>
-    <text x="32" y="46" font-family="sans-serif" font-size="23" font-weight="900" fill="#0f172a" text-anchor="middle">${dayNum}</text>
-  </svg>`;
-}
-
 const FULL_LESSONS_DATABASE = [
   {
     id: "prepositions",
@@ -209,23 +198,24 @@ const FULL_LESSONS_DATABASE = [
   {
     id: "days_of_week",
     title: "9. Dni tygodnia",
-    subtitle: "Poznaj wszystkie dni od poniedziałku do niedzieli!",
-    icon: "📅🗓️",
+    subtitle: "Ze słuchu (PL ⇄ EN): posłuchaj lektora i wskaż głośnik!",
+    icon: "📅🔊",
     color: "from-teal-400 to-emerald-600",
     borderColor: "border-teal-400",
     type: "vocab",
+    audioQuizOnly: true,
     testOnly: true,
     items: [
-      { en: "Monday",    pl: "Poniedziałek", phonetic: "mandej",   icon: getDayCalendarSvg("1", "PON", "#ef4444", "#b91c1c"), age: [4, 6] },
-      { en: "Tuesday",   pl: "Wtorek",       phonetic: "tjuzdej",  icon: getDayCalendarSvg("2", "WTO", "#f97316", "#c2410c"), age: [4, 6] },
-      { en: "Wednesday", pl: "Środa",        phonetic: "łenzdej",  icon: getDayCalendarSvg("3", "ŚRO", "#eab308", "#a16207"), age: [4, 6] },
-      { en: "Thursday",  pl: "Czwartek",     phonetic: "ferzdej",  icon: getDayCalendarSvg("4", "CZW", "#22c55e", "#15803d"), age: [4, 6] },
-      { en: "Friday",    pl: "Piątek",       phonetic: "frajdej",  icon: getDayCalendarSvg("5", "PIĄ", "#06b6d4", "#0e7490"), age: [4, 6] },
-      { en: "Saturday",  pl: "Sobota",       phonetic: "saterdej", icon: getDayCalendarSvg("6", "SOB", "#3b82f6", "#1d4ed8"), age: [4, 6] },
-      { en: "Sunday",    pl: "Niedziela",    phonetic: "sandej",   icon: getDayCalendarSvg("7", "NIE", "#a855f7", "#7e22ce"), age: [4, 6] },
-      { en: "Weekend",   pl: "Weekend",      phonetic: "łikend",   icon: "🎉🏖️", age: [6] },
-      { en: "Today",     pl: "Dzisiaj",      phonetic: "tudej",    icon: "👇📅", age: [6] },
-      { en: "Tomorrow",  pl: "Jutro",        phonetic: "tumoroł",  icon: "➡️🌅", age: [6] }
+      { en: "Monday",    pl: "Poniedziałek", phonetic: "mandej",   icon: "🔊", audioOnly: true, age: [4, 6] },
+      { en: "Tuesday",   pl: "Wtorek",       phonetic: "tjuzdej",  icon: "🔊", audioOnly: true, age: [4, 6] },
+      { en: "Wednesday", pl: "Środa",        phonetic: "łenzdej",  icon: "🔊", audioOnly: true, age: [4, 6] },
+      { en: "Thursday",  pl: "Czwartek",     phonetic: "ferzdej",  icon: "🔊", audioOnly: true, age: [4, 6] },
+      { en: "Friday",    pl: "Piątek",       phonetic: "frajdej",  icon: "🔊", audioOnly: true, age: [4, 6] },
+      { en: "Saturday",  pl: "Sobota",       phonetic: "saterdej", icon: "🔊", audioOnly: true, age: [4, 6] },
+      { en: "Sunday",    pl: "Niedziela",    phonetic: "sandej",   icon: "🔊", audioOnly: true, age: [4, 6] },
+      { en: "Weekend",   pl: "Weekend",      phonetic: "łikend",   icon: "🔊", audioOnly: true, age: [6] },
+      { en: "Today",     pl: "Dzisiaj",      phonetic: "tudej",    icon: "🔊", audioOnly: true, age: [6] },
+      { en: "Tomorrow",  pl: "Jutro",        phonetic: "tumoroł",  icon: "🔊", audioOnly: true, age: [6] }
     ]
   },
   {
@@ -510,16 +500,16 @@ const FULL_LESSONS_DATABASE = [
     borderColor: "border-rose-400",
     type: "mic_only",
     items: [
-      { en: "Hello",      pl: "Cześć",         phonetic: "heloł",     icon: "👋",   age: [4, 6] },
-      { en: "Thank you",  pl: "Dziękuję",      phonetic: "fenk ju",   icon: "😊",   age: [4, 6] },
-      { en: "Apple",      pl: "Jabłko",        phonetic: "apl",       icon: "🍎",   age: [4, 6] },
-      { en: "Lion",       pl: "Lew",           phonetic: "lajon",     icon: "🦁",   age: [4, 6] },
-      { en: "Red",        pl: "Czerwony",      phonetic: "red",       icon: "🔴",   age: [4, 6] },
-      { en: "Blue",       pl: "Niebieski",     phonetic: "blu",       icon: "🔵",   age: [4, 6] },
-      { en: "Twenty",     pl: "Dwadzieścia",   phonetic: "tłenti",    icon: "2️⃣0️⃣", age: [4, 6] },
-      { en: "One hundred",pl: "Sto",           phonetic: "łan handred",icon: "💯",  age: [6] },
-      { en: "Elephant",   pl: "Słoń",          phonetic: "elefant",   icon: "🐘",   age: [6] },
-      { en: "Strawberry", pl: "Truskawka",     phonetic: "stroberi",  icon: "🍓",   age: [6] }
+      { en: "Hello",      pl: "Cześć",         phonetic: "heloł",      icon: "👋",   age: [4, 6] },
+      { en: "Thank you",  pl: "Dziękuję",      phonetic: "fenk ju",    icon: "😊",   age: [4, 6] },
+      { en: "Apple",      pl: "Jabłko",        phonetic: "apl",        icon: "🍎",   age: [4, 6] },
+      { en: "Lion",       pl: "Lew",           phonetic: "lajon",      icon: "🦁",   age: [4, 6] },
+      { en: "Red",        pl: "Czerwony",      phonetic: "red",        icon: "🔴",   age: [4, 6] },
+      { en: "Blue",       pl: "Niebieski",     phonetic: "blu",        icon: "🔵",   age: [4, 6] },
+      { en: "Twenty",     pl: "Dwadzieścia",   phonetic: "tłenti",     icon: "2️⃣0️⃣", age: [4, 6] },
+      { en: "One hundred",pl: "Sto",           phonetic: "łan handred",icon: "💯",   age: [6] },
+      { en: "Elephant",   pl: "Słoń",          phonetic: "elefant",    icon: "🐘",   age: [6] },
+      { en: "Strawberry", pl: "Truskawka",     phonetic: "stroberi",   icon: "🍓",   age: [6] }
     ]
   }
 ];
@@ -545,6 +535,6 @@ const AUTO_SIMPLE_WORDS_POOL = [
   { lessonId: "colors",         en: "Gold",       pl: "Złoty",        phonetic: "gold",      icon: "🌟", age: [4, 6] },
   { lessonId: "colors",         en: "Silver",     pl: "Srebrny",      phonetic: "silwer",    icon: "🥈", age: [4, 6] },
   { lessonId: "body_hurts",     en: "Tooth",      pl: "Ząb",          phonetic: "tuf",       icon: "🦷", age: [4, 6] },
-  { lessonId: "days_of_week",   en: "Yesterday",  pl: "Wczoraj",      phonetic: "jesterdej", icon: "⬅️📅", age: [6] },
+  { lessonId: "days_of_week",   en: "Yesterday",  pl: "Wczoraj",      phonetic: "jesterdej", icon: "🔊", audioOnly: true, age: [6] },
   { lessonId: "bakery_shop",    en: "Ice cream",  pl: "Lody",         phonetic: "ajs krim",  icon: "🍦", age: [4, 6] }
 ];

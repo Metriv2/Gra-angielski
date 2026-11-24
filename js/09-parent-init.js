@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/09-parent-init.js
-   PIN RODZICA, GENERATOR LEKCJI GEMINI AI, CENTRUM TESTOWE (KOŁO FORTUNY + LEKCJE)
+   PIN RODZICA (BEZ KLAWIATURY TELEFONU), GENERATOR AI, CENTRUM TESTOWE I SKRZYNIE
    ============================================================================ */
 
 let _pendingPinAction = "dashboard";
@@ -275,9 +275,16 @@ function openParentPinModal(action = "dashboard") {
       : (_pendingPinAction === "mic_approve" ? "🔒 Zatwierdzenie Wymowy" : "🔒 Panel Rodzica");
   }
   if (descEl) {
-    descEl.textContent = "Wpisz 4-cyfrowy kod PIN rodziców:";
+    descEl.textContent = "Wpisz 4-cyfrowy kod PIN (klawiaturą poniżej):";
   }
+
+  input.readOnly = true;
+  input.setAttribute("readonly", "readonly");
+  input.setAttribute("inputmode", "none");
   input.value = "";
+  if (document.activeElement && typeof document.activeElement.blur === "function") {
+    document.activeElement.blur();
+  }
   if (err) err.textContent = "";
 
   if (kb) {
@@ -292,7 +299,6 @@ function openParentPinModal(action = "dashboard") {
 
   modal.classList.remove("hidden");
   modal.classList.add("flex");
-  setTimeout(() => input.focus(), 80);
 }
 
 function closeParentPinModal() {
@@ -374,6 +380,9 @@ function closeParentDashboard() {
   if (modal) {
     modal.classList.add("hidden");
     modal.classList.remove("flex");
+  }
+  if (state.profile && PROFILE_META[state.profile] && typeof checkPendingDadChestsForPlayer === "function") {
+    checkPendingDadChestsForPlayer(state.profile);
   }
   if (state.profile && typeof showLessonMenu === "function") {
     showLessonMenu();
@@ -1013,7 +1022,11 @@ function parentGiveTestChest(profKey, tier) {
   state.stats[profKey] = p;
   saveCloudData();
   const names = { bronze: "Brązową", silver: "Srebrną", gold: "Złotą" };
-  showParentStatus(`🎁 Wysłano ${names[tier] || ""} Skrzynię do ${PROFILE_META[profKey].name}! Otworzy ją po wejściu na swój profil.`);
+  const isCurrentUser = state.profile === profKey;
+  const openNowBtn = isCurrentUser
+    ? ` <button onclick="closeParentDashboard()" class="ml-2 px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow">🎁 Otwórz teraz!</button>`
+    : "";
+  showParentStatus(`🎁 Wysłano ${names[tier] || ""} Skrzynię do ${PROFILE_META[profKey].name}! ${isCurrentUser ? "Zamknij panel lub kliknij obok, aby otworzyć:" : "Otworzy ją po wejściu na swój profil."}${openNowBtn}`);
 }
 
 function parentScanWorksheetAI(inputEl) {
@@ -1152,12 +1165,22 @@ function resetEverythingAll() {
 
 window.addEventListener("DOMContentLoaded", () => {
   syncVersionLabelsInDom();
-  const pinInput = document.getElementById("pinInputField");
-  if (pinInput) {
-    pinInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") verifyParentPinAndProceed();
-    });
-  }
+
+  document.addEventListener("keydown", (e) => {
+    const pinModal = document.getElementById("parentPinModal");
+    if (!pinModal || pinModal.classList.contains("hidden")) return;
+    if (/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      handlePinKeypadPress(e.key);
+    } else if (e.key === "Backspace" || e.key === "Delete") {
+      e.preventDefault();
+      handlePinKeypadPress("C");
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      handlePinKeypadPress("OK");
+    }
+  });
+
   if (typeof loadCloudData === "function") {
     loadCloudData();
   }

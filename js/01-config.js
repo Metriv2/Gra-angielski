@@ -3,7 +3,7 @@
    CENTRALNA KONFIGURACJA WERSJI ORAZ WŁASNE GRAFIKI SVG DLA PANKEJKÓW
    ============================================================================ */
 
-const CURRENT_GAME_VERSION = "14.8";
+const CURRENT_GAME_VERSION = "14.9";
 
 const APP_CONFIG = {
   version: CURRENT_GAME_VERSION,
@@ -12,24 +12,24 @@ const APP_CONFIG = {
   gasApiUrl: "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec",
   whatsNewItems: [
     {
+      icon: "👕🛠️",
+      title: "Zarządzanie Garderobą osobno dla Taty, Igora i Huberta w Panelu Rodzica!",
+      desc: "W Panelu Rodzica pojawiła się osobna sekcja Garderoby: można odblokować wszystkie lub pojedyncze ubrania i zwierzaki osobno dla każdego profilu."
+    },
+    {
       icon: "🎁👑",
       title: "Naprawione otwieranie skrzynek, Garderoba, Spiżarnia i Klaser!",
-      desc: "Wszystkie skrzynie (Brązowa, Srebrna, Złota – ze sklepiku, od Taty, z urodzin i ze Smoka) otwierają się teraz bezbłędnie!"
+      desc: "Wszystkie skrzynie (Brązowa, Srebrna, Złota – ze sklepiku, od Taty, z urodzin i ze Smoka) otwierają się teraz bezbłędnie."
     },
     {
       icon: "🃏🦉",
-      title: "Ulepszone Fiszki z polskim lektorem i szybkim powrotem do lekcji!",
-      desc: "Sówka czyta teraz w fiszkach angielskie słówko oraz polskie tłumaczenie, a na górze widać wszystkie sekcje danej lekcji."
+      title: "Fiszki z polskim lektorem Sówki i szybkim powrotem do lekcji!",
+      desc: "Sówka czyta w fiszkach angielskie słówko oraz polskie tłumaczenie, a na górze widać wszystkie sekcje danej lekcji."
     },
     {
       icon: "🎧🔊",
       title: "Lekcja Dni tygodnia w pełni ze słuchu (PL ⇄ EN)!",
       desc: "Lektor zadaje pytania po polsku lub po angielsku, a odpowiedzi wybiera się z samych głośniczków."
-    },
-    {
-      icon: "🔢💯",
-      title: "Liczby 1–20 dla Igora oraz aż do 100 dla Huberta!",
-      desc: "Igor ćwiczy wszystkie liczby od 1 do 20, a Hubert dodatkowo uczy się dziesiątek aż do 100."
     }
   ]
 };

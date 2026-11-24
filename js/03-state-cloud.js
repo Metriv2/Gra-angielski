@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/03-state-cloud.js
-   STAN GRY, KOŁO FORTUNY, SYNCHRONIZACJA GARDEROBY (ANTY-CACHE) I CHMURA GAS
+   STAN GRY, KOŁO FORTUNY, SYNCHRONIZACJA GARDEROBY I SKRZYNEK (ANTY-CACHE)
    ============================================================================ */
 
 const PROFILE_META = {
@@ -56,6 +56,7 @@ function checkPendingDadChestsForPlayer(profKey) {
 
   const chestsToQueue = [...p.pendingChests];
   p.pendingChests = [];
+  p.pendingChestsUpdatedAt = Date.now();
   state.stats[profKey] = p;
   saveCloudData();
 
@@ -197,7 +198,8 @@ let cloudSyncReady = false;
 function createDefaultPlayerStats() {
   return {
     stars: 0, cups: 0, perfectRounds: 0, examsDone: 0, duelsWon: 0, streakDays: 0, lastPlayDate: "", micCount: 0,
-    lastBirthdayRewardYear: 0, lastWheelSpinDate: "", nakedStartMigrated: true, seenVersion: "", wardrobeUpdatedAt: 0,
+    lastBirthdayRewardYear: 0, lastWheelSpinDate: "", nakedStartMigrated: true, seenVersion: "",
+    wardrobeUpdatedAt: 0, pendingChestsUpdatedAt: 0,
     badges: [], avatar: { head: "", torso: "", legs: "", pet: "" },
     unlockedItems: [], memoryAnimals: [], hardWords: [],
     pendingChests: [],
@@ -256,6 +258,7 @@ function ensurePlayerStructure(p) {
     nakedStartMigrated: true,
     seenVersion: p.seenVersion || "",
     wardrobeUpdatedAt: Number(p.wardrobeUpdatedAt) || 0,
+    pendingChestsUpdatedAt: Number(p.pendingChestsUpdatedAt) || 0,
     badges: Array.isArray(p.badges) ? p.badges : [],
     unlockedItems: Array.from(new Set(rawUnlocked)),
     memoryAnimals: Array.from(new Set(rawAnimals)),
@@ -321,6 +324,14 @@ function mergePlayerProgressSafe(localRaw, cloudRaw) {
     finalMemoryAnimals = Array.from(new Set([...(loc.memoryAnimals || []), ...(cld.memoryAnimals || [])]));
   }
 
+  // Synchronizacja kolejki skrzyń: wygrywa nowsza zmiana, a przy remisie chmura (nie wskrzesza odebranych skrzynek z localStorage)
+  const locCTime = Number(loc.pendingChestsUpdatedAt) || 0;
+  const cldCTime = Number(cld.pendingChestsUpdatedAt) || 0;
+  const finalPendingChests = locCTime > cldCTime
+    ? [...(loc.pendingChests || [])]
+    : [...(cld.pendingChests || [])];
+  const finalPendingChestsUpdatedAt = Math.max(locCTime, cldCTime);
+
   return {
     ...loc,
     ...cld,
@@ -336,11 +347,12 @@ function mergePlayerProgressSafe(localRaw, cloudRaw) {
     lastBirthdayRewardYear: Math.max(loc.lastBirthdayRewardYear || 0, cld.lastBirthdayRewardYear || 0),
     seenVersion: cld.seenVersion || loc.seenVersion || "",
     wardrobeUpdatedAt: finalWardrobeUpdatedAt,
+    pendingChestsUpdatedAt: finalPendingChestsUpdatedAt,
     badges: Array.from(new Set([...(loc.badges || []), ...(cld.badges || [])])),
     unlockedItems: finalUnlockedItems,
     memoryAnimals: finalMemoryAnimals,
     hardWords: (cld.hardWords && cld.hardWords.length > 0) ? cld.hardWords : (loc.hardWords || []),
-    pendingChests: [...(cld.pendingChests || []), ...(loc.pendingChests || [])].filter((v, i, arr) => arr.findIndex(x => JSON.stringify(x) === JSON.stringify(v)) === i),
+    pendingChests: finalPendingChests,
     dragonChestDaily: mergeDailyCounterSafe(loc.dragonChestDaily, cld.dragonChestDaily),
     duelChestDaily: mergeDailyCounterSafe(loc.duelChestDaily, cld.duelChestDaily),
     petFood: mergedPetFood,

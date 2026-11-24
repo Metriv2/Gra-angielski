@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/09-parent-init.js
-   PIN RODZICA (BEZ KLAWIATURY TELEFONU), GENERATOR AI, CENTRUM TESTOWE I GARDEROBA
+   PIN RODZICA (BEZ KLAWIATURY TELEFONU), GENERATOR AI, SKRZYNIE I GARDEROBA (%)
    ============================================================================ */
 
 let _pendingPinAction = "dashboard";
@@ -417,6 +417,7 @@ function openParentSection(sectionKey) {
 function refreshAllParentWidgets() {
   populateParentLessonSelect();
   renderParentTestCenter();
+  updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
   renderParentLessonsManager();
   renderParentHardWordsBox();
@@ -897,8 +898,79 @@ function renderParentTestCenter() {
 }
 
 // ------------------------------------------------------------------------
-// GARDEROBA I PRZEBRANIA (OSOBNO DLA TATY, IGORA I HUBERTA)
+// GARDEROBA I PRZEBRANIA (PROCENTOWY POSTĘP + ZARZĄDZANIE OSOBNO NA PROFIL)
 // ------------------------------------------------------------------------
+function getPlayerWardrobeProgressStats(profKey) {
+  const allOutfits = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat() : [];
+  const allPets = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  const ownedSet = new Set(p.unlockedItems || []);
+
+  const calcTier = (tier) => {
+    const list = allOutfits.filter(o => o.tier === tier);
+    const owned = list.filter(o => ownedSet.has(o.src)).length;
+    const total = list.length;
+    const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
+    return { owned, total, pct };
+  };
+
+  const ownedTotal = allOutfits.filter(o => ownedSet.has(o.src)).length;
+  const totalOutfits = allOutfits.length;
+  const pctTotal = totalOutfits > 0 ? Math.round((ownedTotal / totalOutfits) * 100) : 0;
+
+  const petsOwned = allPets.filter(pet => (p.memoryAnimals || []).includes(pet.id)).length;
+  const petsTotal = allPets.length;
+  const petsPct = petsTotal > 0 ? Math.round((petsOwned / petsTotal) * 100) : 0;
+
+  return {
+    owned: ownedTotal,
+    total: totalOutfits,
+    pct: pctTotal,
+    bronze: calcTier("bronze"),
+    silver: calcTier("silver"),
+    gold: calcTier("gold"),
+    petsOwned,
+    petsTotal,
+    petsPct
+  };
+}
+
+function updateParentMenuWardrobeSummaryBadge() {
+  const tile = document.querySelector('#parentMenuGrid [onclick*="wardrobe_manager"]');
+  if (!tile) return;
+
+  const ig = getPlayerWardrobeProgressStats("igor");
+  const hu = getPlayerWardrobeProgressStats("hubert");
+  const maxPct = Math.max(ig.pct, hu.pct);
+
+  const badgeTone = (pct) => pct >= 85
+    ? "bg-rose-600 text-white"
+    : (pct >= 70 ? "bg-amber-500 text-amber-950" : "bg-white text-indigo-900 border border-indigo-300");
+
+  let box = document.getElementById("parentMenuWardrobeProgressBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "parentMenuWardrobeProgressBox";
+    box.className = "mt-2 space-y-1";
+    const topBlock = tile.firstElementChild;
+    if (topBlock) topBlock.appendChild(box);
+  }
+
+  const alertHtml = maxPct >= 85
+    ? `<div class="text-[10px] font-extrabold text-rose-700 bg-rose-100 border border-rose-300 rounded-lg px-2 py-0.5">🔥 Pula prawie pełna – czas dorobić nowe ubrania!</div>`
+    : (maxPct >= 70
+      ? `<div class="text-[10px] font-extrabold text-amber-900 bg-amber-100 border border-amber-300 rounded-lg px-2 py-0.5">⚠️ Ponad 70% ubrań zebrane – warto szykować nowe!</div>`
+      : "");
+
+  box.innerHTML = `
+    <div class="flex flex-wrap gap-1.5">
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${badgeTone(ig.pct)}">👦 Igor: ${ig.pct}% (${ig.owned}/${ig.total})</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${badgeTone(hu.pct)}">🧑 Hubert: ${hu.pct}% (${hu.owned}/${hu.total})</span>
+    </div>
+    ${alertHtml}
+  `;
+}
+
 function parentUnlockAllOutfitsForProfile(profKey) {
   if (!state.stats[profKey]) return;
   const p = ensurePlayerStructure(state.stats[profKey]);
@@ -908,6 +980,7 @@ function parentUnlockAllOutfitsForProfile(profKey) {
   state.stats[profKey] = p;
   saveCloudData();
   if (typeof updateHeaderUI === "function") updateHeaderUI();
+  updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
   showParentStatus(`🔓 Odblokowano wszystkie ${all131.length} przebrań wyłącznie dla: <strong>${PROFILE_META[profKey].name}</strong>!`);
 }
@@ -925,6 +998,7 @@ function parentLockAllOutfitsForProfile(profKey) {
   state.stats[profKey] = p;
   saveCloudData();
   if (typeof updateHeaderUI === "function") updateHeaderUI();
+  updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
   showParentStatus(`🔒 Zablokowano wszystkie przebrania dla: <strong>${PROFILE_META[profKey].name}</strong>.`);
 }
@@ -938,6 +1012,7 @@ function parentUnlockAllPetsForProfile(profKey) {
   state.stats[profKey] = p;
   saveCloudData();
   if (typeof updateHeaderUI === "function") updateHeaderUI();
+  updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
   showParentStatus(`🐾 Odblokowano wszystkie ${allPets.length} zwierzaków wyłącznie dla: <strong>${PROFILE_META[profKey].name}</strong>!`);
 }
@@ -951,6 +1026,7 @@ function parentLockAllPetsForProfile(profKey) {
   state.stats[profKey] = p;
   saveCloudData();
   if (typeof updateHeaderUI === "function") updateHeaderUI();
+  updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
   showParentStatus(`🔒 Zablokowano wszystkie zwierzaki dla: <strong>${PROFILE_META[profKey].name}</strong>.`);
 }
@@ -975,6 +1051,7 @@ function parentToggleSingleOutfitForProfile(profKey, src) {
   state.stats[profKey] = p;
   saveCloudData();
   if (typeof updateHeaderUI === "function") updateHeaderUI();
+  updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
 }
 
@@ -992,6 +1069,7 @@ function parentToggleSinglePetForProfile(profKey, petId) {
   state.stats[profKey] = p;
   saveCloudData();
   if (typeof updateHeaderUI === "function") updateHeaderUI();
+  updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
 }
 
@@ -1005,13 +1083,42 @@ function renderParentWardrobeManager() {
 
   const all131 = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat() : [];
   const allPets = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
-  const ownedOutfitsCount = all131.filter(o => p.unlockedItems.includes(o.src)).length;
-  const ownedPetsCount = allPets.filter(pet => (p.memoryAnimals || []).includes(pet.id)).length;
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.9";
+
+  const activeStats = getPlayerWardrobeProgressStats(profKey);
+  const igStats = getPlayerWardrobeProgressStats("igor");
+  const huStats = getPlayerWardrobeProgressStats("hubert");
+
+  const renderBoyProgressCard = (label, st, accentBorder) => {
+    const barColor = st.pct >= 85 ? "bg-rose-500" : (st.pct >= 70 ? "bg-amber-500" : "bg-emerald-500");
+    const statusPill = st.pct >= 85
+      ? `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-extrabold text-[10px]">🔥 Czas dorobić nowe!</span>`
+      : (st.pct >= 70
+        ? `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-extrabold text-[10px]">⚠️ Zbliża się koniec puli</span>`
+        : `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">✅ Zapas jest ok</span>`);
+    return `
+      <div class="p-3 rounded-2xl bg-white border-2 ${accentBorder} shadow-sm space-y-1.5">
+        <div class="flex flex-wrap items-center justify-between gap-1">
+          <span class="font-extrabold text-xs md:text-sm text-slate-900">${label}: <strong>${st.pct}%</strong> (${st.owned}/${st.total} ubrań)</span>
+          ${statusPill}
+        </div>
+        <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+          <div class="${barColor} h-full rounded-full transition-all" style="width:${st.pct}%"></div>
+        </div>
+        <div class="flex flex-wrap gap-1.5 text-[10px] font-bold text-slate-600 pt-0.5">
+          <span class="px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200">📦 Brązowa: ${st.bronze.pct}% (${st.bronze.owned}/${st.bronze.total})</span>
+          <span class="px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-300">🥈 Srebrna: ${st.silver.pct}% (${st.silver.owned}/${st.silver.total})</span>
+          <span class="px-2 py-0.5 rounded-lg bg-yellow-50 border border-yellow-300">👑 Złota: ${st.gold.pct}% (${st.gold.owned}/${st.gold.total})</span>
+          <span class="px-2 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200">🐾 Zwierzaki: ${st.petsPct}% (${st.petsOwned}/${st.petsTotal})</span>
+        </div>
+      </div>
+    `;
+  };
 
   const profiles = [
     { key: "tata",   label: "👨‍💻 TATA (Konto testowe)", activeCls: "bg-emerald-600 text-white border-emerald-800" },
-    { key: "igor",   label: "👦 IGOR (4 l.)",           activeCls: "bg-amber-500 text-white border-amber-700" },
-    { key: "hubert", label: "🧑 HUBERT (6 l.)",         activeCls: "bg-sky-600 text-white border-sky-800" }
+    { key: "igor",   label: `👦 IGOR (${igStats.pct}%)`,   activeCls: "bg-amber-500 text-white border-amber-700" },
+    { key: "hubert", label: `🧑 HUBERT (${huStats.pct}%)`, activeCls: "bg-sky-600 text-white border-sky-800" }
   ];
 
   const catTabs = [
@@ -1019,14 +1126,14 @@ function renderParentWardrobeManager() {
     { id: "head",  label: "🧢 Głowa" },
     { id: "torso", label: "👕 Tułów" },
     { id: "legs",  label: "👖 Nogi" },
-    { id: "pets",  label: `🐾 Zwierzaki (${ownedPetsCount}/${allPets.length})` }
+    { id: "pets",  label: `🐾 Zwierzaki (${activeStats.petsOwned}/${allPets.length})` }
   ];
 
   const tierTabs = [
     { id: "all",    label: "Wszystkie skrzynie" },
-    { id: "bronze", label: "📦 Brązowa" },
-    { id: "silver", label: "🥈 Srebrna" },
-    { id: "gold",   label: "👑 Złota" }
+    { id: "bronze", label: `📦 Brązowa (${activeStats.bronze.pct}%)` },
+    { id: "silver", label: `🥈 Srebrna (${activeStats.silver.pct}%)` },
+    { id: "gold",   label: `👑 Złota (${activeStats.gold.pct}%)` }
   ];
 
   let gridHtml = "";
@@ -1068,7 +1175,7 @@ function renderParentWardrobeManager() {
                 unlocked ? "bg-emerald-50 border-emerald-500 text-slate-900 shadow-sm" : "bg-slate-100 border-slate-300 text-slate-500 opacity-75"
               }">
               <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadge} mb-1">${item.tierLabel}</span>
-              <img src="${item.src}?v=${CURRENT_GAME_VERSION}" loading="lazy" decoding="async" class="w-12 h-12 object-contain my-0.5" onerror="handleOutfitImgError(this, '${item.src}', '${item.fallbackSrc}')" />
+              <img src="${item.src}?v=${ver}" loading="lazy" decoding="async" class="w-12 h-12 object-contain my-0.5" onerror="if(typeof handleOutfitImgError==='function'){handleOutfitImgError(this, '${item.src}', '${item.fallbackSrc}');}" />
               <span class="text-[10px] font-bold leading-tight break-all">${item.name}</span>
               <span class="mt-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold ${unlocked ? "bg-emerald-600 text-white" : "bg-slate-300 text-slate-700"}">
                 ${unlocked ? "✓ Ma to" : "🔒 Brak"}
@@ -1084,8 +1191,13 @@ function renderParentWardrobeManager() {
     <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
       <h3 class="font-extrabold text-indigo-950 text-lg">👕 Garderoba i Przebrania (Osobno na każdy profil)</h3>
       <span class="px-3 py-1 rounded-full bg-white border border-indigo-300 text-xs font-extrabold text-indigo-900">
-        ${PROFILE_META[profKey].name}: 👕 ${ownedOutfitsCount}/${all131.length} • 🐾 ${ownedPetsCount}/${allPets.length}
+        ${PROFILE_META[profKey].name}: 👕 ${activeStats.pct}% (${activeStats.owned}/${activeStats.total}) • 🐾 ${activeStats.petsPct}% (${activeStats.petsOwned}/${activeStats.petsTotal})
       </span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-3">
+      ${renderBoyProgressCard("👦 Igor", igStats, "border-amber-300")}
+      ${renderBoyProgressCard("🧑 Hubert", huStats, "border-sky-300")}
     </div>
 
     <div class="mb-3">
@@ -1275,6 +1387,7 @@ function parentGiveTestChest(profKey, tier) {
   if (!state.stats[profKey]) return;
   const p = ensurePlayerStructure(state.stats[profKey]);
   p.pendingChests.push({ tier, reason: "Specjalna skrzynia od Taty! 🎁", date: new Date().toISOString() });
+  p.pendingChestsUpdatedAt = Date.now();
   state.stats[profKey] = p;
   saveCloudData();
   const names = { bronze: "Brązową", silver: "Srebrną", gold: "Złotą" };

@@ -4,27 +4,6 @@
    ============================================================================ */
 
 const OUTFITS_DB = {
-   function handleOutfitImgError(imgEl, primarySrc, fallbackSrc) {
-  if (!imgEl) return;
-  const attempt = parseInt(imgEl.dataset.retry || "0", 10);
-
-  if (attempt === 0 && fallbackSrc && fallbackSrc !== primarySrc && imgEl.src.indexOf("srebrna/zlota") === -1) {
-    imgEl.dataset.retry = "1";
-    imgEl.src = fallbackSrc;
-    return;
-  }
-
-  if (attempt < 3) {
-    imgEl.dataset.retry = String(attempt + 1);
-    setTimeout(() => {
-      const sep = primarySrc.includes("?") ? "&" : "?";
-      imgEl.src = `${primarySrc}${sep}v=${CURRENT_GAME_VERSION}&r=${attempt + 1}`;
-    }, 700 * (attempt + 1));
-    return;
-  }
-
-  imgEl.style.display = "none";
-}
   bronze: {
     head: [
       "cap_red.png", "cap_blue.png", "cap_green.png", "cap_yellow.png",
@@ -84,6 +63,29 @@ const OUTFITS_DB = {
     ]
   }
 };
+
+function handleOutfitImgError(imgEl, primarySrc, fallbackSrc) {
+  if (!imgEl) return;
+  const attempt = parseInt(imgEl.dataset.retry || "0", 10);
+
+  if (attempt === 0 && fallbackSrc && fallbackSrc !== primarySrc && imgEl.src.indexOf("srebrna/zlota") === -1) {
+    imgEl.dataset.retry = "1";
+    imgEl.src = fallbackSrc;
+    return;
+  }
+
+  if (attempt < 3) {
+    imgEl.dataset.retry = String(attempt + 1);
+    setTimeout(() => {
+      const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.9";
+      const sep = primarySrc.includes("?") ? "&" : "?";
+      imgEl.src = `${primarySrc}${sep}v=${ver}&r=${attempt + 1}`;
+    }, 700 * (attempt + 1));
+    return;
+  }
+
+  imgEl.style.display = "none";
+}
 
 const COMPANION_PETS = [
   { id: "p_dog", pl: "Piesek", en: "Dog", icon: "🐶" },
@@ -411,7 +413,7 @@ function getAllAchievements() {
   });
   [{ k: "stars", n: "Arcymistrz Gwiazdek", d: "Zbierz wszystkie odznaki za Gwiazdki!" }, { k: "streak", n: "Arcymistrz Systematyczności", d: "Zbierz wszystkie odznaki za Dni z rzędu!" }, { k: "lessons", n: "Arcymistrz Lekcji", d: "Zbierz wszystkie odznaki za Powtórki lekcji!" }, { k: "special", n: "Arcymistrz Wyzwań", d: "Zbierz wszystkie odznaki w kategorii Wyzwania!" }].forEach(mc => {
     const subIds = list.filter(a => a.cat === mc.k).map(a => a.id);
-    list.push({ id: `master_${mc.k}`, cat: "masters", tier: 5, icon: "👑", name: mc.n, d: mc.d, check: p => subIds.length > 0 && subIds.every(id => p.badges.includes(id)), progress: p => `${subIds.filter(id => p.badges.includes(id)).length}/${subIds.length}` });
+    list.push({ id: `master_${mc.k}`, cat: "masters", tier: 5, icon: "👑", name: mc.n, desc: mc.d, check: p => subIds.length > 0 && subIds.every(id => p.badges.includes(id)), progress: p => `${subIds.filter(id => p.badges.includes(id)).length}/${subIds.length}` });
   });
   return list;
 }
@@ -531,11 +533,11 @@ function openChestReal(profKey, tier) {
   const content = document.getElementById("rewardPopupContent");
   const p = ensurePlayerStructure(state.stats[profKey]);
   const kidName = PROFILE_META[profKey] ? PROFILE_META[profKey].name : "Bohater";
-  
+
   const missingStickers = STICKER_POOL.filter(s => !(state.stats.stickers || []).includes(s.id));
   const missingPets = COMPANION_PETS.filter(a => !(p.memoryAnimals || []).includes(a.id));
   const foodPool = typeof PET_FOOD_POOL !== "undefined" ? PET_FOOD_POOL : [];
-  
+
   let outfitTier = "bronze";
   const rnd = Math.random() * 100;
   if (tier === "bronze") { if (rnd < 5) outfitTier = "gold"; else if (rnd < 20) outfitTier = "silver"; }
@@ -562,6 +564,7 @@ function openChestReal(profKey, tier) {
   if (dropType === "pet") {
     const animal = missingPets[Math.floor(Math.random() * missingPets.length)];
     p.memoryAnimals.push(animal.id);
+    p.wardrobeUpdatedAt = Date.now();
     rewardName = `Towarzysz: ${animal.pl}`;
     rewardHtml = `<div class="my-2 drop-shadow-lg pop-correct bg-white/70 rounded-full w-28 h-28 mx-auto flex items-center justify-center" style="font-size: 62px;">${animal.icon}</div>`;
     speechSegments.push({ lang: "pl", text: `Brawo ${kidName}! Ze skrzynki wylosowano nowego towarzysza! To jest ${animal.pl}, po angielsku` }, { lang: "en", text: animal.en });
@@ -575,8 +578,10 @@ function openChestReal(profKey, tier) {
   } else if (dropType === "outfit") {
     const outfit = unownedOutfits[Math.floor(Math.random() * unownedOutfits.length)];
     p.unlockedItems.push(outfit.src);
+    p.wardrobeUpdatedAt = Date.now();
     rewardName = `Ubranie: ${outfit.name}`;
-    rewardHtml = `<img src="${outfit.src}" class="w-28 h-28 object-contain mx-auto my-2 drop-shadow-xl pop-correct bg-white/70 rounded-full p-2" onerror="if(this.src.indexOf('srebrna/zlota')===-1){this.src='${outfit.fallbackSrc}';}else{this.style.display='none';}" />`;
+    const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.9";
+    rewardHtml = `<img src="${outfit.src}?v=${ver}" decoding="async" class="w-28 h-28 object-contain mx-auto my-2 drop-shadow-xl pop-correct bg-white/70 rounded-full p-2" onerror="handleOutfitImgError(this, '${outfit.src}', '${outfit.fallbackSrc}')" />`;
     speechSegments.push({ lang: "pl", text: `Ekstra ${kidName}! Wylosowano nowe przebranie do garderoby:` }, { lang: "en", text: outfit.name.replace(/[_-]/g, " ") });
   } else {
     p.stars = (p.stars || 0) + 25;
@@ -732,12 +737,13 @@ function renderAvatarItems() {
   const container = document.getElementById("avatarItemsContainer");
   if (!container) return;
   const all131 = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat() : [];
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.9";
   const countOwned = list => list.filter(it => p.unlockedItems.includes(it.src)).length;
   const tierTabs = [
-    { id: "all", label: `Wszystkie (${countOwned(all131)}/131)` },
-    { id: "bronze", label: `📦 Brązowa (${countOwned(all131.filter(i => i.tier === "bronze"))}/30)` },
-    { id: "silver", label: `🥈 Srebrna (${countOwned(all131.filter(i => i.tier === "silver"))}/56)` },
-    { id: "gold", label: `👑 Złota (${countOwned(all131.filter(i => i.tier === "gold"))}/45)` }
+    { id: "all", label: `Wszystkie (${countOwned(all131)}/${all131.length})` },
+    { id: "bronze", label: `📦 Brązowa (${countOwned(all131.filter(i => i.tier === "bronze"))}/${all131.filter(i => i.tier === "bronze").length})` },
+    { id: "silver", label: `🥈 Srebrna (${countOwned(all131.filter(i => i.tier === "silver"))}/${all131.filter(i => i.tier === "silver").length})` },
+    { id: "gold", label: `👑 Złota (${countOwned(all131.filter(i => i.tier === "gold"))}/${all131.filter(i => i.tier === "gold").length})` }
   ];
   const stars = p.stars || 0;
 
@@ -780,7 +786,7 @@ function renderAvatarItems() {
       const isUnlocked = p.unlockedItems.includes(item.src), isEquipped = p.avatar && p.avatar[cat.key] === item.src;
       const tierBadgeColor = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-800" : "bg-amber-700 text-white";
       html += isUnlocked
-        ? `<div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm"><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><img src="${item.src}?v=${CURRENT_GAME_VERSION}" loading="lazy" decoding="async" class="w-14 h-14 object-contain mb-1 drop-shadow" onerror="handleOutfitImgError(this, '${item.src}', '${item.fallbackSrc}')" />><div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}</div>`
+        ? `<div onclick="equipAvatarItem('${cat.key}', '${item.src}')" class="cursor-pointer rounded-2xl border-3 ${isEquipped ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white'} p-2 flex flex-col items-center justify-between text-center shadow-sm"><span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><img src="${item.src}?v=${ver}" loading="lazy" decoding="async" class="w-14 h-14 object-contain mb-1 drop-shadow" onerror="handleOutfitImgError(this, '${item.src}', '${item.fallbackSrc}')" /><div class="text-[10px] font-bold text-slate-700 leading-tight break-all">${item.name}</div>${isEquipped ? `<div class="text-[9px] mt-1 bg-emerald-500 text-white px-2 py-0.5 rounded-full font-extrabold">Założone ✓</div>` : ``}</div>`
         : `<div class="rounded-2xl border-2 border-slate-200 bg-slate-100 p-2 flex flex-col items-center justify-between text-center opacity-55"><span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tierBadgeColor} mb-1">${item.tierLabel}</span><div class="text-2xl my-2">🔒</div><div class="text-[10px] font-bold text-slate-500 leading-tight break-all">${item.name}</div></div>`;
     });
     html += `</div></div>`;
@@ -845,6 +851,7 @@ function unlockAllOutfitsForTesting() {
     const p = ensurePlayerStructure(state.stats[k]);
     p.unlockedItems = Array.from(new Set([...p.unlockedItems, ...all131]));
     p.memoryAnimals = Array.from(new Set([...p.memoryAnimals, ...allPets]));
+    p.wardrobeUpdatedAt = Date.now();
     state.stats[k] = p;
   });
   saveCloudData();
@@ -857,6 +864,7 @@ function lockAllOutfitsAfterTesting() {
     p.unlockedItems = [];
     p.memoryAnimals = [];
     p.avatar = { head: "", torso: "", legs: "", pet: "" };
+    p.wardrobeUpdatedAt = Date.now();
     state.stats[k] = p;
   });
   saveCloudData();

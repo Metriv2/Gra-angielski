@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/08-pancakes-minigames.js
-   KUCHNIA PANKEJKÓW, LITERKI, MEMORY, MIKROFON, PRZYIMKI I FISZKI (EN + PL)
+   KUCHNIA PANKEJKÓW (1 KLIK/DODATEK), LITERKI, MEMORY, MIKROFON (FIX SMOKA)
    ============================================================================ */
 
 const _origRenderTopGameBarV14 = typeof renderTopGameBar === "function" ? renderTopGameBar : null;
@@ -31,17 +31,25 @@ renderTopGameBar = function(lesson) {
       dotsHtml += `<div class="w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${bg}">${badgeTxt}</div>`;
     }
 
+    const comboBadge = (state.roundCombo >= 2 && !isFlashcards && state.currentSubMode !== "pancake_cooking_game")
+      ? `<span class="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-extrabold text-xs shadow animate-pulse">🔥 Seria x${state.roundCombo}</span>`
+      : "";
+    const rematchBanner = state.isRematchPhase
+      ? `<div class="mb-2 p-2 rounded-2xl bg-indigo-100 border-2 border-indigo-400 text-indigo-950 font-extrabold text-center text-xs shadow-sm uppercase">🦉🎯 Szybka dogrywka! Poprawiamy pomylone słówka (${state.roundIndex + 1}/${totalQ})</div>`
+      : "";
+
     const rightBtn = isFlashcards
       ? `<button onclick="startLesson('pancakes_cooking')" class="px-3 py-1 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 text-xs font-extrabold border border-rose-300">Zakończ fiszki ⏹️</button>`
       : `<button onclick="showLessonMenu()" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Menu 🏠</button>`;
 
     return `
+      ${rematchBanner}
       <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-amber-300 flex flex-col gap-2 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex flex-wrap gap-1.5 items-center">${flashBtn}${quizBtn}${audioOnlyBtn}${cookBtn}${lettersBtn}${micBtn}${tataSwitchBar}</div>
           ${rightBtn}
         </div>
-        ${(state.currentSubMode !== "pancake_cooking_game" && !isFlashcards) ? `<div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100"><span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}</div>` : ""}
+        ${(state.currentSubMode !== "pancake_cooking_game" && !isFlashcards) ? `<div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100"><span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}${comboBadge}</div>` : ""}
       </div>
     `;
   }
@@ -149,7 +157,7 @@ function isSpeechMatchForWord(heardRaw, targetRaw) {
 }
 
 // ------------------------------------------------------------------------
-// KUCHNIA PANKEJKÓW (5 ETAPÓW + 4 WYBORY W SKLEPIE + LOSOWE DODAWANIE)
+// KUCHNIA PANKEJKÓW (5 ETAPÓW + 1 KLIK NA KAŻDY DODATEK W DEKORACJI)
 // ------------------------------------------------------------------------
 const PANCAKE_BASE_INGREDIENTS = [
   { id: "flour",   en: "Flour",   pl: "Mąka",   icon: getCustomPancakeSvg("flour", 58),   smallIcon: getCustomPancakeSvg("flour", 28) },
@@ -178,12 +186,28 @@ function startPancakeCookingGame(lesson) {
     stage: "bakery_shop", shopIdx: 0, boughtItems: [],
     addOrder: shuffleArray(PANCAKE_BASE_INGREDIENTS),
     addIdx: 0, addedIds: [], addedItems: [], _addingLock: false, mixClicks: 0,
-    addedToppings: [], selectedFruitForVoice: PANCAKE_TOPPING_FRUITS[0].id
+    addedToppings: [], addedToppingIds: [], selectedFruitForVoice: PANCAKE_TOPPING_FRUITS[0].id
   };
   renderPancakeCookingStage(lesson);
 }
 
-function renderPancakeCookingStage(lesson) {
+function addPancakeToppingOnce(fruitId) {
+  const ps = state.pancakeState;
+  if (!ps) return null;
+  if (!Array.isArray(ps.addedToppingIds)) ps.addedToppingIds = [];
+  if (ps.addedToppingIds.includes(fruitId)) return null;
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId);
+  if (!f) return null;
+
+  ps.addedToppingIds.push(f.id);
+  ps.addedToppings.push(f.icon);
+
+  const nextRemaining = PANCAKE_TOPPING_FRUITS.find(x => !ps.addedToppingIds.includes(x.id));
+  ps.selectedFruitForVoice = nextRemaining ? nextRemaining.id : "";
+  return f;
+}
+
+function renderPancakeCookingStage(lesson, skipIntroSpeech = false) {
   const activeLesson = lesson || state.lessons.find(l => l.id === "pancakes_cooking");
   const ps = state.pancakeState;
   const mc = document.getElementById("mainContainer");
@@ -227,7 +251,9 @@ function renderPancakeCookingStage(lesson) {
         </div>
       </div>
     `;
-    speakSequence([{ lang: "pl", text: ps.shopIdx === 0 ? "Wchodzimy do sklepu po składniki na pankejki! Powiedz:" : "Poproś o kolejny składnik:" }, { lang: "en", text: askPhrase }]);
+    if (!skipIntroSpeech) {
+      speakSequence([{ lang: "pl", text: ps.shopIdx === 0 ? "Wchodzimy do sklepu po składniki na pankejki! Powiedz:" : "Poproś o kolejny składnik:" }, { lang: "en", text: askPhrase }]);
+    }
     return;
   }
 
@@ -258,7 +284,9 @@ function renderPancakeCookingStage(lesson) {
         </div>
       </div>
     `;
-    speakSequence([{ lang: "en", text: cmdEn }, { lang: "pl", text: `Dodaj: ${targetIng.pl}!` }]);
+    if (!skipIntroSpeech) {
+      speakSequence([{ lang: "en", text: cmdEn }, { lang: "pl", text: `Dodaj: ${targetIng.pl}!` }]);
+    }
     return;
   }
 
@@ -275,43 +303,89 @@ function renderPancakeCookingStage(lesson) {
         ${!isMixed ? `<div onclick="clickMixBowl()" class="kid-card cursor-pointer w-52 h-40 mx-auto rounded-b-full bg-gradient-to-b from-yellow-100 to-amber-300 border-4 border-amber-500 shadow-xl flex flex-col items-center justify-center relative"><div class="text-5xl mb-1">🥄🥣</div><div class="font-extrabold text-sm text-amber-950">Kliknij, aby mieszać! (${ps.mixClicks}/3)</div></div>` : `<div onclick="fryPancakesOnPan()" class="kid-card cursor-pointer w-56 h-44 mx-auto rounded-3xl bg-gradient-to-b from-slate-700 to-slate-900 border-4 border-amber-400 shadow-xl flex flex-col items-center justify-center text-white"><div class="text-6xl mb-1 float-anim">🍳🥞</div><div class="font-extrabold text-base text-amber-300">Usmaż Pankejksy! 🔥</div></div>`}
       </div>
     `;
-    speakSequence([{ lang: "en", text: isMixed ? "Pancakes!" : "Mix!" }, { lang: "pl", text: isMixed ? "Ciasto wymieszane! Kliknij patelnię, aby usmażyć pankejksy!" : "Mieszamy! Kliknij trzy razy w miskę!" }]);
+    if (!skipIntroSpeech) {
+      speakSequence([{ lang: "en", text: isMixed ? "Pancakes!" : "Mix!" }, { lang: "pl", text: isMixed ? "Ciasto wymieszane! Kliknij patelnię, aby usmażyć pankejksy!" : "Mieszamy! Kliknij trzy razy w miskę!" }]);
+    }
     return;
   }
 
   if (ps.stage === "decorate_fruits") {
-    const toppingsHtml = ps.addedToppings.length ? ps.addedToppings.map(ic => `<span class="text-3xl pop-correct">${ic}</span>`).join(" ") : `<span class="text-xs text-slate-400">Dodaj ulubione owoce na górę!</span>`;
+    if (!Array.isArray(ps.addedToppingIds)) ps.addedToppingIds = [];
+    const remainingFruits = PANCAKE_TOPPING_FRUITS.filter(f => !ps.addedToppingIds.includes(f.id));
+    if (remainingFruits.length > 0 && (!ps.selectedFruitForVoice || ps.addedToppingIds.includes(ps.selectedFruitForVoice))) {
+      ps.selectedFruitForVoice = remainingFruits[0].id;
+    } else if (remainingFruits.length === 0) {
+      ps.selectedFruitForVoice = "";
+    }
+
+    const toppingsHtml = ps.addedToppings.length
+      ? ps.addedToppings.map(ic => `<span class="text-3xl pop-correct">${ic}</span>`).join(" ")
+      : `<span class="text-xs text-slate-400">Dodaj ulubione owoce na górę (każdy po 1 razie)!</span>`;
+
     mc.innerHTML = `
       ${renderTopGameBar(activeLesson)}
       <div class="bg-white rounded-3xl shadow-xl border-4 border-pink-400 p-4 md:p-6 text-center max-w-3xl mx-auto">
         <div class="text-xs font-extrabold text-pink-700 uppercase mb-1">🍓🍌 Etap 4/5: Dekorujemy Pankejksy!</div>
         <div class="my-3 p-4 rounded-3xl bg-gradient-to-b from-amber-50 to-orange-50 border-3 border-amber-300 max-w-md mx-auto shadow-inner">
-          <div class="flex justify-center gap-1 min-h-[38px] mb-1">${toppingsHtml}</div>
+          <div class="flex justify-center flex-wrap gap-1 min-h-[38px] mb-1">${toppingsHtml}</div>
           <div class="text-7xl drop-shadow-md">🥞</div>
-          <div class="text-xs font-extrabold text-amber-900 mt-1">Twoje Pankejksy (${ps.addedToppings.length} dodatków)</div>
+          <div class="text-xs font-extrabold text-amber-900 mt-1">Twoje Pankejksy (${ps.addedToppings.length}/${PANCAKE_TOPPING_FRUITS.length} dodatków)</div>
         </div>
         <div id="pancakeFruitStatus" class="min-h-[34px] font-extrabold text-sm text-rose-800 mb-2 flex items-center justify-center"></div>
         ${isIgor ? `
           <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4">
-            ${PANCAKE_TOPPING_FRUITS.map(f => `<div class="rounded-2xl border-2 border-pink-300 bg-pink-50/40 p-2 flex flex-col items-center shadow-sm"><button onclick="igorClickFruitTopping('${f.id}')" class="kid-card flex flex-col items-center w-full"><span class="text-4xl">${f.icon}</span><span class="font-extrabold text-xs text-slate-900 mt-1">${f.en}</span><span class="text-[10px] text-slate-500">${f.pl}</span></button><button onclick="voiceAddFruitTopping('${f.id}')" class="mt-1.5 w-full py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px]">🎤 Powiedz</button></div>`).join("")}
+            ${PANCAKE_TOPPING_FRUITS.map(f => {
+              const isAdded = ps.addedToppingIds.includes(f.id);
+              return `
+                <div class="rounded-2xl border-2 ${isAdded ? 'border-emerald-400 bg-emerald-50 opacity-70' : 'border-pink-300 bg-pink-50/40'} p-2 flex flex-col items-center shadow-sm">
+                  <button onclick="igorClickFruitTopping('${f.id}')" ${isAdded ? "disabled" : ""} class="${isAdded ? 'cursor-not-allowed' : 'kid-card'} flex flex-col items-center w-full">
+                    <span class="text-4xl">${f.icon}</span>
+                    <span class="font-extrabold text-xs text-slate-900 mt-1">${f.en}</span>
+                    <span class="text-[10px] text-slate-500">${f.pl}</span>
+                  </button>
+                  ${isAdded
+                    ? `<span class="mt-1.5 w-full py-1 rounded-lg bg-emerald-600 text-white font-extrabold text-[10px]">✓ Dodano</span>`
+                    : `<button onclick="voiceAddFruitTopping('${f.id}')" class="mt-1.5 w-full py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px]">🎤 Powiedz</button>`}
+                </div>
+              `;
+            }).join("")}
           </div>
         ` : `
           <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
             ${PANCAKE_TOPPING_FRUITS.map(f => {
-              const sel = ps.selectedFruitForVoice === f.id;
-              return `<div onclick="selectFruitForHubertVoice('${f.id}')" class="kid-card cursor-pointer rounded-2xl border-3 ${sel ? 'border-rose-500 bg-rose-50 ring-2 ring-rose-400' : 'border-slate-200 bg-white'} p-2.5 flex flex-col items-center shadow-sm"><span class="text-4xl">${f.icon}</span><span class="font-extrabold text-xs text-slate-900 mt-1">${f.en}</span><span class="text-[10px] text-slate-500">${f.pl}</span></div>`;
+              const isAdded = ps.addedToppingIds.includes(f.id);
+              const sel = !isAdded && ps.selectedFruitForVoice === f.id;
+              return isAdded
+                ? `<div class="rounded-2xl border-2 border-emerald-400 bg-emerald-50 opacity-70 p-2.5 flex flex-col items-center shadow-sm cursor-not-allowed">
+                     <span class="text-4xl">${f.icon}</span>
+                     <span class="font-extrabold text-xs text-slate-900 mt-1">${f.en}</span>
+                     <span class="mt-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[9px]">✓ Dodano</span>
+                   </div>`
+                : `<div onclick="selectFruitForHubertVoice('${f.id}')" class="kid-card cursor-pointer rounded-2xl border-3 ${sel ? 'border-rose-500 bg-rose-50 ring-2 ring-rose-400' : 'border-slate-200 bg-white'} p-2.5 flex flex-col items-center shadow-sm">
+                     <span class="text-4xl">${f.icon}</span>
+                     <span class="font-extrabold text-xs text-slate-900 mt-1">${f.en}</span>
+                     <span class="text-[10px] text-slate-500">${f.pl}</span>
+                   </div>`;
             }).join("")}
           </div>
-          <div class="flex flex-wrap justify-center gap-2 mb-4">
-            <button onclick="speakSelectedFruitHint()" class="kid-card px-4 py-2 rounded-xl bg-sky-500 text-white font-bold text-xs shadow">🔊 Podpowiedz wymowę</button>
-            <button onclick="voiceAddFruitTopping(state.pancakeState.selectedFruitForVoice)" class="kid-card px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-sm shadow-lg">🎤 Powiedz nazwę owocu!</button>
-            <button onclick="parentApprovePancakeFruit()" class="kid-card px-3.5 py-2 rounded-xl bg-emerald-500 text-emerald-950 font-bold text-xs border border-emerald-700">🔒 Zalicz (Tata)</button>
-          </div>
+          ${remainingFruits.length > 0 ? `
+            <div class="flex flex-wrap justify-center gap-2 mb-4">
+              <button onclick="speakSelectedFruitHint()" class="kid-card px-4 py-2 rounded-xl bg-sky-500 text-white font-bold text-xs shadow">🔊 Podpowiedz wymowę</button>
+              <button onclick="voiceAddFruitTopping(state.pancakeState.selectedFruitForVoice)" class="kid-card px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-sm shadow-lg">🎤 Powiedz nazwę owocu!</button>
+              <button onclick="parentApprovePancakeFruit()" class="kid-card px-3.5 py-2 rounded-xl bg-emerald-500 text-emerald-950 font-bold text-xs border border-emerald-700">🔒 Zalicz (Tata)</button>
+            </div>
+          ` : `
+            <div class="mb-4 p-2.5 rounded-2xl bg-emerald-100 border-2 border-emerald-400 text-emerald-900 font-extrabold text-xs">
+              🌟 Wszystkie dodatki są już na pankejkach! Czas poczęstować zwierzaka!
+            </div>
+          `}
         `}
         <button onclick="goToFeedPetWithPancakes()" class="kid-card w-full max-w-md py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base shadow-lg">🍽️ Gotowe! Podaj Pankejksy Zwierzakowi ➔</button>
       </div>
     `;
-    speakSequence([{ lang: "pl", text: isIgor ? "Pankejksy usmażone! Kliknij owoce, które chcesz położyć na górze!" : "Pankejksy usmażone! Wybierz owoc i powiedz jego nazwę po angielsku do mikrofonu!" }]);
+    if (!skipIntroSpeech) {
+      speakSequence([{ lang: "pl", text: isIgor ? "Pankejksy usmażone! Kliknij owoce, które chcesz położyć na górze!" : "Pankejksy usmażone! Wybierz owoc i powiedz jego nazwę po angielsku do mikrofonu!" }]);
+    }
     return;
   }
 
@@ -325,10 +399,12 @@ function renderPancakeCookingStage(lesson) {
         <div class="text-xs font-extrabold text-emerald-700 uppercase mb-2">🐾 Etap 5/5: Czas na poczęstunek!</div>
         <div class="text-7xl my-2 float-anim">${petIcon}</div>
         <div class="bg-emerald-50 p-3.5 rounded-2xl border-2 border-emerald-300 mb-4"><div class="text-lg md:text-2xl font-extrabold text-emerald-950">${petNamePl} mówi: "I'm hungry! Please give me pancakes!"</div><div class="text-xs font-bold text-slate-600 mt-0.5">Jestem głodny! Poproszę pankejksy!</div></div>
-        <div onclick="servePancakesToPet()" class="kid-card cursor-pointer p-4 rounded-3xl bg-amber-50 hover:bg-amber-100 border-4 border-amber-400 max-w-xs mx-auto shadow-lg"><div class="flex justify-center gap-1 mb-1">${ps.addedToppings.map(ic => `<span class="text-2xl">${ic}</span>`).join("")}</div><div class="text-6xl">🥞</div><div class="mt-2 py-2 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-sm">🍽️ Podaj i powiedz: "Thank you! Goodbye!"</div></div>
+        <div onclick="servePancakesToPet()" class="kid-card cursor-pointer p-4 rounded-3xl bg-amber-50 hover:bg-amber-100 border-4 border-amber-400 max-w-xs mx-auto shadow-lg"><div class="flex justify-center flex-wrap gap-1 mb-1">${ps.addedToppings.map(ic => `<span class="text-2xl">${ic}</span>`).join("")}</div><div class="text-6xl">🥞</div><div class="mt-2 py-2 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-sm">🍽️ Podaj i powiedz: "Thank you! Goodbye!"</div></div>
       </div>
     `;
-    speakSequence([{ lang: "en", text: "I am hungry! Please give me pancakes!" }, { lang: "pl", text: `${petNamePl} jest głodny! Kliknij talerz z pankejkami, aby go poczęstować!` }]);
+    if (!skipIntroSpeech) {
+      speakSequence([{ lang: "en", text: "I am hungry! Please give me pancakes!" }, { lang: "pl", text: `${petNamePl} jest głodny! Kliknij talerz z pankejkami, aby go poczęstować!` }]);
+    }
   }
 }
 
@@ -397,15 +473,59 @@ function addIngredientToBowl(ingId) {
   }
 }
 
-function clickMixBowl() { const ps = state.pancakeState; ps.mixClicks++; playEffect("beep"); if (ps.mixClicks >= 3) { playEffect("success"); speakSequence([{ lang: "en", text: "Mix, mix, mix!" }], () => renderPancakeCookingStage()); } else renderPancakeCookingStage(); }
-function fryPancakesOnPan() { playEffect("fanfare"); state.pancakeState.stage = "decorate_fruits"; renderPancakeCookingStage(); }
-function igorClickFruitTopping(fruitId) { const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId); if (!f) return; state.pancakeState.addedToppings.push(f.icon); playEffect("success"); renderPancakeCookingStage(); speakSequence([{ lang: "en", text: `Add ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Dodano: ${f.pl}!` }]); }
-function selectFruitForHubertVoice(fruitId) { state.pancakeState.selectedFruitForVoice = fruitId; playEffect("beep"); renderPancakeCookingStage(); }
-function speakSelectedFruitHint() { const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === state.pancakeState.selectedFruitForVoice); if (f) speakSequence([{ lang: "pl", text: "Powiedz:" }, { lang: "en", text: f.en }]); }
-function parentApprovePancakeFruit() { const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === state.pancakeState.selectedFruitForVoice); if (!f) return; state.pancakeState.addedToppings.push(f.icon); playEffect("success"); renderPancakeCookingStage(); speakSequence([{ lang: "en", text: `Yummy ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Tata zalicza! Dodano: ${f.pl}!` }]); }
+function clickMixBowl() {
+  const ps = state.pancakeState;
+  ps.mixClicks++;
+  playEffect("beep");
+  if (ps.mixClicks >= 3) {
+    playEffect("success");
+    speakSequence([{ lang: "en", text: "Mix, mix, mix!" }], () => renderPancakeCookingStage());
+  } else {
+    renderPancakeCookingStage(null, true);
+  }
+}
+
+function fryPancakesOnPan() {
+  playEffect("fanfare");
+  state.pancakeState.stage = "decorate_fruits";
+  renderPancakeCookingStage();
+}
+
+function igorClickFruitTopping(fruitId) {
+  const f = addPancakeToppingOnce(fruitId);
+  if (!f) return;
+  playEffect("success");
+  renderPancakeCookingStage(null, true);
+  speakSequence([{ lang: "en", text: `Add ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Dodano: ${f.pl}!` }]);
+}
+
+function selectFruitForHubertVoice(fruitId) {
+  const ps = state.pancakeState;
+  if (!ps || (ps.addedToppingIds || []).includes(fruitId)) return;
+  ps.selectedFruitForVoice = fruitId;
+  playEffect("beep");
+  renderPancakeCookingStage(null, true);
+}
+
+function speakSelectedFruitHint() {
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === state.pancakeState.selectedFruitForVoice);
+  if (f) speakSequence([{ lang: "pl", text: "Powiedz:" }, { lang: "en", text: f.en }]);
+}
+
+function parentApprovePancakeFruit() {
+  const f = addPancakeToppingOnce(state.pancakeState.selectedFruitForVoice);
+  if (!f) return;
+  playEffect("success");
+  renderPancakeCookingStage(null, true);
+  speakSequence([{ lang: "en", text: `Yummy ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Tata zalicza! Dodano: ${f.pl}!` }]);
+}
 
 function voiceAddFruitTopping(fruitId) {
-  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId); if (!f) return;
+  const ps = state.pancakeState;
+  if (!ps || !fruitId || (ps.addedToppingIds || []).includes(fruitId)) return;
+  const f = PANCAKE_TOPPING_FRUITS.find(x => x.id === fruitId);
+  if (!f) return;
+
   cancelAllSpeechAndTimers(); playEffect("beep");
   const stBox = document.getElementById("pancakeFruitStatus");
   if (stBox) stBox.innerHTML = `🎙️ MÓW TERAZ PO ANGIELSKU: <strong>"${f.en}"</strong> (lub "Add ${f.en.toLowerCase()}")!`;
@@ -423,8 +543,13 @@ function voiceAddFruitTopping(fruitId) {
             if (alt) lastHeard = alt;
             if (isSpeechMatchForWord(alt, f.en)) {
               handled = true; try { rec.stop(); } catch (err) {}
-              state.pancakeState.addedToppings.push(f.icon); playEffect("success"); renderPancakeCookingStage();
-              speakSequence([{ lang: "en", text: `Add ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Brawo! Pięknie powiedziane! Dodano: ${f.pl}!` }]);
+              const added = addPancakeToppingOnce(f.id);
+              if (!added) return;
+              playEffect("success");
+              renderPancakeCookingStage(null, true);
+              setTimeout(() => {
+                speakSequence([{ lang: "en", text: `Add ${f.en.toLowerCase()}!` }, { lang: "pl", text: `Brawo! Pięknie powiedziane! Dodano: ${f.pl}!` }]);
+              }, 140);
               return;
             }
           }
@@ -437,11 +562,13 @@ function voiceAddFruitTopping(fruitId) {
 }
 
 function goToFeedPetWithPancakes() { playEffect("beep"); state.pancakeState.stage = "feed_pet"; renderPancakeCookingStage(); }
+
 function servePancakesToPet() {
   const profKey = getActiveProfileKey(), p = ensurePlayerStructure(state.stats[profKey]), petId = p.avatar && p.avatar.pet;
   if (petId) { if (!p.petXp) p.petXp = {}; p.petXp[petId] = (p.petXp[petId] || 0) + 1; }
   p.stars = (p.stars || 0) + 5; p.cups = (p.cups || 0) + 1; p.lessonCounts["pancakes_cooking"] = (p.lessonCounts["pancakes_cooking"] || 0) + 1;
   state.stats[profKey] = p; state.lastPlayedLessonId = "pancakes_cooking"; state.lastPlayedSubMode = "pancake_cooking_game";
+  if (typeof recordPlayerActivity === "function") recordPlayerActivity(profKey, "pancakes_cooking");
   advanceDailyQuestProgress(profKey, "stars", 5); advanceDailyQuestProgress(profKey, "rounds", 1);
   if (petId) advanceDailyQuestProgress(profKey, "feed_pet", 1);
   checkAndUnlockAchievements(profKey); saveCloudData(); if (typeof updateHeaderUI === "function") updateHeaderUI(); playEffect("fanfare");
@@ -473,11 +600,15 @@ function renderLettersGame(lesson) {
     : `<div class="flex flex-wrap justify-center gap-1.5 my-3">${rawWord.split("").map((ch, idx) => ch === " " ? `<div class="w-6 h-14"></div>` : `<div class="w-11 h-14 md:w-13 md:h-16 rounded-2xl border-4 ${idx < state.letterBuilt.length ? 'border-emerald-500 bg-emerald-50 text-emerald-800' : idx === state.letterBuilt.length ? 'border-purple-500 bg-purple-50 text-purple-400 animate-pulse' : 'border-slate-300 bg-slate-50 text-slate-300'} flex items-center justify-center text-2xl md:text-3xl font-extrabold shadow-sm">${idx < state.letterBuilt.length ? rawWord[idx] : '_'}</div>`).join("")}</div>`;
 
   mc.innerHTML = `${renderTopGameBar(lesson)}<div class="bg-white rounded-3xl shadow-xl border-4 border-purple-400 p-4 md:p-6 text-center max-w-2xl mx-auto w-full"><div class="text-xs font-extrabold text-purple-700 uppercase mb-1">🧩 Układanka Literkowa (${isIgor ? 'Wskaż brakującą pierwszą literę (4 opcje)' : 'Posłuchaj i ułóż słowo'})</div><div class="flex items-center justify-center gap-4 my-2"><button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-14 h-14 rounded-2xl bg-purple-600 text-white text-3xl shadow flex items-center justify-center">🔊</button><div class="text-6xl md:text-7xl float-anim drop-shadow-sm">${q.icon || '⭐'}</div><div class="text-left"><div class="text-xl md:text-2xl font-extrabold text-slate-800">${q.pl}</div><div class="text-xs font-bold text-purple-600">Kliknij 🔊 aby usłyszeć po angielsku</div></div></div>${slotsHtml}<div id="feedbackBanner" class="min-h-[30px] font-bold text-sm mb-2 flex items-center justify-center"></div><div class="flex flex-wrap justify-center gap-2.5 mt-2">${state.letterPool.map((tile, idx) => `<button id="letTile_${idx}" onclick="pickLetterTile(${idx})" ${tile.used ? 'disabled' : ''} class="kid-card w-14 h-14 md:w-16 md:h-16 rounded-2xl border-4 ${tile.used ? 'border-slate-200 bg-slate-100 text-slate-300 opacity-40 cursor-not-allowed' : 'border-purple-400 bg-white hover:bg-purple-50 text-purple-950 shadow-md'} font-extrabold text-2xl md:text-3xl">${tile.char}</button>`).join("")}</div></div>`;
-  if (state.letterBuilt.length === 0 && state.currentQuestionMistakes === 0) speakSequence([{ lang: "pl", text: isIgor ? `Posłuchaj i wskaż pierwszą literę słowa:` : `Posłuchaj i ułóż z liter słowo:` }, { lang: "en", text: q.en }]);
+  if (state.letterBuilt.length === 0 && state.currentQuestionMistakes === 0) {
+    if (typeof lockQuestionInputBriefly === "function") lockQuestionInputBriefly(650);
+    speakSequence([{ lang: "pl", text: isIgor ? `Posłuchaj i wskaż pierwszą literę słowa:` : `Posłuchaj i ułóż z liter słowo:` }, { lang: "en", text: q.en }]);
+  }
 }
 
 function pickLetterTile(poolIdx) {
   if (state.answeredCurrent) return;
+  if (typeof isQuestionInputLocked === "function" && isQuestionInputLocked()) return;
   const q = state.roundQuestions[state.roundIndex], rawWord = window._letterTargetWord || q.en.trim().toUpperCase(), isIgor = isEffectiveIgorMode(), tile = state.letterPool[poolIdx];
   if (!tile || tile.used) return;
   const expectedChar = isIgor ? rawWord[0] : rawWord[state.letterBuilt.length], btn = document.getElementById(`letTile_${poolIdx}`), fb = document.getElementById("feedbackBanner");
@@ -487,11 +618,18 @@ function pickLetterTile(poolIdx) {
     else { state.letterBuilt += tile.char; while (state.letterBuilt.length < rawWord.length && rawWord[state.letterBuilt.length] === " ") state.letterBuilt += " "; }
     if (isIgor || state.letterBuilt.length >= rawWord.length) {
       state.answeredCurrent = true; window._letterTargetWord = ""; renderLettersGame(state.lessons.find(l => l.id === state.currentLessonId)); playEffect("success");
-      const fbAfter = document.getElementById("feedbackBanner"); if (fbAfter) fbAfter.innerHTML = `<span class="text-emerald-600 font-extrabold">🌟 Brawo! Ułożono słowo: ${rawWord} (${q.pl})!</span>`;
-      awardCorrectAnswer(); speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Super! To jest ${q.pl}!` }], () => advanceNextQuestion());
+      const comboInfo = awardCorrectAnswer();
+      const fbAfter = document.getElementById("feedbackBanner");
+      if (fbAfter) fbAfter.innerHTML = `<span class="text-emerald-600 font-extrabold">🌟 Brawo! Ułożono słowo: ${rawWord} (${q.pl})!${comboInfo && comboInfo.bonusText ? " " + comboInfo.bonusText : ""}</span>`;
+      const speechSegs = [{ lang: "en", text: q.en }, { lang: "pl", text: `Super! To jest ${q.pl}!` }];
+      if (comboInfo && comboInfo.bonusSpeech) speechSegs.push({ lang: "pl", text: comboInfo.bonusSpeech });
+      speakSequence(speechSegs, () => advanceNextQuestion());
     } else renderLettersGame(state.lessons.find(l => l.id === state.currentLessonId));
   } else {
-    state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); if (btn) btn.classList.add("shake-wrong");
+    state.roundMistakes++; state.currentQuestionMistakes++;
+    if (typeof resetRoundCombo === "function") resetRoundCombo();
+    if (typeof recordMistakeForRematch === "function") recordMistakeForRematch(q);
+    playEffect("wrong"); if (btn) btn.classList.add("shake-wrong");
     if (fb) fb.innerHTML = `<span class="text-rose-600">❌ Szukamy innej litery! Kliknij 🔊 i spróbuj jeszcze raz!</span>`;
   }
 }
@@ -501,6 +639,7 @@ function pickLetterTile(poolIdx) {
 // ------------------------------------------------------------------------
 function startMemoryGame() {
   cancelAllSpeechAndTimers(); state.currentLessonId = "memory_game"; state.isExamMode = false; state.isHardWordsMode = false; state.isCoopDragonMode = false;
+  state.isRematchPhase = false; state.rematchQueue = []; state.roundCombo = 0; state.roundBonusStars = 0;
   const isAdvanced = !isEffectiveIgorMode(), numPairs = isAdvanced ? 8 : 6;
   let pool = [];
   state.lessons.filter(l => !l.testOnly || state.profile === "tata").forEach(l => {
@@ -545,7 +684,7 @@ function flipMemoryCard(idx) {
 }
 
 // ------------------------------------------------------------------------
-// STUDIO WYMOWY
+// STUDIO WYMOWY (Z NAPRAWIONYM PRZESKAKIWANIEM W WALCE ZE SMOKIEM)
 // ------------------------------------------------------------------------
 function stopActiveSpeechRecSafely() {
   if (window._activeSpeechRec) {
@@ -752,10 +891,14 @@ function approveMicAnswer(msg) {
   const profKey = state.isCoopDragonMode
     ? (isSandbox ? "tata" : "hubert")
     : ((state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor");
+
   if (state.stats[profKey]) {
     state.stats[profKey].micCount = (state.stats[profKey].micCount || 0) + 1;
   }
-  removeHardWordIfMastered(q);
+
+  if (!state.isCoopDragonMode && state.profile !== "duel" && typeof removeHardWordIfMastered === "function") {
+    try { removeHardWordIfMastered(q); } catch (e) {}
+  }
 
   const box = document.getElementById("micStatusBox");
   if (box) {
@@ -766,22 +909,26 @@ function approveMicAnswer(msg) {
   if (state.isCoopDragonMode) {
     state.dragonBattle.dragonHp = Math.max(0, state.dragonBattle.dragonHp - 1);
     state.dragonBattle.statusText = `🎤⚔️ POTĘŻNY OKRZYK HUBERTA! Zadałeś Smokowi obrażenie głosem! (Smok ma ${state.dragonBattle.dragonHp} HP)`;
-    awardCorrectAnswer();
+    try { awardCorrectAnswer(); } catch (e) {}
 
-    if (typeof playDragonAttackSequence === "function") {
-      playDragonAttackSequence("hit", "Super! Zaatakujemy teraz smoka!");
-    } else {
-      speakSequence([{ lang: "pl", text: "Super! Zaatakujemy teraz smoka!" }], () => {
+    setTimeout(() => {
+      if (typeof playDragonAttackSequence === "function") {
+        playDragonAttackSequence("hit", "Super! Zaatakujemy teraz smoka!");
+      } else {
         if (typeof triggerDragonBattleAnimation === "function") triggerDragonBattleAnimation("hit");
         setTimeout(() => advanceNextQuestion(true), 4650);
-      });
-    }
+      }
+    }, 160);
     return;
   }
 
   playEffect("success");
-  awardCorrectAnswer();
-  speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Piękna wymowa! To znaczy ${q.pl}!` }], () => advanceNextQuestion());
+  const comboInfo = awardCorrectAnswer();
+  const speechSegs = [{ lang: "en", text: q.en }, { lang: "pl", text: `Piękna wymowa! To znaczy ${q.pl}!` }];
+  if (comboInfo && comboInfo.bonusSpeech) speechSegs.push({ lang: "pl", text: comboInfo.bonusSpeech });
+  setTimeout(() => {
+    speakSequence(speechSegs, () => advanceNextQuestion());
+  }, 160);
 }
 
 // ------------------------------------------------------------------------
@@ -803,17 +950,26 @@ function renderPrepChooseWord(lesson) {
   let emojiHtml = q.prep === "In" ? `<span class="absolute z-20 text-3xl md:text-5xl left-6 bottom-4 md:bottom-8">${q.animal}</span>` : q.prep === "On" ? `<span class="absolute z-20 text-3xl md:text-5xl left-6 -top-4 md:-top-8">${q.animal}</span>` : `<span class="absolute z-20 text-3xl md:text-5xl left-6 -bottom-5 md:-bottom-10">${q.animal}</span>`;
   const bObj = { box: "📦", bag: "🎒", table: "🪑", chair: "🪑", basket: "🧺", bed: "🛏️", tree: "🌳" }, mc = document.getElementById("mainContainer"); if (!mc) return;
   mc.innerHTML = `${renderTopGameBar(lesson)}<div class="bg-white rounded-3xl shadow-xl border-4 border-sky-300 p-4 md:p-6 text-center"><div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2"></div><div class="relative text-7xl md:text-9xl mb-8 float-anim mt-4 mx-auto w-32 md:w-48 flex items-center justify-center">${bObj[q.container] || "📦"} ${emojiHtml}</div><h2 class="text-xl md:text-2xl font-extrabold text-slate-800 mb-6">Wybierz słowo:</h2><div class="flex justify-center gap-3">${choices.map(c => `<button id="pBtn_${c}" onclick="checkPrepWord('${c}')" class="kid-card px-6 py-4 rounded-2xl border-4 border-slate-200 bg-slate-50 hover:bg-sky-50 font-extrabold text-2xl shadow w-32 uppercase tracking-wider">${c}</button>`).join("")}</div></div>`;
+  if (typeof lockQuestionInputBriefly === "function") lockQuestionInputBriefly(650);
   speakSequence([{ lang: "pl", text: `gdzie jest ${q.plDesc.split(' ')[0].toLowerCase()}? in, on czy under?` }]);
 }
 
 function checkPrepWord(chosen) {
   if (state.answeredCurrent) return;
+  if (typeof isQuestionInputLocked === "function" && isQuestionInputLocked()) return;
   const q = state.roundQuestions[state.roundIndex], fb = document.getElementById("feedbackBanner"), btn = document.getElementById(`pBtn_${chosen}`);
   if (chosen === q.prep) {
-    state.answeredCurrent = true; playEffect("success"); btn.classList.add("pop-correct"); fb.innerHTML = `<span class="text-emerald-600">✅ Dobrze! ${q.fullEn}</span>`;
-    awardCorrectAnswer(); speakSequence([{ lang: "en", text: q.fullEn }, { lang: "pl", text: `super! to znaczy: ${q.plDesc.toLowerCase()}` }], () => advanceNextQuestion());
+    state.answeredCurrent = true; playEffect("success"); btn.classList.add("pop-correct");
+    const comboInfo = awardCorrectAnswer();
+    fb.innerHTML = `<span class="text-emerald-600">✅ Dobrze! ${q.fullEn}${comboInfo && comboInfo.bonusText ? " " + comboInfo.bonusText : ""}</span>`;
+    const speechSegs = [{ lang: "en", text: q.fullEn }, { lang: "pl", text: `super! to znaczy: ${q.plDesc.toLowerCase()}` }];
+    if (comboInfo && comboInfo.bonusSpeech) speechSegs.push({ lang: "pl", text: comboInfo.bonusSpeech });
+    speakSequence(speechSegs, () => advanceNextQuestion());
   } else {
-    state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); btn.classList.add("shake-wrong"); recordHardWordForActivePlayer(q);
+    state.roundMistakes++; state.currentQuestionMistakes++;
+    if (typeof resetRoundCombo === "function") resetRoundCombo();
+    if (typeof recordMistakeForRematch === "function") recordMistakeForRematch(q);
+    playEffect("wrong"); btn.classList.add("shake-wrong"); recordHardWordForActivePlayer(q);
     if (state.profile === "duel") { state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! To było ${q.prep}!</span>`; speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion()); }
     else { fb.innerHTML = `<span class="text-rose-600">❌ Nie, spróbuj jeszcze raz!</span>`; speakSequence([{ lang: "pl", text: "nie to, pomyśl jeszcze raz!" }]); }
   }
@@ -823,17 +979,26 @@ function renderPrepChoosePic(lesson) {
   const q = state.roundQuestions[state.roundIndex], choices = shuffleArray(["In", "On", "Under"]); window._currentChoices = choices;
   const bObj = { box: "📦", bag: "🎒", table: "🪑", chair: "🪑", basket: "🧺", bed: "🛏️", tree: "🌳" }, mc = document.getElementById("mainContainer"); if (!mc) return;
   mc.innerHTML = `${renderTopGameBar(lesson)}<div class="bg-white rounded-3xl shadow-xl border-4 border-sky-300 p-4 md:p-6 text-center"><div class="flex items-center justify-center bg-sky-50 p-3 rounded-2xl border border-sky-200 mb-3 drop-shadow-sm gap-3"><button onclick="speakSequence([{lang:'en',text:'${q.fullEn.replace(/'/g,"\\'")}'}])" class="kid-card w-12 h-12 rounded-2xl bg-sky-500 text-white text-2xl shadow flex items-center justify-center">🔊</button><div class="text-2xl md:text-3xl font-extrabold text-slate-900">"${q.fullEn}"</div></div><div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2"></div><div class="grid grid-cols-3 gap-3">${choices.map((c, idx) => { let html = c === "In" ? `<span class="absolute z-20 text-3xl left-2 bottom-1 md:left-4 md:bottom-2">${q.animal}</span>` : c === "On" ? `<span class="absolute z-20 text-3xl left-2 -top-4 md:left-4 md:-top-5">${q.animal}</span>` : `<span class="absolute z-20 text-3xl left-2 -bottom-5 md:left-4 md:-bottom-6">${q.animal}</span>`; return `<div id="pCard_${idx}" onclick="checkPrepPic(${idx})" class="kid-card cursor-pointer rounded-2xl border-4 border-slate-200 bg-slate-50 hover:border-sky-400 py-6 px-2 shadow flex items-center justify-center relative"><div class="text-6xl md:text-7xl relative mx-auto w-16 md:w-20 float-anim">${bObj[q.container] || "📦"}${html}</div></div>`; }).join("")}</div></div>`;
+  if (typeof lockQuestionInputBriefly === "function") lockQuestionInputBriefly(650);
   speakSequence([{ lang: "pl", text: "wskaż obrazek dla:" }, { lang: "en", text: q.fullEn }]);
 }
 
 function checkPrepPic(idx) {
   if (state.answeredCurrent) return;
+  if (typeof isQuestionInputLocked === "function" && isQuestionInputLocked()) return;
   const q = state.roundQuestions[state.roundIndex], chosen = window._currentChoices[idx], card = document.getElementById(`pCard_${idx}`), fb = document.getElementById("feedbackBanner");
   if (chosen === q.prep) {
-    state.answeredCurrent = true; playEffect("success"); card.classList.add("pop-correct"); fb.innerHTML = `<span class="text-emerald-600">✅ Dobrze! ${q.plDesc}</span>`;
-    awardCorrectAnswer(); speakSequence([{ lang: "en", text: q.fullEn }, { lang: "pl", text: `tak! ${q.plDesc.toLowerCase()}` }], () => advanceNextQuestion());
+    state.answeredCurrent = true; playEffect("success"); card.classList.add("pop-correct");
+    const comboInfo = awardCorrectAnswer();
+    fb.innerHTML = `<span class="text-emerald-600">✅ Dobrze! ${q.plDesc}${comboInfo && comboInfo.bonusText ? " " + comboInfo.bonusText : ""}</span>`;
+    const speechSegs = [{ lang: "en", text: q.fullEn }, { lang: "pl", text: `tak! ${q.plDesc.toLowerCase()}` }];
+    if (comboInfo && comboInfo.bonusSpeech) speechSegs.push({ lang: "pl", text: comboInfo.bonusSpeech });
+    speakSequence(speechSegs, () => advanceNextQuestion());
   } else {
-    state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong"); card.classList.add("shake-wrong"); recordHardWordForActivePlayer(q);
+    state.roundMistakes++; state.currentQuestionMistakes++;
+    if (typeof resetRoundCombo === "function") resetRoundCombo();
+    if (typeof recordMistakeForRematch === "function") recordMistakeForRematch(q);
+    playEffect("wrong"); card.classList.add("shake-wrong"); recordHardWordForActivePlayer(q);
     if (state.profile === "duel") { state.answeredCurrent = true; fb.innerHTML = `<span class="text-rose-600">❌ Pudło! Powinno być ${q.prep}!</span>`; speakSequence([{ lang: "pl", text: "pudło! kolej brata!" }], () => advanceNextQuestion()); }
     else { fb.innerHTML = `<span class="text-rose-600">❌ Nie ten obrazek!</span>`; speakSequence([{ lang: "pl", text: "nie! pomyśl jeszcze raz!" }]); }
   }

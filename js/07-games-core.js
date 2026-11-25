@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/07-games-core.js
-   PASEK GRY, PYTANIA ZE SŁUCHU (PL ⇄ EN), WALKA ZE SMOKIEM, POJEDYNEK I QUIZ
+   WALKA ZE SMOKIEM (KOMUNIKATY BŁĘDÓW), COMBO ⭐, BLOKADA KLIKU I DOGRYWKA (V15.0)
    ============================================================================ */
 
 (function ensureDragonFullscreenStyles() {
@@ -53,6 +53,47 @@
   `;
   document.head.appendChild(style);
 })();
+
+// ------------------------------------------------------------------------
+// POMOCNIKI V15.0: BLOKADA KLIKU, COMBO I DOGRYWKA Z BŁĘDÓW
+// ------------------------------------------------------------------------
+function lockQuestionInputBriefly(ms = 650) {
+  state.inputLockedUntil = Date.now() + ms;
+}
+
+function isQuestionInputLocked() {
+  return Boolean(state.inputLockedUntil && Date.now() < state.inputLockedUntil);
+}
+
+function resetRoundCombo() {
+  state.roundCombo = 0;
+}
+
+function recordMistakeForRematch(q) {
+  if (!q || state.isRematchPhase || state.isExamMode || state.isCoopDragonMode || state.profile === "duel") return;
+  if (!Array.isArray(state.rematchQueue)) state.rematchQueue = [];
+  const key = String(q.id || q.en || "").toLowerCase();
+  if (!key) return;
+  const alreadyIn = state.rematchQueue.some(item => String(item.id || item.en || "").toLowerCase() === key);
+  if (!alreadyIn && state.rematchQueue.length < 4) {
+    state.rematchQueue.push(q);
+  }
+}
+
+function highlightCorrectCardAfterError(prefix, labelPrefix, q, showEnglishAndPolish = false) {
+  if (!Array.isArray(window._currentChoices) || !q) return;
+  const correctIdx = window._currentChoices.findIndex(c => c && c.en === q.en);
+  if (correctIdx < 0) return;
+  const cCard = document.getElementById(`${prefix}${correctIdx}`);
+  const cLbl = document.getElementById(`${labelPrefix}${correctIdx}`);
+  if (cCard) {
+    cCard.classList.add("ring-4", "ring-emerald-500", "bg-emerald-100", "border-emerald-500", "animate-pulse");
+  }
+  if (cLbl) {
+    cLbl.textContent = showEnglishAndPolish ? `✅ ${q.en} (${q.pl})` : `✅ ${q.pl}`;
+    cLbl.classList.add("bg-emerald-500", "text-white", "border-emerald-700");
+  }
+}
 
 function isBrothersTestSandbox() {
   if (typeof isTataSandboxBrothersMode === "function") return isTataSandboxBrothersMode();
@@ -240,7 +281,7 @@ function showBattleFullscreenClash(type, mode = "dragon") {
     const heartsEl = document.getElementById("dragonFsHearts");
     if (bar) bar.style.width = `${endPct}%`;
     if (hpTxt) hpTxt.textContent = `${endHp} / ${maxTargetHp} HP`;
-    if (heartsEl && !isHit) heartsEl.textContent = endHearts;
+    if (heartsEl && !isHit) heartsEl.innerHTML = endHearts;
   }, 2050);
 
   window._dragonFsTimer = setTimeout(() => {
@@ -257,7 +298,7 @@ function triggerDragonBattleAnimation(type) {
   triggerBattleAnimation(type, "dragon");
 }
 
-function playBattleAttackSequence(type, speechPl, mode = "dragon") {
+function playBattleAttackSequence(type, speechPayload, mode = "dragon") {
   clearAllDragonBattleTimers();
   const capturedRoundIndex = state.roundIndex;
   let animStarted = false;
@@ -289,25 +330,30 @@ function playBattleAttackSequence(type, speechPl, mode = "dragon") {
     }, 4650);
   };
 
-  if (typeof speakSequence === "function" && speechPl) {
-    speakSequence([{ lang: "pl", text: speechPl }], () => {
+  const segments = Array.isArray(speechPayload)
+    ? speechPayload
+    : (speechPayload ? [{ lang: "pl", text: speechPayload }] : []);
+
+  if (typeof speakSequence === "function" && segments.length > 0) {
+    speakSequence(segments, () => {
       beginAnimationPhase();
     });
   } else {
     beginAnimationPhase();
   }
 
+  const guardMs = segments.length > 1 ? 10500 : 6500;
   window._dragonSpeechGuardTimer = setTimeout(() => {
     beginAnimationPhase();
-  }, 6500);
+  }, guardMs);
 
   window._dragonHardWatchdog = setTimeout(() => {
     finishAndGoNext();
-  }, 12000);
+  }, guardMs + 6000);
 }
 
-function playDragonAttackSequence(type, speechPl) {
-  playBattleAttackSequence(type, speechPl, "dragon");
+function playDragonAttackSequence(type, speechPayload) {
+  playBattleAttackSequence(type, speechPayload, "dragon");
 }
 
 function renderTopGameBar(lesson) {
@@ -454,12 +500,18 @@ function renderTopGameBar(lesson) {
 
   const examBar = state.isExamMode ? `<div class="mb-2 p-2 rounded-2xl bg-orange-100 border-2 border-orange-400 text-orange-950 font-extrabold text-center text-xs shadow-sm uppercase">🎓 Wielki Sprawdzian (Pytanie ${state.roundIndex+1}/15)</div>` : "";
   const hardBar = state.isHardWordsMode ? `<div class="mb-2 p-2 rounded-2xl bg-rose-100 border-2 border-rose-400 text-rose-950 font-extrabold text-center text-xs shadow-sm uppercase">🎯 Trening Trudnych Słówek • Za odpowiedź bez błędu: +2 ⭐!</div>` : "";
+  const rematchBar = state.isRematchPhase ? `<div class="mb-2 p-2 rounded-2xl bg-indigo-100 border-2 border-indigo-400 text-indigo-950 font-extrabold text-center text-xs shadow-sm uppercase">🦉🎯 Szybka dogrywka! Poprawiamy pomylone słówka (${state.roundIndex + 1}/${totalQ})</div>` : "";
+
+  const comboBadge = (state.roundCombo >= 2 && !isFlashcards && !state.isRematchPhase && state.profile !== "duel" && !state.isCoopDragonMode)
+    ? `<span class="ml-2 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-extrabold text-xs shadow animate-pulse">🔥 Seria x${state.roundCombo}</span>`
+    : "";
+
   const rightActionBtn = isFlashcards
     ? `<button onclick="startLesson('${lesson ? lesson.id : ''}')" class="px-3 py-1 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 text-xs font-extrabold border border-rose-300">Zakończ fiszki ⏹️</button>`
     : `<button onclick="advanceNextQuestion(true)" class="px-3 py-1 rounded-xl bg-slate-100 text-xs font-bold hover:bg-slate-200">Pomiń ⏭️</button>`;
 
   return `
-    ${dragonHud} ${duelBar} ${examBar} ${hardBar}
+    ${dragonHud} ${duelBar} ${examBar} ${hardBar} ${rematchBar}
     <div class="bg-white/95 rounded-2xl p-3 mb-3 border-2 border-sky-200 flex flex-col gap-2 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-wrap gap-1.5 items-center">${subModesHtml}${tataSwitchBar}</div>
@@ -467,17 +519,95 @@ function renderTopGameBar(lesson) {
       </div>
       ${!isFlashcards ? `
         <div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-100">
-          <span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}
+          <span class="text-[10px] font-bold text-slate-500 mr-2 uppercase">Postęp:</span>${dotsHtml}${comboBadge}
         </div>
       ` : ""}
     </div>
   `;
 }
 
+function renderRematchIntroScreen() {
+  cancelAllSpeechAndTimers();
+  const count = Array.isArray(state.rematchQueue) ? state.rematchQueue.length : 0;
+  const mc = document.getElementById("mainContainer");
+  if (!mc || count === 0) return renderEndRoundScreen();
+
+  const wordsPreview = state.rematchQueue
+    .map(w => `<span class="px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200 text-xs font-extrabold text-indigo-900">${w.icon || "⭐"} ${w.pl}</span>`)
+    .join("");
+
+  mc.innerHTML = `
+    <div class="bg-white rounded-3xl shadow-2xl border-4 border-indigo-400 p-6 text-center max-w-xl mx-auto">
+      <div class="text-6xl mb-2 float-anim">🦉🎯</div>
+      <h2 class="text-2xl md:text-3xl font-extrabold text-indigo-950 mb-2">Szybka dogrywka!</h2>
+      <p class="text-slate-700 font-bold text-sm md:text-base mb-4">
+        Świetnie Ci poszło! Zanim odbierzesz puchar, spróbuj poprawić <strong>${count}</strong> ${count === 1 ? "słówko" : (count <= 4 ? "słówka" : "słówek")}, w których była mała pomyłka:
+      </p>
+      <div class="flex flex-wrap justify-center gap-2 mb-5">${wordsPreview}</div>
+      <div class="flex flex-col gap-2.5">
+        <button onclick="startRematchNow()" class="kid-card w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-extrabold text-lg shadow-lg">
+          ▶️ Rozpocznij dogrywkę! (+1 ⭐ za poprawkę)
+        </button>
+        <button onclick="skipRematchToEnd()" class="kid-card w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm">
+          Pomiń dogrywkę i zobacz wynik ⏭️
+        </button>
+      </div>
+    </div>
+  `;
+
+  speakSequence([
+    { lang: "pl", text: `Świetna robota! Zanim odbierzesz puchar, zróbmy szybką dogrywkę! Poprawimy ${count === 1 ? "jedno pomylone słówko" : count + " pomylone słówka"}! Kliknij Rozpocznij dogrywkę!` }
+  ]);
+}
+
+function startRematchNow() {
+  if (!Array.isArray(state.rematchQueue) || state.rematchQueue.length === 0) {
+    return renderEndRoundScreen();
+  }
+  state._mainRoundSnapshot = {
+    score: state.roundScore,
+    total: state.roundQuestions.length,
+    mistakes: state.roundMistakes,
+    rematchCount: state.rematchQueue.length
+  };
+  const rematchList = [...state.rematchQueue];
+  state.isRematchPhase = true;
+  state._rematchQuestionsRef = rematchList;
+  state.roundQuestions = rematchList;
+  state.rematchQueue = [];
+  state.roundIndex = 0;
+  state.roundResults = [];
+  state.roundScore = 0;
+  state.roundMistakes = 0;
+  state.roundCombo = 0;
+  renderCurrentQuestion();
+}
+
+function skipRematchToEnd() {
+  state.rematchQueue = [];
+  state.isRematchPhase = false;
+  state._rematchQuestionsRef = null;
+  renderEndRoundScreen();
+}
+
 function renderCurrentQuestion() {
   clearAllDragonBattleTimers();
   cancelAllSpeechAndTimers();
   hideDragonFullscreenClash();
+
+  // Wykrywanie startu nowej rundy (reset Combo i Dogrywki bez ingerencji w 06-menu-modes.js)
+  if (state.isRematchPhase && state._rematchQuestionsRef !== state.roundQuestions) {
+    state.isRematchPhase = false;
+    state._rematchQuestionsRef = null;
+    state._mainRoundSnapshot = null;
+  }
+  if (!state.isRematchPhase && state.roundIndex === 0 && state.roundResults.length === 0 && state.roundScore === 0 && state.roundMistakes === 0) {
+    state.roundCombo = 0;
+    state.roundBonusStars = 0;
+    state.rematchQueue = [];
+    state._mainRoundSnapshot = null;
+  }
+
   state.answeredCurrent = false;
   state.currentQuestionMistakes = 0;
   state.riddleHintShown = false;
@@ -489,7 +619,12 @@ function renderCurrentQuestion() {
   if (state.profile === "duel" && state.duelBattle && (state.duelBattle.igorHp <= 0 || state.duelBattle.hubertHp <= 0)) {
     return renderEndRoundScreen();
   }
-  if (state.roundIndex >= state.roundQuestions.length) return renderEndRoundScreen();
+  if (state.roundIndex >= state.roundQuestions.length) {
+    if (!state.isRematchPhase && !state.isExamMode && !state.isCoopDragonMode && state.profile !== "duel" && Array.isArray(state.rematchQueue) && state.rematchQueue.length > 0) {
+      return renderRematchIntroScreen();
+    }
+    return renderEndRoundScreen();
+  }
 
   if ((state.profile === "duel" || state.isCoopDragonMode) && state.duelReadyWaiting) {
     const isIgor = state.duelTurn === "igor";
@@ -550,7 +685,7 @@ function renderCurrentQuestion() {
   if (activeMode === "doctor_game") return renderDoctorGame(lesson);
   if (activeMode === "riddles_game") return renderRiddlesGame(lesson);
   if (activeMode === "color_mix_game") return renderColorMixGame(lesson);
-  
+
   renderUniversalVisualQuiz(lesson);
 }
 
@@ -575,8 +710,10 @@ function renderAudioOnlyQuiz(lesson) {
   }
   const isEnToPl = q._audioDirection === "en_to_pl";
   const isIgorTurn = isEffectiveIgorMode();
-  const numChoices = !isIgorTurn ? 6 : 4;
-  const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
+  const numChoices = !isIgorTurn ? 6 : (state.isCoopDragonMode ? 4 : 3);
+  const gridColsClass = numChoices === 3
+    ? "grid-cols-2 sm:grid-cols-3 max-w-3xl mx-auto"
+    : (numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3");
 
   let allPool = [];
   const isTataCtx = isBrothersTestSandbox();
@@ -654,6 +791,7 @@ function renderAudioOnlyQuiz(lesson) {
     </div>
   `;
 
+  lockQuestionInputBriefly(650);
   if (isEnToPl) {
     speakSequence([
       { lang: "pl", text: "Posłuchaj po angielsku i wskaż polskie tłumaczenie:" },
@@ -667,7 +805,7 @@ function renderAudioOnlyQuiz(lesson) {
 }
 
 function checkAudioOnlyAnswer(idx) {
-  if (state.answeredCurrent) return;
+  if (state.answeredCurrent || isQuestionInputLocked()) return;
   const q = state.roundQuestions[state.roundIndex];
   const isEnToPl = q && q._audioDirection === "en_to_pl";
   const chosen = window._currentChoices[idx];
@@ -698,33 +836,55 @@ function checkAudioOnlyAnswer(idx) {
       playBattleAttackSequence("hit", `Super ${attackerName}! Zaatakujesz teraz ${defenderGenitive}!`, "duel");
     } else {
       playEffect("success");
-      if (fb) fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! "${q.en}" znaczy "${q.pl}"!</span>`;
-      awardCorrectAnswer();
-      speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Brawo! ${q.en} to po polsku ${q.pl}!` }], () => advanceNextQuestion());
+      const comboInfo = awardCorrectAnswer();
+      if (fb) fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! "${q.en}" znaczy "${q.pl}"!${comboInfo && comboInfo.bonusText ? " " + comboInfo.bonusText : ""}</span>`;
+      const speechSegs = [{ lang: "en", text: q.en }, { lang: "pl", text: `Brawo! ${q.en} to po polsku ${q.pl}!` }];
+      if (comboInfo && comboInfo.bonusSpeech) speechSegs.push({ lang: "pl", text: comboInfo.bonusSpeech });
+      speakSequence(speechSegs, () => advanceNextQuestion());
     }
   } else {
     state.roundMistakes++;
     state.currentQuestionMistakes++;
+    resetRoundCombo();
+    recordMistakeForRematch(q);
     if (card) card.classList.add("shake-wrong");
     recordHardWordForActivePlayer(q);
     if (lbl) lbl.textContent = isEnToPl ? `❌ ${chosen.en}` : `❌ ${chosen.pl}`;
 
     if (state.isCoopDragonMode) {
       state.answeredCurrent = true;
+      highlightCorrectCardAfterError("aCard_", "aLabel_", q, true);
       state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
-      state.dragonBattle.statusText = `🔥💥 ZIONIĘCIE OGNIEM! Smok trafia drużynę! Tracicie 1 serduszko! (Zostało: ${state.dragonBattle.teamHp} ❤️)`;
-      if (fb) fb.innerHTML = `<span class="text-rose-600 font-extrabold">🔥💥 O nie! Smok atakuje! "${q.pl}" to po angielsku "${q.en}"!</span>`;
-      playDragonAttackSequence("fire", "Niestety, smok atakuje nas!");
+      state.dragonBattle.statusText = `🔥💥 ZIONIĘCIE OGNIEM! Zaznaczono: ${chosen.pl}. Poprawnie: ${q.en} (${q.pl}). Zostało: ${state.dragonBattle.teamHp} ❤️`;
+      if (fb) fb.innerHTML = `<span class="text-rose-600 font-extrabold">🔥💥 Zaznaczono: "${chosen.pl}". Poprawna odpowiedź to: "${q.en}" (${q.pl})! Smok atakuje!</span>`;
+      const errSpeech = isEnToPl
+        ? [
+            { lang: "pl", text: `Ojej! Zaznaczono ${chosen.pl}, a słowo` },
+            { lang: "en", text: q.en },
+            { lang: "pl", text: `oznacza ${q.pl}! Niestety, smok atakuje nas!` }
+          ]
+        : [
+            { lang: "pl", text: `Ojej! Zaznaczono ${chosen.pl}, a po angielsku ${q.pl} to:` },
+            { lang: "en", text: q.en },
+            { lang: "pl", text: "Niestety, smok atakuje nas!" }
+          ];
+      playDragonAttackSequence("fire", errSpeech);
     } else if (state.profile === "duel") {
       if (!state.duelBattle && typeof initDuelBattleState === "function") initDuelBattleState();
       state.answeredCurrent = true;
+      highlightCorrectCardAfterError("aCard_", "aLabel_", q, true);
       const attackerKey = state.duelTurn;
       const attackerName = state.duelTurn === "igor" ? "Igor" : "Hubert";
       const defenderName = state.duelTurn === "igor" ? "Hubert" : "Igor";
       state.duelBattle[`${attackerKey}Hp`] = Math.max(0, state.duelBattle[`${attackerKey}Hp`] - 1);
-      state.duelBattle.statusText = `⚡ KONTRATAK! ${defenderName.toUpperCase()} odbiera 1 serduszko! "${q.pl}" to "${q.en}"`;
-      if (fb) fb.innerHTML = `<span class="text-rose-600 font-extrabold">⚡ Pudło! ${defenderName} kontratakuje! "${q.pl}" to "${q.en}"!</span>`;
-      playBattleAttackSequence("fire", `Niestety ${attackerName}! ${defenderName} kontratakuje!`, "duel");
+      state.duelBattle.statusText = `⚡ KONTRATAK! Zaznaczono: ${chosen.pl}. Poprawnie: "${q.en}" (${q.pl})`;
+      if (fb) fb.innerHTML = `<span class="text-rose-600 font-extrabold">⚡ Pudło! Zaznaczono "${chosen.pl}", a poprawnie to "${q.en}" (${q.pl})!</span>`;
+      const duelErrSpeech = [
+        { lang: "pl", text: `Ojej ${attackerName}! Zaznaczono ${chosen.pl}, a szukaliśmy:` },
+        { lang: "en", text: q.en },
+        { lang: "pl", text: `czyli ${q.pl}! ${defenderName} kontratakuje!` }
+      ];
+      playBattleAttackSequence("fire", duelErrSpeech, "duel");
     } else {
       playEffect("wrong");
       if (isEnToPl) {
@@ -770,6 +930,7 @@ function renderColorMixGame(lesson) {
       </div>
     </div>
   `;
+  lockQuestionInputBriefly(650);
   speakSequence([{ lang: "pl", text: "Wskaż:" }, { lang: "en", text: q.en }]);
 }
 
@@ -949,6 +1110,7 @@ function renderDoctorGame(lesson) {
       <div id="doctorCalibSlidersBox">${renderDoctorCalibSlidersHtml()}</div>
     </div>
   `;
+  lockQuestionInputBriefly(650);
   speakSequence([{ lang: "pl", text: "Przyklej plasterek! Pacjent mówi:" }, { lang: "en", text: phrase }]);
 }
 
@@ -978,7 +1140,7 @@ function endBandAidTouch(e) {
 }
 
 function applyBandAidToZone(zoneId) {
-  if (state.answeredCurrent) return;
+  if (state.answeredCurrent || isQuestionInputLocked()) return;
   const q = state.roundQuestions[state.roundIndex];
   const zone = getDoctorZonesForActivePlayer().find(z => z.id === zoneId);
   if (!zone) return;
@@ -990,11 +1152,16 @@ function applyBandAidToZone(zoneId) {
     if (zoneEl) { zoneEl.className = "absolute -translate-x-1/2 flex items-center justify-center z-50 pop-correct"; zoneEl.innerHTML = `<span class="text-3xl drop-shadow-lg">🩹</span>`; }
     const dragBtn = document.getElementById("draggableBandAid");
     if (dragBtn) dragBtn.innerHTML = `<span class="text-4xl">✅</span><span class="text-[10px] font-extrabold text-emerald-700">Przyklejony!</span>`;
-    if (fb) fb.innerHTML = `<span class="text-emerald-600 font-extrabold">🩹🌟 Brawo! Plasterek przyklejony na: ${q.pl} (${q.en})! Pacjent wyleczony!</span>`;
-    awardCorrectAnswer();
-    speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Super! Plasterek przyklejony! To jest ${q.pl}!` }], () => advanceNextQuestion());
+    const comboInfo = awardCorrectAnswer();
+    if (fb) fb.innerHTML = `<span class="text-emerald-600 font-extrabold">🩹🌟 Brawo! Plasterek przyklejony na: ${q.pl} (${q.en})!${comboInfo && comboInfo.bonusText ? " " + comboInfo.bonusText : ""}</span>`;
+    const speechSegs = [{ lang: "en", text: q.en }, { lang: "pl", text: `Super! Plasterek przyklejony! To jest ${q.pl}!` }];
+    if (comboInfo && comboInfo.bonusSpeech) speechSegs.push({ lang: "pl", text: comboInfo.bonusSpeech });
+    speakSequence(speechSegs, () => advanceNextQuestion());
   } else {
-    state.roundMistakes++; state.currentQuestionMistakes++; playEffect("wrong");
+    state.roundMistakes++; state.currentQuestionMistakes++;
+    resetRoundCombo();
+    recordMistakeForRematch(q);
+    playEffect("wrong");
     if (patientBox) { patientBox.classList.add("shake-wrong"); setTimeout(() => patientBox.classList.remove("shake-wrong"), 550); }
     recordHardWordForActivePlayer(q);
     if (fb) fb.innerHTML = `<span class="text-rose-600">❌ To jest ${zone.pl} (${zone.en})! Posłuchaj pacjenta i przyklej plaster w dobre miejsce!</span>`;
@@ -1021,8 +1188,8 @@ function handleRiddleHintClick() {
 function renderRiddlesGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const pool = typeof RIDDLES_POOL !== "undefined" ? RIDDLES_POOL : lesson.items;
-  const numChoices = !isEffectiveIgorMode() ? 6 : 4;
-  const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
+  const numChoices = !isEffectiveIgorMode() ? 6 : 3;
+  const gridColsClass = numChoices === 3 ? "grid-cols-2 sm:grid-cols-3 max-w-3xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
   const choices = shuffleArray([q, ...shuffleArray(pool.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);
   window._currentChoices = choices; state.riddleHintStep = 0;
 
@@ -1045,14 +1212,15 @@ function renderRiddlesGame(lesson) {
       </div>
     </div>
   `;
+  lockQuestionInputBriefly(650);
   speakSequence([{ lang: "en", text: q.clueEn }]);
 }
 
 function renderShopCartGame(lesson) {
   const q = state.roundQuestions[state.roundIndex];
   const products = getVisibleLessonItems(lesson.items, true, lesson.id).filter(i => i.isProduct);
-  const numChoices = !isEffectiveIgorMode() ? 5 : 4;
-  const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
+  const numChoices = !isEffectiveIgorMode() ? 5 : 3;
+  const gridColsClass = numChoices === 3 ? "grid-cols-2 sm:grid-cols-3 max-w-3xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
   const choices = shuffleArray([q, ...shuffleArray(products.filter(it => it.en !== q.en)).slice(0, numChoices - 1)]);
   window._currentChoices = choices;
   const cartIcons = (state.shopCart && state.shopCart.length > 0) ? state.shopCart.map(ic => `<span class="text-2xl pop-correct">${ic}</span>`).join(" ") : `<span class="text-xs text-amber-700">Koszyk jest jeszcze pusty...</span>`;
@@ -1074,6 +1242,7 @@ function renderShopCartGame(lesson) {
       </div>
     </div>
   `;
+  lockQuestionInputBriefly(650);
   speakSequence([{ lang: "pl", text: "Włóż do koszyka:" }, { lang: "en", text: q.en }]);
 }
 
@@ -1083,8 +1252,10 @@ function renderUniversalVisualQuiz(lesson) {
     return renderAudioOnlyQuiz(lesson);
   }
   const isIgorTurn = isEffectiveIgorMode();
-  const numChoices = !isIgorTurn ? 6 : 4;
-  const gridColsClass = numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3";
+  const numChoices = !isIgorTurn ? 6 : (state.isCoopDragonMode ? 4 : 3);
+  const gridColsClass = numChoices === 3
+    ? "grid-cols-2 sm:grid-cols-3 max-w-3xl mx-auto"
+    : (numChoices === 4 ? "grid-cols-2 max-w-2xl mx-auto" : "grid-cols-2 sm:grid-cols-3");
 
   let allPool = [];
   const isTataCtx = isBrothersTestSandbox();
@@ -1123,7 +1294,7 @@ function renderUniversalVisualQuiz(lesson) {
       <div class="flex items-center justify-between bg-sky-50 p-3 rounded-2xl border border-sky-200 mb-3 drop-shadow-sm">
         <button onclick="speakSequence([{lang:'en',text:'${q.en.replace(/'/g,"\\'")}'}])" class="kid-card w-12 h-12 rounded-2xl bg-sky-500 text-white text-2xl shadow flex items-center justify-center">🔊</button>
         <div class="text-xl md:text-3xl font-extrabold text-slate-900 flex-1 px-2 tracking-wide">"${q.en}" ${q.phonetic ? '[' + q.phonetic + ']' : ''}</div>
-        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-sky-300 text-slate-600">${!isIgorTurn ? '🧑 6 opcji' : '👦 4 opcje'}</span>
+        <span class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold border border-sky-300 text-slate-600">${!isIgorTurn ? '🧑 6 opcji' : `👦 ${numChoices} opcje`}</span>
       </div>
       <div id="feedbackBanner" class="min-h-[34px] font-bold text-base mb-2 flex items-center justify-center"></div>
       <div class="grid ${gridColsClass} gap-3.5">
@@ -1131,11 +1302,12 @@ function renderUniversalVisualQuiz(lesson) {
       </div>
     </div>
   `;
+  lockQuestionInputBriefly(650);
   speakSequence([{ lang: "pl", text: "Wskaż:" }, { lang: "en", text: q.en }]);
 }
 
 function checkUniversalAnswer(idx, isShopCart = false) {
-  if (state.answeredCurrent) return;
+  if (state.answeredCurrent || isQuestionInputLocked()) return;
   const q = state.roundQuestions[state.roundIndex], chosen = window._currentChoices[idx];
   const card = document.getElementById(`vCard_${idx}`), lbl = document.getElementById(`vLabel_${idx}`), fb = document.getElementById("feedbackBanner");
 
@@ -1163,30 +1335,49 @@ function checkUniversalAnswer(idx, isShopCart = false) {
       playBattleAttackSequence("hit", `Super ${attackerName}! Zaatakujesz teraz ${defenderGenitive}!`, "duel");
     } else {
       playEffect("success");
-      fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! ${state.isHardWordsMode && state.currentQuestionMistakes === 0 ? 'Opanowano trudne słówko (+2 ⭐)!' : 'O to chodziło!'}</span>`;
-      awardCorrectAnswer();
-      speakSequence([{ lang: "en", text: q.en }, { lang: "pl", text: `Brawo! To znaczy ${q.pl}!` }], () => advanceNextQuestion());
+      const comboInfo = awardCorrectAnswer();
+      const mainMsg = state.isRematchPhase
+        ? "Dogrywka zaliczona (+1 ⭐)!"
+        : (state.isHardWordsMode && state.currentQuestionMistakes === 0 ? "Opanowano trudne słówko (+2 ⭐)!" : "O to chodziło!");
+      fb.innerHTML = `<span class="text-emerald-600 drop-shadow-sm">🌟 Brawo! ${mainMsg}${comboInfo && comboInfo.bonusText ? " " + comboInfo.bonusText : ""}</span>`;
+      const speechSegs = [{ lang: "en", text: q.en }, { lang: "pl", text: `Brawo! To znaczy ${q.pl}!` }];
+      if (comboInfo && comboInfo.bonusSpeech) speechSegs.push({ lang: "pl", text: comboInfo.bonusSpeech });
+      speakSequence(speechSegs, () => advanceNextQuestion());
     }
   } else {
-    state.roundMistakes++; state.currentQuestionMistakes++; card.classList.add("shake-wrong");
+    state.roundMistakes++; state.currentQuestionMistakes++;
+    resetRoundCombo();
+    recordMistakeForRematch(q);
+    card.classList.add("shake-wrong");
     recordHardWordForActivePlayer(q);
     lbl.textContent = `❌ ${chosen.pl}`;
+
     if (state.isCoopDragonMode) {
       state.answeredCurrent = true;
+      highlightCorrectCardAfterError("vCard_", "vLabel_", q, false);
       state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
-      state.dragonBattle.statusText = `🔥💥 ZIONIĘCIE OGNIEM! Smok trafia drużynę! Tracicie 1 serduszko! (Zostało: ${state.dragonBattle.teamHp} ❤️)`;
-      fb.innerHTML = `<span class="text-rose-600 font-extrabold">🔥💥 O nie! Smok atakuje nas! Szukaliśmy: ${q.en} (${q.pl})</span>`;
-      playDragonAttackSequence("fire", "Niestety, smok atakuje nas!");
+      state.dragonBattle.statusText = `🔥💥 ZIONIĘCIE OGNIEM! Zaznaczono: ${chosen.pl}. Szukaliśmy: ${q.en} (${q.pl})! Zostało: ${state.dragonBattle.teamHp} ❤️`;
+      fb.innerHTML = `<span class="text-rose-600 font-extrabold">🔥💥 Zaznaczono: ${chosen.pl}, a szukaliśmy: "${q.en}" (${q.pl})! Smok atakuje!</span>`;
+      playDragonAttackSequence("fire", [
+        { lang: "pl", text: `Ojej! Zaznaczono ${chosen.pl}, a szukaliśmy:` },
+        { lang: "en", text: q.en },
+        { lang: "pl", text: `czyli ${q.pl}! Niestety, smok atakuje nas!` }
+      ]);
     } else if (state.profile === "duel") {
       if (!state.duelBattle && typeof initDuelBattleState === "function") initDuelBattleState();
       state.answeredCurrent = true;
+      highlightCorrectCardAfterError("vCard_", "vLabel_", q, false);
       const attackerKey = state.duelTurn;
       const attackerName = state.duelTurn === "igor" ? "Igor" : "Hubert";
       const defenderName = state.duelTurn === "igor" ? "Hubert" : "Igor";
       state.duelBattle[`${attackerKey}Hp`] = Math.max(0, state.duelBattle[`${attackerKey}Hp`] - 1);
-      state.duelBattle.statusText = `⚡ KONTRATAK! ${defenderName.toUpperCase()} odbiera 1 serduszko! Szukaliśmy: ${q.en} (${q.pl})`;
-      fb.innerHTML = `<span class="text-rose-600 font-extrabold">⚡ Pudło! ${defenderName} kontratakuje! Szukaliśmy: ${q.en} (${q.pl})</span>`;
-      playBattleAttackSequence("fire", `Niestety ${attackerName}! ${defenderName} kontratakuje!`, "duel");
+      state.duelBattle.statusText = `⚡ KONTRATAK! Zaznaczono: ${chosen.pl}. Szukaliśmy: ${q.en} (${q.pl})`;
+      fb.innerHTML = `<span class="text-rose-600 font-extrabold">⚡ Pudło! Zaznaczono: ${chosen.pl}, a szukaliśmy: "${q.en}" (${q.pl})!</span>`;
+      playBattleAttackSequence("fire", [
+        { lang: "pl", text: `Ojej ${attackerName}! Zaznaczono ${chosen.pl}, a szukaliśmy:` },
+        { lang: "en", text: q.en },
+        { lang: "pl", text: `czyli ${q.pl}! ${defenderName} kontratakuje!` }
+      ], "duel");
     } else {
       playEffect("wrong");
       fb.innerHTML = `<span class="text-rose-600">❌ To jest ${chosen.pl}. Spróbuj jeszcze raz!</span>`;
@@ -1198,14 +1389,60 @@ function checkUniversalAnswer(idx, isShopCart = false) {
 function awardCorrectAnswer() {
   state.roundScore++;
   const q = state.roundQuestions[state.roundIndex];
-  const starBonus = (state.isHardWordsMode && state.currentQuestionMistakes === 0) ? 2 : 1;
-  if (state.currentQuestionMistakes === 0) { state.roundResults.push("correct"); if (state.isHardWordsMode) removeHardWordIfMastered(q); }
-  else state.roundResults.push("wrong");
+  const isSolo = state.profile !== "duel" && !state.isCoopDragonMode;
+  const isFirstTry = state.currentQuestionMistakes === 0;
+  const starBonus = (state.isHardWordsMode && isFirstTry && !state.isRematchPhase) ? 2 : 1;
 
-  if (state.profile === "igor") { state.stats.igor.stars += starBonus; advanceDailyQuestProgress("igor", "stars", starBonus); }
-  else if (state.profile === "hubert") { state.stats.hubert.stars += starBonus; advanceDailyQuestProgress("hubert", "stars", starBonus); }
-  else if (state.profile === "tata") { state.stats.tata.stars += starBonus; advanceDailyQuestProgress("tata", "stars", starBonus); }
-  else if (state.profile === "duel" || state.isCoopDragonMode) {
+  if (isFirstTry) {
+    state.roundResults.push("correct");
+    if (state.isHardWordsMode && typeof removeHardWordIfMastered === "function") {
+      try { removeHardWordIfMastered(q); } catch (e) {}
+    }
+  } else {
+    state.roundResults.push("wrong");
+  }
+
+  let comboBonus = 0;
+  let bonusText = "";
+  let bonusSpeech = "";
+
+  if (isSolo && !state.isRematchPhase) {
+    if (isFirstTry) {
+      state.roundCombo = (state.roundCombo || 0) + 1;
+      if (state.roundCombo === 3) {
+        comboBonus = 2;
+        bonusText = "🔥 COMBO x3! Bonus +2 ⭐!";
+        bonusSpeech = "Super seria trzy z rzędu! Dostajesz dwie dodatkowe gwiazdki!";
+      } else if (state.roundCombo === 5) {
+        comboBonus = 5;
+        bonusText = "🔥🔥 COMBO x5! Bonus +5 ⭐!";
+        bonusSpeech = "Niesamowita seria pięć z rzędu! Dostajesz pięć dodatkowych gwiazdek!";
+      } else if (state.roundCombo === 8) {
+        comboBonus = 10;
+        bonusText = "🔥🔥🔥 MEGA COMBO x8! Bonus +10 ⭐!";
+        bonusSpeech = "Mega seria osiem z rzędu! Dostajesz aż dziesięć dodatkowych gwiazdek!";
+      }
+      if (comboBonus > 0) {
+        state.roundBonusStars = (state.roundBonusStars || 0) + comboBonus;
+        playEffect("fanfare");
+      }
+    } else {
+      state.roundCombo = 0;
+    }
+  }
+
+  const totalStarsAwarded = starBonus + comboBonus;
+
+  if (state.profile === "igor") {
+    state.stats.igor.stars += totalStarsAwarded;
+    advanceDailyQuestProgress("igor", "stars", totalStarsAwarded);
+  } else if (state.profile === "hubert") {
+    state.stats.hubert.stars += totalStarsAwarded;
+    advanceDailyQuestProgress("hubert", "stars", totalStarsAwarded);
+  } else if (state.profile === "tata") {
+    state.stats.tata.stars += totalStarsAwarded;
+    advanceDailyQuestProgress("tata", "stars", totalStarsAwarded);
+  } else if (state.profile === "duel" || state.isCoopDragonMode) {
     if (isBrothersTestSandbox()) {
       if (state.duelTurn === "igor") state.duelScores.igor++;
       else state.duelScores.hubert++;
@@ -1214,10 +1451,13 @@ function awardCorrectAnswer() {
       else { state.duelScores.hubert++; state.stats.hubert.stars++; advanceDailyQuestProgress("hubert", "stars", 1); }
     }
   }
+
   if (typeof updateHeaderUI === "function") updateHeaderUI();
   if (!isBrothersTestSandbox() || (state.profile !== "duel" && !state.isCoopDragonMode)) {
     saveCloudData();
   }
+
+  return { combo: state.roundCombo || 0, bonusStars: comboBonus, bonusText, bonusSpeech };
 }
 
 function advanceNextQuestion(forceSkip = false) {
@@ -1238,6 +1478,7 @@ function advanceNextQuestion(forceSkip = false) {
   window._letterTargetWord = ""; window._letterRoundIdx = -1;
   if (!state.answeredCurrent) {
     state.roundResults.push("wrong"); state.roundMistakes++;
+    resetRoundCombo();
     if (state.isCoopDragonMode) state.dragonBattle.teamHp = Math.max(0, state.dragonBattle.teamHp - 1);
     if (state.profile === "duel" && state.duelBattle) {
       state.duelBattle[`${state.duelTurn}Hp`] = Math.max(0, state.duelBattle[`${state.duelTurn}Hp`] - 1);
@@ -1254,6 +1495,12 @@ function advanceNextQuestion(forceSkip = false) {
 }
 
 function playAgainCurrentLesson() {
+  state.isRematchPhase = false;
+  state._rematchQuestionsRef = null;
+  state.rematchQueue = [];
+  state._mainRoundSnapshot = null;
+  state.roundCombo = 0;
+  state.roundBonusStars = 0;
   const lid = state.lastPlayedLessonId || state.currentLessonId;
   const sub = state.lastPlayedSubMode || state.currentSubMode;
   if (lid === "memory_game" && typeof startMemoryGame === "function") return startMemoryGame();
@@ -1266,6 +1513,10 @@ function playAgainCurrentLesson() {
 }
 
 function startNextSequentialLesson() {
+  state.isRematchPhase = false;
+  state._rematchQuestionsRef = null;
+  state.rematchQueue = [];
+  state._mainRoundSnapshot = null;
   const visible = state.lessons.filter(l => !l.testOnly || state.profile === "tata");
   const curId = state.lastPlayedLessonId || state.currentLessonId;
   const idx = visible.findIndex(l => l.id === curId);
@@ -1278,6 +1529,19 @@ function renderEndRoundScreen() {
   clearAllDragonBattleTimers();
   cancelAllSpeechAndTimers();
   hideDragonFullscreenClash();
+
+  const mainSnap = state._mainRoundSnapshot || null;
+  const finalScore = mainSnap ? mainSnap.score : state.roundScore;
+  const finalTotal = mainSnap ? mainSnap.total : state.roundQuestions.length;
+  const finalMistakes = mainSnap ? mainSnap.mistakes : state.roundMistakes;
+  const rematchDoneCount = (state.isRematchPhase && mainSnap) ? mainSnap.rematchCount : 0;
+  const bonusStarsEarned = state.roundBonusStars || 0;
+
+  state.isRematchPhase = false;
+  state._rematchQuestionsRef = null;
+  state.rematchQueue = [];
+  state._mainRoundSnapshot = null;
+
   const finishedLessonId = state.currentLessonId || state.lastPlayedLessonId;
   if (finishedLessonId) state.lastPlayedLessonId = finishedLessonId;
 
@@ -1311,6 +1575,10 @@ function renderEndRoundScreen() {
       }
 
       state.stats.igor.cups++; state.stats.hubert.cups++;
+      if (typeof recordPlayerActivity === "function") {
+        recordPlayerActivity("igor", "dragon_coop");
+        recordPlayerActivity("hubert", "dragon_coop");
+      }
       const dailyDragon = getDailySpecialChestStatus("dragon");
 
       if (dailyDragon.canEarn) {
@@ -1402,6 +1670,10 @@ function renderEndRoundScreen() {
       duelChestBannerHtml = `<div class="mt-2 p-2.5 rounded-xl bg-emerald-100 border border-emerald-400 text-xs font-extrabold text-emerald-950">🧪 Tryb testowy Taty: wynik pojedynku nie wpływa na gwiazdki, puchary ani limit skrzyń Igora i Huberta.</div>`;
     } else {
       state.stats.igor.cups++; state.stats.hubert.cups++;
+      if (typeof recordPlayerActivity === "function") {
+        recordPlayerActivity("igor", "duel");
+        recordPlayerActivity("hubert", "duel");
+      }
       if (duelWinner === "igor") state.stats.igor.duelsWon++;
       else if (duelWinner === "hubert") state.stats.hubert.duelsWon++;
       checkAndUnlockAchievements("igor"); checkAndUnlockAchievements("hubert");
@@ -1431,8 +1703,11 @@ function renderEndRoundScreen() {
     }
   } else {
     p.cups++;
+    if (typeof recordPlayerActivity === "function") {
+      recordPlayerActivity(profKey, finishedLessonId || "lesson");
+    }
     advanceDailyQuestProgress(profKey, "rounds", 1);
-    if (state.roundMistakes === 0) { p.perfectRounds++; advanceDailyQuestProgress(profKey, "perfect", 1); }
+    if (finalMistakes === 0) { p.perfectRounds++; advanceDailyQuestProgress(profKey, "perfect", 1); }
     if (state.isExamMode) p.examsDone++;
     if (finishedLessonId && finishedLessonId !== "grand_exam" && finishedLessonId !== "hard_words_training") {
       p.lessonCounts[finishedLessonId] = (p.lessonCounts[finishedLessonId] || 0) + 1;
@@ -1442,12 +1717,19 @@ function renderEndRoundScreen() {
   }
 
   if (state.isExamMode) {
-    const chest = state.roundMistakes <= 2 ? "gold" : state.roundMistakes <= 5 ? "silver" : "bronze";
-    if (typeof renderChestOpeningInsidePopup === "function") renderChestOpeningInsidePopup(profKey, chest, `🎓 Nagroda za Sprawdzian (Błędów: ${state.roundMistakes})`);
+    const chest = finalMistakes <= 2 ? "gold" : finalMistakes <= 5 ? "silver" : "bronze";
+    if (typeof renderChestOpeningInsidePopup === "function") renderChestOpeningInsidePopup(profKey, chest, `🎓 Nagroda za Sprawdzian (Błędów: ${finalMistakes})`);
   }
 
   const isMemory = finishedLessonId === "memory_game";
   const dvbFinal = state.duelBattle || { igorHp: 7, hubertHp: 7, maxHp: 7 };
+  const comboSummaryHtml = bonusStarsEarned > 0
+    ? `<div class="mb-2 inline-block px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-orange-100 to-amber-100 border-2 border-amber-400 text-amber-950 font-extrabold text-xs md:text-sm">🔥 Bonusowe gwiazdki za serię Combo: <strong>+${bonusStarsEarned} ⭐</strong>!</div>`
+    : "";
+  const rematchSummaryHtml = rematchDoneCount > 0
+    ? `<div class="mb-2 inline-block px-3.5 py-1.5 rounded-2xl bg-indigo-100 border-2 border-indigo-300 text-indigo-950 font-extrabold text-xs md:text-sm">🦉🎯 Dogrywka ukończona! Poprawiono ${rematchDoneCount} ${rematchDoneCount === 1 ? "słówko" : "słówka"}!</div>`
+    : "";
+
   const duelInfo = state.profile === "duel"
     ? `<div class="my-3 p-4 rounded-2xl bg-purple-50 border-2 border-purple-300 font-extrabold text-lg">
         <div class="flex justify-center items-center gap-6 mb-2">
@@ -1461,7 +1743,7 @@ function renderEndRoundScreen() {
        </div>`
     : (isMemory
         ? `<p class="text-slate-700 font-bold mb-4">Brawo! Znaleziono wszystkie pary (${state.memoryMatchedPairs}/${state.memoryMatchedPairs})! 🎉</p>`
-        : `<p class="text-slate-600 mb-4">Wynik: <strong>${state.roundScore}/${state.roundQuestions.length}</strong> (Błędy: ${state.roundMistakes})</p>`);
+        : `<p class="text-slate-600 mb-3">Wynik: <strong>${finalScore}/${finalTotal}</strong> (Błędy: ${finalMistakes})</p><div class="flex flex-col items-center gap-1 mb-2">${comboSummaryHtml}${rematchSummaryHtml}</div>`);
 
   const nextLessonBtnHtml = state.profile !== "duel" && !state.isExamMode
     ? `<button onclick="startNextSequentialLesson()" class="kid-card w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold shadow-lg text-base">⏭️ Następna lekcja</button>`

@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/09-parent-init.js
-   PIN RODZICA, GENERATOR AI, POTWIERDZENIA AKCJI, SKRZYNIE I GARDEROBA (%)
+   PANEL RODZICA (V15.0): AKTYWNOŚĆ 7 DNI, AUTO-BACKUP 14 DNI, POTWIERDZENIA, %
    ============================================================================ */
 
 let _pendingPinAction = "dashboard";
@@ -420,13 +420,265 @@ function openParentSection(sectionKey) {
 
 function refreshAllParentWidgets() {
   populateParentLessonSelect();
+  renderParentWeeklyActivityBox();
   renderParentTestCenter();
   updateParentMenuWardrobeSummaryBadge();
   renderParentWardrobeManager();
   renderParentLessonsManager();
   renderParentHardWordsBox();
   renderRoundLengthButtons();
+  renderParentDailyBackupsBox();
   updateAiKeyStatusBadge();
+}
+
+// ------------------------------------------------------------------------
+// TYGODNIOWE PODSUMOWANIE AKTYWNOŚCI SYNÓW (OSTATNIE 7 DNI)
+// ------------------------------------------------------------------------
+function getLessonShortNameForReport(lessonId) {
+  const specials = {
+    grand_exam: "🎓 Wielki Sprawdzian",
+    hard_words_training: "🎯 Trudne słówka",
+    dragon_coop: "🐉 Walka ze Smokiem",
+    duel: "⚔️ Pojedynek Braci"
+  };
+  if (specials[lessonId]) return specials[lessonId];
+  const found = (state.lessons || []).find(l => l.id === lessonId);
+  if (found) return `${found.icon || "📘"} ${found.title.replace(/^\d+\.\s*/, "")}`;
+  return lessonId;
+}
+
+function renderParentWeeklyActivityBox() {
+  const menu = document.getElementById("parentMenuGrid");
+  if (!menu) return;
+
+  let box = document.getElementById("parentWeeklyActivityBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "parentWeeklyActivityBox";
+    box.className = "col-span-full p-3.5 rounded-2xl bg-gradient-to-r from-sky-50 via-indigo-50 to-purple-50 border-2 border-indigo-200 shadow-sm";
+    menu.prepend(box);
+  }
+
+  const dayNamesPl = ["Nd", "Pn", "Wt", "Śr", "Cz", "Pt", "Sb"];
+  const last7Days = [];
+  for (let offset = 6; offset >= 0; offset--) {
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    last7Days.push({
+      iso: d.toISOString().slice(0, 10),
+      shortDay: dayNamesPl[d.getDay()],
+      dayNum: d.getDate()
+    });
+  }
+
+  const activeKidsLessons = (state.lessons || []).filter(l => !l.testOnly);
+
+  const renderBoyWeeklyCard = (profKey, label, borderCls) => {
+    const p = ensurePlayerStructure(state.stats[profKey]);
+    const log = p.activityLog || {};
+    let totalRounds = 0;
+    let activeDays = 0;
+    const lessonTotals = {};
+
+    const dayPills = last7Days.map(day => {
+      const rec = log[day.iso];
+      const cnt = rec ? (Number(rec.rounds) || 0) : 0;
+      totalRounds += cnt;
+      if (cnt > 0) activeDays++;
+      if (rec && rec.lessons) {
+        Object.keys(rec.lessons).forEach(lid => {
+          lessonTotals[lid] = (lessonTotals[lid] || 0) + (Number(rec.lessons[lid]) || 0);
+        });
+      }
+      const pillCls = cnt >= 3
+        ? "bg-emerald-500 text-white border-emerald-600"
+        : (cnt > 0 ? "bg-emerald-100 text-emerald-900 border-emerald-300" : "bg-slate-100 text-slate-400 border-slate-200");
+      return `
+        <div class="flex flex-col items-center px-1.5 py-1 rounded-xl border text-[10px] font-extrabold ${pillCls}">
+          <span>${day.shortDay}</span>
+          <span class="text-xs">${cnt > 0 ? cnt : "·"}</span>
+        </div>
+      `;
+    }).join("");
+
+    const topLessons = Object.entries(lessonTotals)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4);
+
+    const skippedLessons = activeKidsLessons
+      .filter(l => !lessonTotals[l.id])
+      .slice(0, 4)
+      .map(l => l.title.replace(/^\d+\.\s*/, ""));
+
+    return `
+      <div class="p-3 rounded-2xl bg-white border-2 ${borderCls} shadow-sm space-y-2">
+        <div class="flex flex-wrap items-center justify-between gap-1">
+          <span class="font-extrabold text-xs md:text-sm text-slate-900">${label}</span>
+          <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-900 border border-indigo-200">
+            7 dni: ${totalRounds} rund • ${activeDays}/7 dni • 🔥 seria: ${p.streakDays || 0}
+          </span>
+        </div>
+        <div class="grid grid-cols-7 gap-1">${dayPills}</div>
+        <div class="text-[11px] text-slate-700">
+          ${topLessons.length > 0
+            ? `<div><strong class="text-emerald-800">Ćwiczone:</strong> ${topLessons.map(([lid, c]) => `${getLessonShortNameForReport(lid)} (${c}x)`).join(", ")}</div>`
+            : `<div class="text-slate-400 font-bold">Brak zapisanych rund w ostatnich 7 dniach (zbieranie rusza od v15.0).</div>`}
+          ${skippedLessons.length > 0
+            ? `<div class="text-[10px] text-amber-800 mt-0.5"><strong>Warto przypomnieć:</strong> ${skippedLessons.join(", ")}</div>`
+            : ""}
+        </div>
+      </div>
+    `;
+  };
+
+  box.innerHTML = `
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+      <div class="font-extrabold text-sm text-indigo-950">📊 Tygodniowe podsumowanie aktywności (ostatnie 7 dni)</div>
+      <span class="text-[10px] font-bold text-indigo-700">Liczba ukończonych rund dziennie</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+      ${renderBoyWeeklyCard("igor", "👦 Igor (4 lata)", "border-amber-300")}
+      ${renderBoyWeeklyCard("hubert", "🧑 Hubert (6 lat)", "border-sky-300")}
+    </div>
+  `;
+}
+
+// ------------------------------------------------------------------------
+// AUTOMATYCZNA 14-DNIOWA HISTORIA KOPII ZAPASOWYCH (TELEFON / LAPTOP)
+// ------------------------------------------------------------------------
+function renderParentDailyBackupsBox() {
+  let box = document.getElementById("parentDailyBackupsBox");
+  if (!box) {
+    const exportBtn = document.querySelector('[onclick*="parentExportBackupJson"]');
+    const host = exportBtn ? (exportBtn.closest(".parent-sub-section") || exportBtn.parentElement) : null;
+    if (!host) return;
+    box = document.createElement("div");
+    box.id = "parentDailyBackupsBox";
+    box.className = "mt-4 p-4 rounded-2xl bg-sky-50 border-2 border-sky-300 shadow-sm space-y-2.5";
+    host.appendChild(box);
+  }
+
+  const backups = typeof getLocalDailyBackups === "function" ? getLocalDailyBackups() : [];
+
+  box.innerHTML = `
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h4 class="font-extrabold text-sky-950 text-sm md:text-base">🗓️ Automatyczne codzienne kopie (ostatnie 14 dni)</h4>
+        <div class="text-[11px] text-sky-800">Gra sama zapisuje 1 kopię dziennie w pamięci tego urządzenia. Możesz ją pobrać jako .json lub przywrócić same ubrania / całość.</div>
+      </div>
+      <button type="button" onclick="parentForceDailyBackupNow()" class="kid-card px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow">
+        📸 Zapisz migawkę teraz
+      </button>
+    </div>
+    ${backups.length === 0
+      ? `<div class="p-3 rounded-xl bg-white border border-sky-200 text-xs font-bold text-slate-500">Brak zapisanych migawek – pierwsza utworzy się automatycznie przy najbliższym zapisie.</div>`
+      : `<div class="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+          ${backups.map(snap => {
+            const ig = snap.data?.stats?.igor || {};
+            const hu = snap.data?.stats?.hubert || {};
+            const savedTime = snap.savedAt ? new Date(snap.savedAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" }) : "";
+            const igOutfits = Array.isArray(ig.unlockedItems) ? ig.unlockedItems.length : 0;
+            const huOutfits = Array.isArray(hu.unlockedItems) ? hu.unlockedItems.length : 0;
+            return `
+              <div class="p-2.5 rounded-xl bg-white border border-sky-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div>
+                  <div class="font-extrabold text-slate-900">📅 ${snap.date} <span class="text-[10px] font-bold text-slate-500">(${savedTime} • v${snap.version || "?"})</span></div>
+                  <div class="text-[10px] text-slate-600">
+                    👦 Igor: ⭐ ${ig.stars || 0} • 👕 ${igOutfits} &nbsp;|&nbsp; 🧑 Hubert: ⭐ ${hu.stars || 0} • 👕 ${huOutfits}
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <button type="button" onclick="parentDownloadDailyBackup('${snap.date}')" class="px-2.5 py-1 rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-900 font-extrabold text-[11px] border border-sky-300">⬇️ .json</button>
+                  <button type="button" onclick="parentRestoreWardrobeOnlyFromDailyBackup('${snap.date}')" class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-950 font-extrabold text-[11px] border border-amber-300">👕 Tylko ubrania</button>
+                  <button type="button" onclick="parentRestoreDailyBackup('${snap.date}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px]">♻️ Całość</button>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>`}
+  `;
+}
+
+function parentForceDailyBackupNow() {
+  if (!confirmParentAction("Zapiszesz teraz ręcznie dzisiejszą migawkę w lokalnej historii 14 dni.")) return;
+  if (typeof recordDailyLocalBackup === "function") recordDailyLocalBackup();
+  renderParentDailyBackupsBox();
+  showParentStatus("📸 Zapisano świeżą dzisiejszą migawkę w historii kopii!");
+}
+
+function parentDownloadDailyBackup(dateStr) {
+  const backups = typeof getLocalDailyBackups === "function" ? getLocalDailyBackups() : [];
+  const snap = backups.find(b => b.date === dateStr);
+  if (!snap || !snap.data) {
+    showParentStatus("❌ Nie znaleziono kopii z dnia " + dateStr, true);
+    return;
+  }
+  const blob = new Blob([JSON.stringify(snap.data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `akademia_auto_backup_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showParentStatus(`⬇️ Pobrano automatyczną kopię z dnia ${dateStr} (.json).`);
+}
+
+function parentRestoreWardrobeOnlyFromDailyBackup(dateStr) {
+  const backups = typeof getLocalDailyBackups === "function" ? getLocalDailyBackups() : [];
+  const snap = backups.find(b => b.date === dateStr);
+  if (!snap || !snap.data || !snap.data.stats) {
+    showParentStatus("❌ Nie znaleziono kopii z dnia " + dateStr, true);
+    return;
+  }
+  if (!confirmParentAction(`Przywrócisz WYŁĄCZNIE ubrania, zwierzaki i wygląd awatarów z dnia ${dateStr} (gwiazdki, puchary i odznaki pozostaną bez zmian).`)) return;
+
+  const nowTs = Date.now();
+  ["igor", "hubert", "tata"].forEach(k => {
+    const srcP = snap.data.stats[k];
+    if (!srcP) return;
+    const cur = ensurePlayerStructure(state.stats[k]);
+    const oldClean = ensurePlayerStructure(srcP);
+    cur.unlockedItems = [...oldClean.unlockedItems];
+    cur.memoryAnimals = [...oldClean.memoryAnimals];
+    cur.avatar = { ...oldClean.avatar };
+    cur.wardrobeUpdatedAt = nowTs;
+    state.stats[k] = cur;
+  });
+
+  saveCloudData();
+  refreshAllParentWidgets();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  showParentStatus(`👕 Przywrócono garderobę i zwierzaki ze stanu z dnia ${dateStr} i zapisano w chmurze!`);
+}
+
+function parentRestoreDailyBackup(dateStr) {
+  const backups = typeof getLocalDailyBackups === "function" ? getLocalDailyBackups() : [];
+  const snap = backups.find(b => b.date === dateStr);
+  if (!snap || !snap.data) {
+    showParentStatus("❌ Nie znaleziono kopii z dnia " + dateStr, true);
+    return;
+  }
+  if (!confirmParentAction(`Przywrócisz PEŁNY stan gry z dnia ${dateStr}. Nadpisze to obecne gwiazdki, ubrania i postępy wszystkich profili!`)) return;
+
+  const parsed = snap.data;
+  const nowTs = Date.now();
+  if (parsed.stats) {
+    ["igor", "hubert", "tata"].forEach(k => {
+      const p = ensurePlayerStructure(parsed.stats[k]);
+      p.wardrobeUpdatedAt = nowTs;
+      p.pendingChestsUpdatedAt = nowTs;
+      state.stats[k] = p;
+    });
+    if (Array.isArray(parsed.stats.stickers)) state.stats.stickers = parsed.stats.stickers;
+  }
+  if (Array.isArray(parsed.lessons)) state.lessons = parsed.lessons;
+  if (parsed.questionsPerRound) state.questionsPerRound = parsed.questionsPerRound;
+  if (parsed.calibration) state.calibration = mergeCalibrationWithDefaults(parsed.calibration);
+
+  saveCloudData();
+  refreshAllParentWidgets();
+  if (typeof updateHeaderUI === "function") updateHeaderUI();
+  showParentStatus(`♻️ Przywrócono pełny stan gry z dnia ${dateStr} i zapisano w chmurze!`);
 }
 
 function populateParentLessonSelect() {
@@ -1073,7 +1325,9 @@ function parentToggleSingleOutfitForProfile(profKey, src) {
   const p = ensurePlayerStructure(state.stats[profKey]);
   const cleanSrc = resolveOutfitPath(src);
   const exists = p.unlockedItems.includes(cleanSrc);
-  const itemLabel = cleanSrc.split("/").pop().replace(/\.png$/i, "");
+  const itemLabel = typeof getOutfitPolishInfo === "function"
+    ? getOutfitPolishInfo(cleanSrc).display
+    : cleanSrc.split("/").pop().replace(/\.png$/i, "");
   const name = PROFILE_META[profKey].name;
 
   const msg = exists
@@ -1136,7 +1390,7 @@ function renderParentWardrobeManager() {
 
   const all131 = typeof getAll131OutfitsFlat === "function" ? getAll131OutfitsFlat() : [];
   const allPets = typeof COMPANION_PETS !== "undefined" ? COMPANION_PETS : [];
-  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.9";
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "15.0";
 
   const activeStats = getPlayerWardrobeProgressStats(profKey);
   const igStats = getPlayerWardrobeProgressStats("igor");
@@ -1222,6 +1476,7 @@ function renderParentWardrobeManager() {
         ${filtered.map(item => {
           const unlocked = p.unlockedItems.includes(item.src);
           const tierBadge = item.tier === "gold" ? "bg-amber-400 text-amber-950" : item.tier === "silver" ? "bg-slate-300 text-slate-900" : "bg-amber-700 text-white";
+          const labelPl = item.displayName || item.name;
           return `
             <button type="button" onclick="parentToggleSingleOutfitForProfile('${profKey}', '${item.src}')"
               class="kid-card p-2 rounded-2xl border-2 text-center flex flex-col items-center justify-between ${
@@ -1229,7 +1484,7 @@ function renderParentWardrobeManager() {
               }">
               <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${tierBadge} mb-1">${item.tierLabel}</span>
               <img src="${item.src}?v=${ver}" loading="lazy" decoding="async" class="w-12 h-12 object-contain my-0.5" onerror="if(typeof handleOutfitImgError==='function'){handleOutfitImgError(this, '${item.src}', '${item.fallbackSrc}');}" />
-              <span class="text-[10px] font-bold leading-tight break-all">${item.name}</span>
+              <span class="text-[10px] font-bold leading-tight">${labelPl}</span>
               <span class="mt-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold ${unlocked ? "bg-emerald-600 text-white" : "bg-slate-300 text-slate-700"}">
                 ${unlocked ? "✓ Ma to" : "🔒 Brak"}
               </span>

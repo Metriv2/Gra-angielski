@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/03-state-cloud.js
-   STAN GRY (V15.0), AUTO-BACKUP 14 DNI, DZIENNIK 7 DNI I CHMURA GAS
+   STAN GRY (V15.0), AUTO-BACKUP 14 DNI, DZIENNIK 7 DNI, NORMALIZACJA IKON SVG
    ============================================================================ */
 
 const PROFILE_META = {
@@ -196,6 +196,25 @@ let activeSpeechToken = 0;
 let pendingAdvanceTimer = null;
 let cloudSyncReady = false;
 
+function normalizeCustomIconForWord(item, inlineEm = false) {
+  if (!item || !item.en) return item;
+  const k = String(item.en).trim().toLowerCase();
+  if (k === "neck" && typeof getCustomBodySvg === "function") {
+    item.icon = getCustomBodySvg("neck", "1em");
+  } else if ((k === "tummy" || k === "stomach") && typeof getCustomBodySvg === "function") {
+    item.icon = getCustomBodySvg("tummy", "1em");
+  } else if (k === "knee" && typeof getCustomBodySvg === "function") {
+    item.icon = getCustomBodySvg("knee", "1em");
+  } else if (k === "flour" && typeof getCustomPancakeSvg === "function") {
+    item.icon = getCustomPancakeSvg("flour", inlineEm ? "1em" : 64);
+  } else if ((k === "yoghurt" || k === "yogurt") && typeof getCustomPancakeSvg === "function") {
+    item.icon = getCustomPancakeSvg("yoghurt", inlineEm ? "1em" : 64);
+  } else if (k === "oil" && typeof getCustomPancakeSvg === "function") {
+    item.icon = getCustomPancakeSvg("oil", inlineEm ? "1em" : 64);
+  }
+  return item;
+}
+
 function createDefaultPlayerStats() {
   return {
     stars: 0, cups: 0, perfectRounds: 0, examsDone: 0, duelsWon: 0, streakDays: 0, lastPlayDate: "", micCount: 0,
@@ -251,6 +270,9 @@ function ensurePlayerStructure(p) {
     ? p.memoryAnimals.map(id => String(id).replace(/^mem_/, "p_")).filter(Boolean)
     : [];
   const rawAvatar = p.avatar || def.avatar;
+  const normalizedHardWords = Array.isArray(p.hardWords)
+    ? p.hardWords.map(w => normalizeCustomIconForWord({ ...w }, true))
+    : [];
 
   return {
     ...def, ...p, lessonCounts: p.lessonCounts || {},
@@ -264,7 +286,7 @@ function ensurePlayerStructure(p) {
     badges: Array.isArray(p.badges) ? p.badges : [],
     unlockedItems: Array.from(new Set(rawUnlocked)),
     memoryAnimals: Array.from(new Set(rawAnimals)),
-    hardWords: Array.isArray(p.hardWords) ? p.hardWords : [],
+    hardWords: normalizedHardWords,
     pendingChests: Array.isArray(p.pendingChests) ? p.pendingChests : [],
     dragonChestDaily: (p.dragonChestDaily && typeof p.dragonChestDaily === "object") ? { ...def.dragonChestDaily, ...p.dragonChestDaily } : def.dragonChestDaily,
     duelChestDaily: (p.duelChestDaily && typeof p.duelChestDaily === "object") ? { ...def.duelChestDaily, ...p.duelChestDaily } : def.duelChestDaily,
@@ -541,15 +563,13 @@ function applyApprovedLessonsPersistence(lessonsArr) {
 }
 
 function normalizePancakesIconsInLessons(lessonsArr) {
-  const pLesson = (lessonsArr || []).find(l => l.id === "pancakes_cooking");
-  if (!pLesson || !Array.isArray(pLesson.items)) return;
-  pLesson.items.forEach(it => {
-    const k = (it.en || "").toLowerCase();
-    if (k === "flour") it.icon = getCustomPancakeSvg("flour", 64);
-    if (k === "yoghurt") it.icon = getCustomPancakeSvg("yoghurt", 64);
-    if (k === "oil") it.icon = getCustomPancakeSvg("oil", 64);
+  (lessonsArr || []).forEach(lesson => {
+    if (!lesson || !Array.isArray(lesson.items)) return;
+    lesson.items.forEach(it => normalizeCustomIconForWord(it, false));
   });
 }
+
+normalizePancakesIconsInLessons(state.lessons);
 
 function isLegacyDuplicateLesson(cl) {
   if (!cl) return true;

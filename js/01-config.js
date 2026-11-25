@@ -1,9 +1,9 @@
 /* ============================================================================
    PLIK: js/01-config.js
-   CENTRALNA KONFIGURACJA WERSJI ORAZ WŁASNE GRAFIKI SVG DLA PANKEJKÓW
+   CENTRALNA KONFIGURACJA WERSJI (15.0) ORAZ WŁASNE GRAFIKI SVG DLA PANKEJKÓW
    ============================================================================ */
 
-const CURRENT_GAME_VERSION = "14.9";
+const CURRENT_GAME_VERSION = "15.0";
 
 const APP_CONFIG = {
   version: CURRENT_GAME_VERSION,
@@ -12,24 +12,19 @@ const APP_CONFIG = {
   gasApiUrl: "https://script.google.com/macros/s/AKfycbxgisF3IoghEU0dYhrnWX2w0uXOIqYMqo4XFYQZ6S3T48zZdHePRCOzrjejcYpIQ_bC/exec",
   whatsNewItems: [
     {
-      icon: "👕🛠️",
-      title: "Zarządzanie Garderobą osobno dla Taty, Igora i Huberta w Panelu Rodzica!",
-      desc: "W Panelu Rodzica pojawiła się osobna sekcja Garderoby: można odblokować wszystkie lub pojedyncze ubrania i zwierzaki osobno dla każdego profilu."
+      icon: "🎲⚡",
+      title: "Nowe przyciski w Garderobie: Wylosuj strój i Załóż cały zestaw!",
+      desc: "Kliknij u góry przycisk 👑 Awatar, a potem zaraz pod swoim bohaterem kliknij zielony przycisk 🎲 Wylosuj strój albo fioletowy przycisk ⚡ Załóż cały zestaw (np. całego Strażaka lub Batmana jednym kliknięciem)!"
     },
     {
-      icon: "🎁👑",
-      title: "Naprawione otwieranie skrzynek, Garderoba, Spiżarnia i Klaser!",
-      desc: "Wszystkie skrzynie (Brązowa, Srebrna, Złota – ze sklepiku, od Taty, z urodzin i ze Smoka) otwierają się teraz bezbłędnie."
+      icon: "🔥⭐",
+      title: "Seria bez błędu (Combo) daje dodatkowe Gwiazdki!",
+      desc: "Słuchaj uważnie i odpowiadaj dobrze kilka razy z rzędu! Za 3 trafienia pod rząd dostaniesz +2 ⭐, za 5 trafień +5 ⭐, a za 8 trafień aż +10 dodatkowych gwiazdek!"
     },
     {
-      icon: "🃏🦉",
-      title: "Fiszki z polskim lektorem Sówki i szybkim powrotem do lekcji!",
-      desc: "Sówka czyta w fiszkach angielskie słówko oraz polskie tłumaczenie, a na górze widać wszystkie sekcje danej lekcji."
-    },
-    {
-      icon: "🎧🔊",
-      title: "Lekcja Dni tygodnia w pełni ze słuchu (PL ⇄ EN)!",
-      desc: "Lektor zadaje pytania po polsku lub po angielsku, a odpowiedzi wybiera się z samych głośniczków."
+      icon: "🦉🎯",
+      title: "Szybka dogrywka na koniec rundy!",
+      desc: "Jeśli w trakcie lekcji zdarzy się mała pomyłka, na końcu rundy Sówka zapyta Cię jeszcze raz tylko o te pomylone słówka, żebyś mógł je od razu poprawić!"
     }
   ]
 };

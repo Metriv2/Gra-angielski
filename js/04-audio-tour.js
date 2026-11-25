@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/04-audio-tour.js
-   DŹWIĘKI (WZMOCNIONE EFEKTY SMOKA), LEKTOR TTS, "CO NOWEGO?" I AWATAR
+   DŹWIĘKI (EFEKTY SMOKA), LEKTOR TTS, "CO NOWEGO?" (V15.0 TYLKO DLA CHŁOPCÓW)
    ============================================================================ */
 
 function playEffect(type) {
@@ -199,7 +199,7 @@ function shouldGlowWhatsNew() {
   if (!state.profile || state.profile === "duel") return false;
   const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
   const p = state.stats[profKey];
-  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.1";
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "15.0";
   return !p || p.seenVersion !== ver;
 }
 
@@ -218,7 +218,7 @@ function updateWhatsNewButtonGlow() {
 function checkAutoShowWhatsNewOnVersionChange(profKey) {
   if (!PROFILE_META[profKey]) return false;
   const p = ensurePlayerStructure(state.stats[profKey]);
-  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.1";
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "15.0";
   if (p.seenVersion === ver) return false;
   setTimeout(() => {
     openWhatsNewModal(false);
@@ -231,7 +231,7 @@ function setOwlFloatingGuide(visible, titleText = "", stepText = "") {
   if (!bar) {
     bar = document.createElement("div");
     bar.id = "owlTourFloatingBanner";
-    bar.className = "fixed bottom-3 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-[95%] bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-4 border-amber-500 rounded-3xl p-3.5 shadow-2xl hidden";
+    bar.className = "fixed bottom-3 left-1/2 -translate-x-1/2 z-[80] max-w-2xl w-[95%] bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-4 border-amber-500 rounded-3xl p-3.5 shadow-2xl hidden";
     document.body.appendChild(bar);
   }
   if (!visible) { bar.classList.add("hidden"); return; }
@@ -252,16 +252,24 @@ function setOwlFloatingGuide(visible, titleText = "", stepText = "") {
   `;
 }
 
+function hideModalSilently(modalId) {
+  const m = document.getElementById(modalId);
+  if (m) {
+    m.classList.add("hidden");
+    m.classList.remove("flex");
+  }
+}
+
 function stopWhatsNewLiveTour() {
   cancelAllSpeechAndTimers();
   setOwlFloatingGuide(false);
-  if (typeof closeAvatarModal === "function") closeAvatarModal();
+  hideModalSilently("avatarModal");
   if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
 }
 
 function openWhatsNewModal(startTourAfter = false) {
   cancelAllSpeechAndTimers();
-  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.1";
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "15.0";
   if (state.profile && state.profile !== "duel") {
     const profKey = (state.profile === "hubert" || state.profile === "tata") ? state.profile : "igor";
     state.stats[profKey] = ensurePlayerStructure(state.stats[profKey]);
@@ -277,6 +285,12 @@ function openWhatsNewModal(startTourAfter = false) {
   const itemsList = (typeof APP_CONFIG !== "undefined" && Array.isArray(APP_CONFIG.whatsNewItems)) ? APP_CONFIG.whatsNewItems : [];
   const box = document.getElementById("whatsNewContentBox");
   if (box) {
+    const wardrobeTourBtnHtml = state.profile && state.profile !== "duel"
+      ? `<button onclick="runWardrobeNewButtonsTour()" class="kid-card w-full mt-2 py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-purple-600 hover:opacity-95 text-white font-extrabold text-sm shadow-lg border-2 border-white/60 flex items-center justify-center gap-2">
+           <span>🦉👉</span> Pokaż mi dokładnie, gdzie kliknąć w Garderobie!
+         </button>`
+      : "";
+
     box.innerHTML = itemsList.map(item => `
       <div class="p-3.5 rounded-2xl bg-rose-50/70 border-2 border-rose-200 flex items-start gap-3">
         <span class="text-3xl shrink-0">${item.icon}</span>
@@ -285,7 +299,7 @@ function openWhatsNewModal(startTourAfter = false) {
           <div class="text-xs md:text-sm font-bold text-slate-700 mt-0.5">${item.desc}</div>
         </div>
       </div>
-    `).join("");
+    `).join("") + wardrobeTourBtnHtml;
   }
 
   const m = document.getElementById("whatsNewModal");
@@ -298,7 +312,7 @@ function openWhatsNewModal(startTourAfter = false) {
   const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : "Tato";
   const summaryText = itemsList.map((it, i) => `${i + 1}. ${it.title} ${it.desc}`).join(" ");
   speakSequence([
-    { lang: "pl", text: `Huhu! Cześć ${kidName}! Pojawiła się nowa Wersja ${ver}! Posłuchaj co nowego: ${summaryText}` }
+    { lang: "pl", text: `Huhu! Cześć ${kidName}! Pojawiła się nowa Wersja ${ver}! Posłuchaj co nowego dla Ciebie: ${summaryText}` }
   ], () => {
     if (startTourAfter) speakWhatsNewTour(0);
   });
@@ -307,22 +321,20 @@ function openWhatsNewModal(startTourAfter = false) {
 function closeWhatsNewModal() {
   cancelAllSpeechAndTimers();
   setOwlFloatingGuide(false);
-  const m = document.getElementById("whatsNewModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
+  hideModalSilently("whatsNewModal");
   if (state.profile && PROFILE_META[state.profile]) {
     checkPendingDadChestsForPlayer(state.profile);
   }
 }
 
 function speakWhatsNewTour(onlyStep = 0) {
-  const m = document.getElementById("whatsNewModal");
-  if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
-  if (typeof closeAvatarModal === "function") closeAvatarModal();
-  if (typeof closeBadgesModal === "function") closeBadgesModal();
-  if (typeof closeStickersModal === "function") closeStickersModal();
+  hideModalSilently("whatsNewModal");
+  hideModalSilently("avatarModal");
+  hideModalSilently("badgesModal");
+  hideModalSilently("stickersModal");
   if (typeof showLessonMenu === "function") showLessonMenu();
 
-  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "14.1";
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "15.0";
   const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : "Tato";
   const hl = (elOrId, on) => {
     const el = typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
@@ -335,27 +347,43 @@ function speakWhatsNewTour(onlyStep = 0) {
   const allSteps = [
     {
       stepId: 1, lang: "pl",
-      text: `Cześć ${kidName}! Już pokazuję nowości w wersji ${ver}! Po pierwsze: Pojedynek Braci oraz Walka ze Smokiem są teraz zawsze pod ręką w menu głównym!`,
-      onStart: () => { setOwlFloatingGuide(true, "⚔️🐉 Krok 1 z 4: Pojedynek Braci i Smok w Menu", "Przycisk Pojedynku Braci jest zawsze widoczny!"); hl("btnDuelMenuAlways", true); hl("btnCoopDragonMenu", true); },
-      onEnd: () => { hl("btnDuelMenuAlways", false); hl("btnCoopDragonMenu", false); }
-    },
-    {
-      stepId: 2, lang: "pl",
-      text: "Po drugie: Asystent Zakupowy w Awatarze! Kiedy wejdziesz w Awatar na górze i klikniesz swojego bohatera lub przycisk sprawdzenia gwiazdek, Sówka powie ile masz gwiazdek i podświetli skrzynie, które możesz kupić!",
-      onStart: () => { setOwlFloatingGuide(true, "👑💬 Krok 2 z 4: Asystent Zakupowy w Awatarze", "Kliknij „👑 Awatar” na górze, aby sprawdzić na jakie skrzynie wystarczą Twoje gwiazdki!"); hl("navAvatarBtn", true); },
+      text: `Cześć ${kidName}! Już pokazuję nowości w wersji ${ver}! Pierwsza nowość jest w Twojej Garderobie! Żeby tam wejść, zawsze klikaj tutaj na górze przycisk Awatar z koroną! Zaraz tam zajrzymy!`,
+      onStart: () => {
+        setOwlFloatingGuide(true, "👑 Krok 1 z 4: Wejście do Garderoby", "Klikaj u góry przycisk „👑 Awatar”, żeby otworzyć swoją Garderobę!");
+        hl("navAvatarBtn", true);
+      },
       onEnd: () => hl("navAvatarBtn", false)
     },
     {
+      stepId: 2, lang: "pl",
+      text: "Jesteśmy w Garderobie! Popatrz pod swojego bohatera – świeci się teraz zielony przycisk z kostką: Wylosuj strój! Kliknij go, a gra sama ubierze Cię w zabawne połączenie z Twoich ubrań!",
+      onStart: () => {
+        if (state.profile !== "duel" && typeof openAvatarModal === "function") openAvatarModal();
+        setOwlFloatingGuide(true, "🎲 Krok 2 z 4: Zielony przycisk Wylosuj strój", "Zaraz pod Twoim bohaterem kliknij „🎲 Wylosuj strój”!");
+        hl("avatarRandomOutfitBtn", true);
+      },
+      onEnd: () => hl("avatarRandomOutfitBtn", false)
+    },
+    {
       stepId: 3, lang: "pl",
-      text: "Po trzecie: w walce ze Smokiem dodaliśmy pełnoekranową animację ataku i ognia z głośnymi efektami dźwiękowymi oraz nielimitowane próby z mikrofonem dla Huberta!",
-      onStart: () => { setOwlFloatingGuide(true, "🔥🗡️ Krok 3 z 4: Walka ze Smokiem", "Pełnoekranowa animacja i głośne dźwięki walki!"); hl("btnCoopDragonMenu", true); },
-      onEnd: () => hl("btnCoopDragonMenu", false)
+      text: "A tuż obok świeci fioletowy przycisk z błyskawicą: Cały zestaw! Kliknij go, żeby jednym kliknięciem założyć cały komplet, na przykład Strażaka, Batmana albo Kosmonautę!",
+      onStart: () => {
+        setOwlFloatingGuide(true, "⚡ Krok 3 z 4: Fioletowy przycisk Cały zestaw", "Obok losowania kliknij „⚡ Cały zestaw”, żeby ubrać pełny strój!");
+        hl("avatarFullSetBtn", true);
+      },
+      onEnd: () => {
+        hl("avatarFullSetBtn", false);
+        hideModalSilently("avatarModal");
+      }
     },
     {
       stepId: 4, lang: "pl",
-      text: "I po czwarte: w lekcji Pieczenie Pankejków mąka, jogurt naturalny i olej mają swoje własne rysunki, a nowe słówka automatycznie trafiają do Pojedynku i walki ze Smokiem! Miłej zabawy!",
-      onStart: () => { setOwlFloatingGuide(true, "🥞🥣 Krok 4 z 4: Pankejki i nowe słówka", "Nowe lekcje automatycznie zasilają Pojedynek Braci i Smoka!"); hl("lessonCard_pancakes_cooking", true); },
-      onEnd: () => hl("lessonCard_pancakes_cooking", false)
+      text: "I jeszcze dwie super rzeczy podczas lekcji! Po pierwsze: Seria bez błędu, czyli Combo – za trzy trafienia pod rząd dostajesz dwie, za pięć trafień pięć, a za osiem trafień aż dziesięć dodatkowych gwiazdek! Po drugie: jeśli zdarzy się mała pomyłka, na końcu rundy zrobimy szybką dogrywkę z pomylonych słówek! Miłej zabawy!",
+      onStart: () => {
+        setOwlFloatingGuide(true, "🔥⭐ Krok 4 z 4: Combo Gwiazdek i Szybka Dogrywka", "Odpowiadaj pod rząd bez błędu po dodatkowe ⭐ i poprawiaj pomyłki w dogrywce!");
+        hl("lessonsGridBox", true);
+      },
+      onEnd: () => hl("lessonsGridBox", false)
     }
   ];
 
@@ -371,17 +399,17 @@ function toggleTurtle() {
 
 function startKidVoiceTour() {
   if (!state.profile) return;
-  if (typeof closeBadgesModal === "function") closeBadgesModal();
-  if (typeof closeStickersModal === "function") closeStickersModal();
-  if (typeof closeAvatarModal === "function") closeAvatarModal();
+  hideModalSilently("badgesModal");
+  hideModalSilently("stickersModal");
+  hideModalSilently("avatarModal");
   if (state.currentLessonId && typeof showLessonMenu === "function") showLessonMenu();
   const kidName = state.profile === "igor" ? "Igor" : state.profile === "hubert" ? "Hubert" : state.profile === "tata" ? "Tato" : "Chłopaki";
   const hl = (id, on) => { const el = document.getElementById(id); if (el) { el.classList.toggle("tutorial-highlight", on); if (on) el.scrollIntoView({ behavior: "smooth", block: "center" }); } };
   speakSequence([
     { lang: "pl", text: `Cześć ${kidName}! Pokażę Ci co gdzie jest! Na środku ekranu masz kolorowe kafelki z lekcjami oraz Pojedynek Braci. Kliknij lekcję, aby zbierać gwiazdki!`, onStart: () => hl("lessonsGridBox", true), onEnd: () => hl("lessonsGridBox", false) },
-    { lang: "pl", text: "Teraz wchodzimy w Odznaki! Im więcej dni z rzędu grasz i im dokładniej odpowiadasz, tym większą masz szansę na srebrną lub złotą skrzynię!", onStart: () => { hl("navBadgesBtn", true); if (state.profile !== "duel" && typeof openBadgesModal === "function") openBadgesModal(); }, onEnd: () => { hl("navBadgesBtn", false); if (typeof closeBadgesModal === "function") closeBadgesModal(); } },
+    { lang: "pl", text: "Teraz wchodzimy w Odznaki! Im więcej dni z rzędu grasz i im dokładniej odpowiadasz, tym większą masz szansę na srebrną lub złotą skrzynię!", onStart: () => { hl("navBadgesBtn", true); if (state.profile !== "duel" && typeof openBadgesModal === "function") openBadgesModal(); }, onEnd: () => { hl("navBadgesBtn", false); hideModalSilently("badgesModal"); } },
     { lang: "pl", text: "Obok świeci przycisk Naklejki! Tam zobaczysz swój klaser ze stoma naklejkami.", onStart: () => hl("navStickersBtn", true), onEnd: () => hl("navStickersBtn", false) },
-    { lang: "pl", text: "A teraz wchodzimy w Awatar! Tutaj możesz ubierać swojego bohatera, zapytać asystenta ile masz gwiazdek i na jakie skrzynie Ci wystarczy, oraz karmić zwierzaka!", onStart: () => { hl("navAvatarBtn", true); if (state.profile !== "duel" && typeof openAvatarModal === "function") openAvatarModal(); }, onEnd: () => { hl("navAvatarBtn", false); if (typeof closeAvatarModal === "function") closeAvatarModal(); } }
+    { lang: "pl", text: "A teraz wchodzimy w Awatar! Tutaj możesz ubierać swojego bohatera, wylosować fajny strój, założyć cały zestaw jednym kliknięciem oraz karmić zwierzaka!", onStart: () => { hl("navAvatarBtn", true); if (state.profile !== "duel" && typeof openAvatarModal === "function") openAvatarModal(); }, onEnd: () => { hl("navAvatarBtn", false); hideModalSilently("avatarModal"); } }
   ]);
 }
 
@@ -416,6 +444,7 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
   state.stats[key] = p;
   const avatar = p.avatar || {};
   const cal = getAvatarCalibration();
+  const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "15.0";
 
   const headImg = resolveOutfitPath(avatar.head); const torsoImg = resolveOutfitPath(avatar.torso); const legsImg = resolveOutfitPath(avatar.legs);
   const headFb = getFallbackOutfitPath(headImg); const torsoFb = getFallbackOutfitPath(torsoImg); const legsFb = getFallbackOutfitPath(legsImg);
@@ -441,12 +470,14 @@ function renderBoyAvatarSvg(playerKey, size = 80) {
     }
   }
 
+  const mkErr = (src, fb) => `if(typeof handleOutfitImgError==='function'){handleOutfitImgError(this,'${src}','${fb}');}else if(this.src.indexOf('srebrna/zlota')===-1&&'${fb}'!=='${src}'){this.src='${fb}';}else{this.style.display='none';}`;
+
   return `
     <div class="relative mx-auto select-none pointer-events-none overflow-visible shrink-0" style="width: ${size}px; height: ${size}px; min-width: ${size}px; min-height: ${size}px;">
       <img src="grafiki/boy_base.png" class="absolute inset-0 w-full h-full object-contain z-10" style="clip-path: ${baseClip};" onerror="this.style.display='none';" />
-      ${legsImg ? `<img src="${legsImg}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${legsFb}'!=='${legsImg}'){this.src='${legsFb}';}else{this.style.display='none';}" />` : ""}
-      ${torsoImg ? `<img src="${torsoImg}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${torsoFb}'!=='${torsoImg}'){this.src='${torsoFb}';}else{this.style.display='none';}" />` : ""}
-      ${headImg ? `<img src="${headImg}" class="absolute left-1/2 object-fill z-40" style="top: ${hCfg.top}%; width: ${hCfg.width}%; height: ${hCfg.height}%; transform: translateX(-50%) scale(${hCfg.scaleX}, ${hCfg.scaleY});" onerror="if(this.src.indexOf('srebrna/zlota')===-1 && '${headFb}'!=='${headImg}'){this.src='${headFb}';}else{this.style.display='none';}" />` : ""}
+      ${legsImg ? `<img src="${legsImg}?v=${ver}" class="absolute left-1/2 object-fill z-20" style="top: ${lCfg.top}%; width: ${lCfg.width}%; height: ${lCfg.height}%; transform: translateX(-50%) scale(${lCfg.scaleX}, ${lCfg.scaleY});" onerror="${mkErr(legsImg, legsFb)}" />` : ""}
+      ${torsoImg ? `<img src="${torsoImg}?v=${ver}" class="absolute left-1/2 object-fill z-30" style="top: ${tCfg.top}%; width: ${tCfg.width}%; height: ${tCfg.height}%; transform: translateX(-50%) scale(${tCfg.scaleX}, ${tCfg.scaleY});" onerror="${mkErr(torsoImg, torsoFb)}" />` : ""}
+      ${headImg ? `<img src="${headImg}?v=${ver}" class="absolute left-1/2 object-fill z-40" style="top: ${hCfg.top}%; width: ${hCfg.width}%; height: ${hCfg.height}%; transform: translateX(-50%) scale(${hCfg.scaleX}, ${hCfg.scaleY});" onerror="${mkErr(headImg, headFb)}" />` : ""}
       ${petHtml}
     </div>
   `;

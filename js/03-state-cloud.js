@@ -1,6 +1,6 @@
 /* ============================================================================
    PLIK: js/03-state-cloud.js
-   STAN GRY, KOŁO FORTUNY, SYNCHRONIZACJA GARDEROBY I SKRZYNEK (ANTY-CACHE)
+   STAN GRY (V15.0), AUTO-BACKUP 14 DNI, DZIENNIK 7 DNI I CHMURA GAS
    ============================================================================ */
 
 const PROFILE_META = {
@@ -189,6 +189,7 @@ function loadInitialCalibrationFromStorage() {
 
 const PARENT_PIN = APP_CONFIG.parentPin;
 const GAS_API_URL = APP_CONFIG.gasApiUrl;
+const DAILY_BACKUP_STORAGE_KEY = "akademia_daily_backups_v1";
 
 let audioCtx = null;
 let activeSpeechToken = 0;
@@ -207,7 +208,7 @@ function createDefaultPlayerStats() {
     duelChestDaily: { date: "", count: 0 },
     petFood: {}, petXp: {},
     dailyQuest: { date: "", type: "", title: "", target: 1, progress: 0, rewardStars: 30, claimed: false },
-    lessonCounts: {}, equipped: {}
+    lessonCounts: {}, activityLog: {}, equipped: {}
   };
 }
 
@@ -253,6 +254,7 @@ function ensurePlayerStructure(p) {
 
   return {
     ...def, ...p, lessonCounts: p.lessonCounts || {},
+    activityLog: (p.activityLog && typeof p.activityLog === "object") ? p.activityLog : {},
     lastBirthdayRewardYear: p.lastBirthdayRewardYear || 0,
     lastWheelSpinDate: p.lastWheelSpinDate || "",
     nakedStartMigrated: true,
@@ -284,6 +286,53 @@ function mergeDailyCounterSafe(locRec, cldRec) {
   const c = cldRec || { date: "", count: 0 };
   if (l.date === c.date) return { date: l.date, count: Math.max(l.count || 0, c.count || 0) };
   return (c.date || "") >= (l.date || "") ? c : l;
+}
+
+function mergeActivityLogsSafe(locLog, cldLog) {
+  const merged = {};
+  const keys = new Set([...Object.keys(locLog || {}), ...Object.keys(cldLog || {})]);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+
+  keys.forEach(dateKey => {
+    if (dateKey < cutoffStr) return;
+    const l = (locLog && locLog[dateKey]) || { rounds: 0, lessons: {} };
+    const c = (cldLog && cldLog[dateKey]) || { rounds: 0, lessons: {} };
+    const lessons = { ...(l.lessons || {}) };
+    Object.keys(c.lessons || {}).forEach(lid => {
+      lessons[lid] = Math.max(Number(lessons[lid]) || 0, Number(c.lessons[lid]) || 0);
+    });
+    const sumLessons = Object.values(lessons).reduce((a, b) => a + (Number(b) || 0), 0);
+    merged[dateKey] = {
+      rounds: Math.max(Number(l.rounds) || 0, Number(c.rounds) || 0, sumLessons),
+      lessons
+    };
+  });
+  return merged;
+}
+
+function recordPlayerActivity(profKey, lessonId = "") {
+  if (!PROFILE_META[profKey]) return;
+  const p = ensurePlayerStructure(state.stats[profKey]);
+  const today = new Date().toISOString().slice(0, 10);
+  if (!p.activityLog || typeof p.activityLog !== "object") p.activityLog = {};
+  if (!p.activityLog[today]) p.activityLog[today] = { rounds: 0, lessons: {} };
+
+  p.activityLog[today].rounds = (Number(p.activityLog[today].rounds) || 0) + 1;
+  if (lessonId) {
+    if (!p.activityLog[today].lessons) p.activityLog[today].lessons = {};
+    p.activityLog[today].lessons[lessonId] = (Number(p.activityLog[today].lessons[lessonId]) || 0) + 1;
+  }
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  Object.keys(p.activityLog).forEach(dk => {
+    if (dk < cutoffStr) delete p.activityLog[dk];
+  });
+
+  state.stats[profKey] = p;
 }
 
 function mergePlayerProgressSafe(localRaw, cloudRaw) {
@@ -324,7 +373,6 @@ function mergePlayerProgressSafe(localRaw, cloudRaw) {
     finalMemoryAnimals = Array.from(new Set([...(loc.memoryAnimals || []), ...(cld.memoryAnimals || [])]));
   }
 
-  // Synchronizacja kolejki skrzyń: wygrywa nowsza zmiana, a przy remisie chmura (nie wskrzesza odebranych skrzynek z localStorage)
   const locCTime = Number(loc.pendingChestsUpdatedAt) || 0;
   const cldCTime = Number(cld.pendingChestsUpdatedAt) || 0;
   const finalPendingChests = locCTime > cldCTime
@@ -358,6 +406,7 @@ function mergePlayerProgressSafe(localRaw, cloudRaw) {
     petFood: mergedPetFood,
     petXp: mergedPetXp,
     lessonCounts: mergedLessonCounts,
+    activityLog: mergeActivityLogsSafe(loc.activityLog, cld.activityLog),
     avatar: {
       head: cld.avatar.head || loc.avatar.head || "",
       torso: cld.avatar.torso || loc.avatar.torso || "",
@@ -374,6 +423,7 @@ var state = {
   isExamMode: false, isHardWordsMode: false, isCoopDragonMode: false,
   roundIndex: 0, roundQuestions: [], roundResults: [], currentQuestionMistakes: 0,
   roundScore: 0, roundMistakes: 0, answeredCurrent: false, flashcardIndex: 0, shopCart: [], riddleHintShown: false,
+  roundCombo: 0, roundBonusStars: 0, isRematchPhase: false, rematchQueue: [], inputLockedUntil: 0,
   letterBuilt: "", letterPool: [],
   duelScores: { igor: 0, hubert: 0 }, duelTurn: "igor", duelReadyWaiting: false,
   dragonBattle: { dragonHp: 10, maxDragonHp: 10, teamHp: 4, maxTeamHp: 4, statusText: "", animClass: "" },
@@ -392,6 +442,64 @@ var state = {
   },
   memoryGameCards: [], memoryFlippedIndexes: [], memoryMatchedPairs: 0
 };
+
+// ------------------------------------------------------------------------
+// AUTOMATYCZNE CODZIENNE MIGAWKI LOKALNE (HISTORIA 14 DNI NA TELEFONIE/LAPTOPIE)
+// ------------------------------------------------------------------------
+function getLocalDailyBackups() {
+  try {
+    const raw = localStorage.getItem(DAILY_BACKUP_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(b => b && b.date && b.data && b.data.stats)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  } catch (e) {
+    return [];
+  }
+}
+
+function recordDailyLocalBackup() {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const ver = typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "15.0";
+    let list = getLocalDailyBackups();
+    const snapshot = {
+      date: today,
+      savedAt: new Date().toISOString(),
+      version: ver,
+      data: {
+        version: ver,
+        exportedAt: new Date().toISOString(),
+        stats: state.stats,
+        lessons: state.lessons,
+        questionsPerRound: state.questionsPerRound,
+        calibration: state.calibration
+      }
+    };
+
+    const existingIdx = list.findIndex(b => b.date === today);
+    if (existingIdx >= 0) {
+      list[existingIdx] = snapshot;
+    } else {
+      list.unshift(snapshot);
+    }
+
+    list.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    if (list.length > 14) list = list.slice(0, 14);
+
+    while (list.length > 0) {
+      try {
+        localStorage.setItem(DAILY_BACKUP_STORAGE_KEY, JSON.stringify(list));
+        break;
+      } catch (quotaErr) {
+        if (list.length <= 1) break;
+        list.pop();
+      }
+    }
+  } catch (e) {}
+}
 
 function getStoredApprovedLessonIds() {
   try {
@@ -597,6 +705,7 @@ function loadCloudData() {
       applyApprovedLessonsPersistence(state.lessons);
       normalizePancakesIconsInLessons(state.lessons);
       cloudSyncReady = true;
+      recordDailyLocalBackup();
       if (typeof updateHeaderUI === "function") updateHeaderUI();
       if (state.profile && typeof showLessonMenu === "function") showLessonMenu();
       else if (typeof showStartScreen === "function") showStartScreen();
@@ -619,9 +728,14 @@ function saveCloudData() {
     localStorage.setItem("akademia_save_v14", serialized);
     localStorage.setItem("akademia_save_v12", serialized);
   } catch (e) {}
+
+  recordDailyLocalBackup();
+
   if (!cloudSyncReady) return;
   const payload = {
     action: "save",
+    dailyBackupDate: new Date().toISOString().slice(0, 10),
+    version: typeof CURRENT_GAME_VERSION !== "undefined" ? CURRENT_GAME_VERSION : "15.0",
     data: {
       stats: state.stats,
       calibration: state.calibration,
